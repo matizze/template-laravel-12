@@ -51,18 +51,23 @@ jobs:
         run: chmod -R 0755 vendor/laravel/dusk/bin/
 
       - name: Start Laravel server
-        run: php artisan serve --host=127.0.0.1 --port=8000 --no-reload &
+        run: |
+          nohup php artisan serve --host=127.0.0.1 --port=8000 --no-reload > storage/logs/ci-server.log 2>&1 &
+          echo $! > /tmp/server.pid
         shell: bash {0}
 
       - name: Wait for server
         run: |
-          for i in {1..60}; do
+          sleep 5
+          for i in {1..30}; do
             if curl --silent --fail http://127.0.0.1:8000 >/dev/null; then
+              echo "Server is ready"
               exit 0
             fi
             sleep 1
           done
           echo "Laravel server did not become ready in time."
+          cat storage/logs/ci-server.log
           exit 1
 
       - name: Dusk Tests
@@ -88,4 +93,7 @@ jobs:
 
       - name: Stop Laravel server
         if: always()
-        run: pkill -f "php artisan serve"
+        run: |
+          if [ -f /tmp/server.pid ]; then
+            kill $(cat /tmp/server.pid) || true
+          fi
