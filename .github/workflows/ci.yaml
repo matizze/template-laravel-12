@@ -51,11 +51,12 @@ jobs:
         run: chmod -R 0755 vendor/laravel/dusk/bin/
 
       - name: Start Laravel server
-        run: php artisan serve --host=127.0.0.1 --port=8000 --no-reload > storage/logs/ci-server.log 2>&1 &
+        run: php artisan serve --host=127.0.0.1 --port=8000 --no-reload &
+        shell: bash {0}
 
       - name: Wait for server
         run: |
-          for i in {1..30}; do
+          for i in {1..60}; do
             if curl --silent --fail http://127.0.0.1:8000 >/dev/null; then
               exit 0
             fi
