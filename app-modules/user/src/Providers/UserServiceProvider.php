@@ -9,11 +9,6 @@ use Illuminate\Support\ServiceProvider;
 
 class UserServiceProvider extends ServiceProvider
 {
-    public function register(): void
-    {
-        //
-    }
-
     public function boot(): void
     {
         $this->loadViewsFrom(__DIR__.'/../../resources/views', 'user');
@@ -22,10 +17,8 @@ class UserServiceProvider extends ServiceProvider
 
         Gate::define('manage-users', fn (User $user) => $user->role === 'admin');
 
-        if ($this->app->runningInConsole()) {
-            $this->commands([
-                CreateUserCommand::class,
-            ]);
-        }
+        $this->commands([
+            CreateUserCommand::class,
+        ]);
     }
 }

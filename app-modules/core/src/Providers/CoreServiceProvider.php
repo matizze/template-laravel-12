@@ -11,17 +11,9 @@ use Illuminate\Support\ServiceProvider;
 
 class CoreServiceProvider extends ServiceProvider
 {
-    public function register(): void
-    {
-        //
-    }
-
     public function boot(): void
     {
-        // Register anonymous components globally (no prefix)
         Blade::anonymousComponentPath(__DIR__.'/../../resources/components');
-
-        // Register views
         $this->loadViewsFrom(__DIR__.'/../../resources/views', 'core');
 
         if (App::environment('local')) {

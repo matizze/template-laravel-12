@@ -22,16 +22,9 @@ class WorkspaceServiceProvider extends ServiceProvider
         $this->loadRoutesFrom(__DIR__.'/../../routes/web.php');
         $this->loadMigrationsFrom(__DIR__.'/../../database/migrations');
 
-        // Register workspace components with prefix: <x-workspace::*>
         Blade::anonymousComponentPath(__DIR__.'/../../resources/components', 'workspace');
 
-        // Share workspace data with dashboard layout
-        View::composer('*', function ($view): void {
-            $viewName = $view->name();
-            if (! str_contains($viewName, 'layout.dashboard')) {
-                return;
-            }
-
+        View::composer('core::components.layout.dashboard', function ($view): void {
             $user = Auth::user();
             $workspaces = $user ? $user->workspaces : collect();
             $currentWorkspace = Workspace::current();
