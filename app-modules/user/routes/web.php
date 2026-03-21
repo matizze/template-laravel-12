@@ -1,8 +1,8 @@
 <?php
 
+use Illuminate\Support\Facades\Route;
 use Modules\User\Http\Controllers\SettingsController;
 use Modules\User\Http\Controllers\UserController;
-use Illuminate\Support\Facades\Route;
 
 Route::middleware(['web', 'auth'])->group(function () {
     Route::get('/settings', [SettingsController::class, 'index'])->name('settings.index');

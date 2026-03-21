@@ -1,13 +1,13 @@
 <?php
 
+use Illuminate\Support\Facades\Route;
 use Modules\Auth\Http\Controllers\ForgotPasswordController;
 use Modules\Auth\Http\Controllers\LoginController;
 use Modules\Auth\Http\Controllers\RegisterController;
 use Modules\Auth\Http\Controllers\ResetPasswordController;
-use Illuminate\Support\Facades\Route;
 
 Route::middleware('web')->group(function () {
-    Route::group(['middleware' => 'guest'], function () {
+    Route::middleware('guest')->group(function () {
         Route::get('/auth/login', [LoginController::class, 'index']);
         Route::post('/auth/login', [LoginController::class, 'store'])->name('login')->middleware('throttle:5,1');
 
@@ -21,7 +21,7 @@ Route::middleware('web')->group(function () {
         Route::post('/auth/reset-password', [ResetPasswordController::class, 'store'])->name('password.update')->middleware('throttle:3,1');
     });
 
-    Route::group(['middleware' => 'auth'], function () {
+    Route::middleware('auth')->group(function () {
         Route::post('/auth/logout', [LoginController::class, 'destroy'])->name('logout');
     });
 });

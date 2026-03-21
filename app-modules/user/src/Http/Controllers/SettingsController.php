@@ -2,10 +2,7 @@
 
 namespace Modules\User\Http\Controllers;
 
-use Modules\Workspace\Enums\WorkspaceRole;
 use App\Http\Controllers\Controller;
-use Modules\Workspace\Models\Member;
-use Modules\Workspace\Models\Workspace;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -16,6 +13,9 @@ use Modules\User\Http\Requests\DeleteAccountRequest;
 use Modules\User\Http\Requests\UpdatePasswordRequest;
 use Modules\User\Http\Requests\UpdateProfileRequest;
 use Modules\User\Models\User;
+use Modules\Workspace\Enums\WorkspaceRole;
+use Modules\Workspace\Models\Member;
+use Modules\Workspace\Models\Workspace;
 
 class SettingsController extends Controller
 {

@@ -1,10 +1,10 @@
 <?php
 
+use Illuminate\Support\Facades\Route;
 use Modules\Workspace\Http\Controllers\MemberController;
 use Modules\Workspace\Http\Controllers\OnboardingController;
 use Modules\Workspace\Http\Controllers\WorkspaceController;
 use Modules\Workspace\Http\Controllers\WorkspaceSettingsController;
-use Illuminate\Support\Facades\Route;
 
 Route::middleware('web')->group(function () {
     Route::middleware('auth')->group(function () {
@@ -14,27 +14,22 @@ Route::middleware('web')->group(function () {
         Route::middleware('workspace')->group(function () {
             Route::view('/dashboard', 'core::dashboard')->name('dashboard');
 
-            // Member management routes
             Route::get('/workspace/{workspace}/members', [MemberController::class, 'index'])->name('workspace.members.index');
             Route::post('/workspace/{workspace}/invite', [MemberController::class, 'invite'])->middleware('throttle:10,1')->name('workspace.members.invite');
             Route::post('/workspace/{workspace}/leave', [MemberController::class, 'leave'])->name('workspace.members.leave');
             Route::patch('/workspace/{workspace}/members/{user}', [MemberController::class, 'updateRole'])->name('workspace.members.updateRole');
             Route::delete('/workspace/{workspace}/members/{user}', [MemberController::class, 'remove'])->name('workspace.members.remove');
 
-            // Workspace settings routes
             Route::get('/workspace/{workspace}/settings', [WorkspaceSettingsController::class, 'show'])->name('workspace.settings.show');
             Route::patch('/workspace/{workspace}/settings', [WorkspaceSettingsController::class, 'update'])->name('workspace.settings.update');
             Route::delete('/workspace/{workspace}', [WorkspaceSettingsController::class, 'destroy'])->name('workspace.destroy');
 
-            // Transfer ownership route
             Route::post('/workspace/{workspace}/transfer', [WorkspaceController::class, 'transferOwnership'])->name('workspace.transferOwnership');
         });
 
-        // Workspace routes
         Route::post('/workspace', [WorkspaceController::class, 'store'])->name('workspace.store');
         Route::post('/workspace/switch/{workspace}', [WorkspaceController::class, 'switch'])->name('workspace.switch');
     });
 
-    // Rota de aceite de convite acessível tanto para guests quanto para usuários autenticados
     Route::get('/invitation/{token}', [MemberController::class, 'accept'])->name('invitation.accept');
 });

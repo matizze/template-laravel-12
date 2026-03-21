@@ -2,7 +2,6 @@
 
 namespace Modules\Workspace\Models;
 
-use Modules\Workspace\Services\CurrentWorkspaceManager;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -12,6 +11,7 @@ use Illuminate\Support\Str;
 use Modules\User\Models\User;
 use Modules\Workspace\Database\Factories\WorkspaceFactory;
 use Modules\Workspace\Enums\WorkspaceRole;
+use Modules\Workspace\Services\CurrentWorkspaceManager;
 
 class Workspace extends Model
 {
@@ -25,37 +25,27 @@ class Workspace extends Model
         return WorkspaceFactory::new();
     }
 
-    /**
-     * Retorna o workspace atual da requisicao via CurrentWorkspaceManager.
-     */
     public static function current(): ?self
     {
         return app(CurrentWorkspaceManager::class)->get();
     }
 
-    /**
-     * Define o workspace atual pelo ID.
-     */
     public static function setCurrent(?int $workspaceId): void
     {
+        $manager = app(CurrentWorkspaceManager::class);
+
         if ($workspaceId) {
-            app(CurrentWorkspaceManager::class)->setById($workspaceId);
+            $manager->setById($workspaceId);
         } else {
-            app(CurrentWorkspaceManager::class)->forget();
+            $manager->forget();
         }
     }
 
-    /**
-     * Define o workspace atual a partir de uma instancia do modelo.
-     */
     public static function setCurrentModel(self $workspace): void
     {
         app(CurrentWorkspaceManager::class)->set($workspace);
     }
 
-    /**
-     * Limpa o workspace atual da memoria e da sessao.
-     */
     public static function forgetCurrent(): void
     {
         app(CurrentWorkspaceManager::class)->forget();

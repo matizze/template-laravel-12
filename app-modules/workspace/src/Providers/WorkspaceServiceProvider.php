@@ -2,12 +2,12 @@
 
 namespace Modules\Workspace\Providers;
 
-use Modules\Workspace\Models\Workspace;
-use Modules\Workspace\Services\CurrentWorkspaceManager;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\Facades\View;
 use Illuminate\Support\ServiceProvider;
+use Modules\Workspace\Models\Workspace;
+use Modules\Workspace\Services\CurrentWorkspaceManager;
 
 class WorkspaceServiceProvider extends ServiceProvider
 {
@@ -24,13 +24,17 @@ class WorkspaceServiceProvider extends ServiceProvider
 
         Blade::anonymousComponentPath(__DIR__.'/../../resources/components', 'workspace');
 
-        View::composer('core::components.layout.dashboard', function ($view): void {
-            $user = Auth::user();
-            $workspaces = $user ? $user->workspaces : collect();
-            $currentWorkspace = Workspace::current();
+        View::composer('*', function ($view): void {
+            if (! str_contains($view->name(), 'layout.dashboard')) {
+                return;
+            }
 
-            $view->with('workspaces', $workspaces);
-            $view->with('currentWorkspace', $currentWorkspace);
+            $user = Auth::user();
+
+            $view->with([
+                'workspaces' => $user ? $user->workspaces : collect(),
+                'currentWorkspace' => Workspace::current(),
+            ]);
         });
     }
 }

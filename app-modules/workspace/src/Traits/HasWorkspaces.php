@@ -2,11 +2,11 @@
 
 namespace Modules\Workspace\Traits;
 
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Modules\Workspace\Enums\WorkspaceRole;
 use Modules\Workspace\Models\Member;
 use Modules\Workspace\Models\Workspace;
-use Illuminate\Database\Eloquent\Relations\BelongsToMany;
-use Illuminate\Database\Eloquent\Relations\HasMany;
 
 trait HasWorkspaces
 {
@@ -33,15 +33,11 @@ trait HasWorkspaces
             return $this->roleCache[$workspace->id];
         }
 
-        /** @var Member|null $member */
         $member = $workspace->memberships()
             ->where('user_id', $this->id)
             ->first();
 
-        /** @var WorkspaceRole|null $role */
-        $role = $member?->role;
-
-        return $this->roleCache[$workspace->id] = $role;
+        return $this->roleCache[$workspace->id] = $member?->role;
     }
 
     public function isMemberOf(Workspace $workspace): bool
