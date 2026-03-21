@@ -8,36 +8,34 @@
         </x-button>
     </x-slot>
 
-    <x-card class="bg-white">
-        <h2 class="text-lg font-bold text-gray-900 mb-4">Convidar membro</h2>
+    <x-card class="flex-col bg-white">
+        <h2 class="text-lg font-bold text-gray-900 mb-6">Convidar membro</h2>
 
-        <form method="POST" action="{{ route('workspace.members.invite', $workspace) }}">
+        <form method="POST" action="{{ route('workspace.members.invite', $workspace) }}" class="space-y-4">
             @csrf
 
-            <div class="space-y-4">
-                <x-form.input
-                    label="E-mail"
-                    name="email"
-                    type="email"
-                    required
-                    placeholder="email@exemplo.com"
-                />
+            <x-form.input
+                label="E-mail"
+                name="email"
+                type="email"
+                required
+                placeholder="email@exemplo.com"
+            />
 
-                <x-form.select
-                    label="Função"
-                    name="role"
-                    id="invite-role"
-                    required
-                >
-                    @foreach (\App\Enums\WorkspaceRole::cases() as $role)
-                        @if($role->value !== 'owner')
-                            <option value="{{ $role->value }}">{{ ucfirst($role->value) }}</option>
-                        @endif
-                    @endforeach
-                </x-form.select>
-            </div>
+            <x-form.select
+                label="Função"
+                name="role"
+                id="invite-role"
+                required
+            >
+                @foreach (\App\Enums\WorkspaceRole::cases() as $role)
+                    @if($role->value !== 'owner')
+                        <option value="{{ $role->value }}">{{ ucfirst($role->value) }}</option>
+                    @endif
+                @endforeach
+            </x-form.select>
 
-            <div class="flex justify-end gap-3 mt-6">
+            <div class="flex justify-end gap-3 pt-4">
                 <x-button type="button" variant="ghost" @click="$dispatch('close-modal')">
                     Cancelar
                 </x-button>

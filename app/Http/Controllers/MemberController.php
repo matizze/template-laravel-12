@@ -50,7 +50,7 @@ class MemberController extends Controller
         }
 
         return redirect()
-            ->route('workspace.members.index', $workspace)
+            ->route('workspace.settings.show', $workspace)
             ->with('success', 'Convite enviado com sucesso!');
     }
 
@@ -108,7 +108,7 @@ class MemberController extends Controller
 
         if ($novoRole === WorkspaceRole::Owner) {
             return redirect()
-                ->route('workspace.members.index', $workspace)
+                ->route('workspace.settings.show', $workspace)
                 ->with('error', 'Não é possível promover um membro a proprietário. Use a transferência de propriedade.');
         }
 
@@ -117,7 +117,7 @@ class MemberController extends Controller
         ]);
 
         return redirect()
-            ->route('workspace.members.index', $workspace)
+            ->route('workspace.settings.show', $workspace)
             ->with('success', 'Função do membro atualizada com sucesso!');
     }
 
@@ -131,14 +131,14 @@ class MemberController extends Controller
         // Impede a remocao do proprietario do workspace
         if ($member->role === WorkspaceRole::Owner) {
             return redirect()
-                ->route('workspace.members.index', $workspace)
+                ->route('workspace.settings.show', $workspace)
                 ->with('error', 'Não é possível remover o proprietário do workspace.');
         }
 
         $workspace->members()->detach($user->id);
 
         return redirect()
-            ->route('workspace.members.index', $workspace)
+            ->route('workspace.settings.show', $workspace)
             ->with('success', 'Membro removido com sucesso!');
     }
 

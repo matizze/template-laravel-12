@@ -41,7 +41,7 @@
                 href="{{ route('settings.index') }}"
                 class="flex items-center gap-3 px-4 py-2.5 text-xs text-gray-300 hover:bg-gray-600/40 transition-colors"
             >
-                <x-lucide-settings class="size-3.5" />
+                <x-icon name="lucide-settings" class="size-3.5" />
                 <span>Configurações</span>
             </a>
 
@@ -52,7 +52,7 @@
                     type="submit"
                     class="flex items-center gap-3 w-full text-left px-4 py-2.5 text-xs text-feedback-danger hover:bg-feedback-danger/10 transition-colors"
                 >
-                    <x-lucide-log-out class="size-3.5" />
+                    <x-icon name="lucide-log-out" class="size-3.5" />
                     <span>Sair</span>
                 </button>
             </form>

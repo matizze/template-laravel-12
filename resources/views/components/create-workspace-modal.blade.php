@@ -26,29 +26,28 @@
         >
             <h2 id="modal-title-create-workspace" class="sr-only">Criar Workspace</h2>
 
-            <x-card class="bg-white" dusk="create-workspace-modal">
-                <h2 class="text-lg font-bold text-gray-900 mb-4">Criar Workspace</h2>
+            <x-card class="flex-col bg-white" dusk="create-workspace-modal">
+                <h2 class="text-lg font-bold text-gray-900 mb-6">Criar Workspace</h2>
 
-                <form method="POST" action="{{ route('workspace.store') }}">
+                <form method="POST" action="{{ route('workspace.store') }}" class="space-y-4">
                     @csrf
 
-                    <div class="space-y-4">
-                        <x-form.input
-                            label="Nome"
-                            name="name"
-                            type="text"
-                            required
-                            placeholder="Nome do workspace"
-                        />
+                    <x-form.input
+                        label="Nome"
+                        name="name"
+                        type="text"
+                        required
+                        placeholder="Nome do workspace"
+                    />
 
-                        <x-form.textarea
-                            label="Descrição (opcional)"
-                            name="description"
-                            placeholder="Descrição do workspace"
-                        />
-                    </div>
+                    <x-form.textarea
+                        label="Descrição (opcional)"
+                        name="description"
+                        placeholder="Descrição do workspace"
+                        class="resize-none"
+                    />
 
-                    <div class="flex justify-end gap-3 mt-6">
+                    <div class="flex justify-end gap-3 pt-4">
                         <x-button type="button" variant="ghost" @click="open = false">
                             Cancelar
                         </x-button>

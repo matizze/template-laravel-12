@@ -24,6 +24,7 @@
                 label="Descrição (opcional)"
                 name="description"
                 placeholder="Descrição do workspace"
+                class="resize-none"
             />
 
             <div class="flex justify-end gap-3 pt-4">

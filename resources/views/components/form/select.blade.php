@@ -20,7 +20,7 @@
     <select
         name="{{ $name }}"
         id="{{ $name }}"
-        class="h-10 w-full text-sm text-gray-500 border-0 border-b border-gray-200 focus:outline-none focus:border-indigo-500 focus:border-b-2 transition-colors"
+        class="h-10 w-full text-sm text-gray-500 bg-transparent border-0 border-b border-gray-200 focus:outline-none focus:border-indigo-500 focus:border-b-2 transition-colors"
         {{ $attributes }}
     >
         {{ $slot }}

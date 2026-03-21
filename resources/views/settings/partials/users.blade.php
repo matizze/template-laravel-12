@@ -8,7 +8,7 @@
         <x-modal title="Novo Usuário" size="max-w-lg">
             <x-slot name="trigger">
                 <x-button class="px-4" dusk="open-create-user-modal">
-                    <x-lucide-plus class="size-4" />
+                    <x-icon name="lucide-plus" class="size-4" />
                     Novo
                 </x-button>
             </x-slot>
@@ -23,19 +23,10 @@
                         <x-form.input label="Senha" name="password" type="password" />
                         <x-form.input label="Confirmar Senha" name="password_confirmation" type="password" />
 
-                        <div class="group">
-                            <label for="role" class="uppercase text-xss block text-gray-400 group-focus-within:text-indigo-500">
-                                Função
-                            </label>
-                            <select
-                                name="role"
-                                id="role"
-                                class="h-10 w-full text-sm text-gray-500 border-0 border-b border-gray-200 bg-transparent focus:outline-none focus:border-indigo-500 focus:border-b-2 transition-colors"
-                            >
-                                <option value="member">Membro</option>
-                                <option value="admin">Administrador</option>
-                            </select>
-                        </div>
+                        <x-form.select label="Função" name="role">
+                            <option value="member">Membro</option>
+                            <option value="admin">Administrador</option>
+                        </x-form.select>
                     </div>
 
                     <div class="flex gap-2 justify-end">
@@ -94,7 +85,7 @@
                                         class="flex items-center justify-center cursor-pointer size-7 bg-indigo-100 text-indigo-600 rounded"
                                         title="{{ $user->role === 'admin' ? 'Tornar Membro' : 'Tornar Administrador' }}"
                                     >
-                                        <x-lucide-repeat class="size-3" />
+                                        <x-icon name="lucide-repeat" class="size-3" />
                                     </button>
                                 </form>
 
@@ -115,7 +106,7 @@
                                             class="flex items-center justify-center cursor-pointer size-7 bg-red-100 text-red-600 rounded"
                                             title="Deletar"
                                         >
-                                            <x-lucide-trash class="size-3" />
+                                            <x-icon name="lucide-trash" class="size-3" />
                                         </button>
                                     </form>
                                 </div>

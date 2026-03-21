@@ -22,7 +22,7 @@
                         'border-transparent text-gray-400 hover:text-gray-600 hover:border-gray-200' => $active !== 'geral',
                     ])
                 >
-                    <x-lucide-settings class="size-4" />
+                    <x-icon name="lucide-settings" class="size-4" />
                     <span>Geral</span>
                 </a>
 
@@ -34,7 +34,7 @@
                         'border-transparent text-gray-400 hover:text-gray-600 hover:border-gray-200' => $active !== 'membros',
                     ])
                 >
-                    <x-lucide-users class="size-4" />
+                    <x-icon name="lucide-users" class="size-4" />
                     <span>Membros</span>
                 </a>
             </aside>
@@ -46,7 +46,7 @@
                         @include('dashboard.workspace-settings.partials.geral', ['workspace' => $workspace])
                         @break
                     @case('membros')
-                        @include('dashboard.workspace-settings.partials.membros', ['workspace' => $workspace, 'members' => $members])
+                        @include('dashboard.workspace-settings.partials.membros', ['workspace' => $workspace, 'members' => $members, 'pendingInvitations' => $pendingInvitations])
                         @break
                 @endswitch
             </main>

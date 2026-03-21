@@ -17,11 +17,13 @@ class WorkspaceSettingsController extends Controller
         $tab = $request->query('tab', 'geral');
 
         $members = $workspace->memberships()->with('user')->get();
+        $pendingInvitations = $workspace->invitations()->pending()->get();
 
         return view('dashboard.workspace-settings.index', [
             'workspace' => $workspace,
             'active' => $tab,
             'members' => $members,
+            'pendingInvitations' => $pendingInvitations,
         ]);
     }
 
