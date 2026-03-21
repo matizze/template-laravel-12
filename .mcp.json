@@ -1,23 +1,18 @@
 {
-    "$schema": "https://opencode.ai/config.json",
-    "mcp": {
+    "mcpServers": {
         "laravel-boost": {
-            "type": "local",
-            "enabled": true,
-            "command": [
-                "php",
+            "command": "php",
+            "args": [
                 "artisan",
                 "boost:mcp"
             ]
         },
         "herd": {
-            "type": "local",
-            "enabled": true,
-            "command": [
-                "php",
+            "command": "php",
+            "args": [
                 "/Applications/Herd.app/Contents/Resources/herd-mcp.phar"
             ],
-            "environment": {
+            "env": {
                 "SITE_PATH": "/Users/henriquecosta/web/studies/template/template-laravel-12"
             }
         }
