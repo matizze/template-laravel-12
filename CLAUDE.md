@@ -77,9 +77,18 @@ php artisan create:user --admin      # create admin user
 
 ### Testing
 - PHPUnit with in-memory SQLite, array session/cache drivers
-- Test suites: `tests/Unit/`, `tests/Feature/`
+- Test suites: `tests/Unit/`, `tests/Feature/`, `tests/Browser/` (Dusk)
 - Feature tests: `AuthTest`, `SettingsTest`, `UserManagementTest`, `PasswordResetTest`, `CreateUserCommandTest`
+- Browser tests (Dusk): `tests/Browser/` — use for end-to-end UI flows requiring real browser interaction (JavaScript, Alpine.js, modals, etc.)
 - PHPFlasher consumes flash session data — do NOT use `assertSessionHas` for flash keys (`success`, `error`, etc.)
+
+### Dusk (Browser Tests)
+- Run with `php artisan dusk` (requires `composer dev` or server running)
+- Create tests with `php artisan make:dusk-test TestName`
+- Dusk tests extend `Laravel\Dusk\TestCase` and live in `tests/Browser/`
+- Use Dusk for flows that require JavaScript execution (Alpine.js interactions, modals, dynamic UI)
+- Use PHPUnit feature tests for everything else — Dusk is slower and requires a running browser
+- Dusk uses its own `.env.dusk.local` environment file
 
 ## Conventions
 

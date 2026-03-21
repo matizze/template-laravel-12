@@ -16,8 +16,17 @@ Laravel 12 starter template with role-based access (admin/member), settings mana
 
 ## Testing
 - PHPUnit (NOT Pest) — feature tests: `AuthTest`, `SettingsTest`, `UserManagementTest`, `PasswordResetTest`, `CreateUserCommandTest`
+- Browser tests (Dusk): `tests/Browser/` — use for end-to-end UI flows requiring real browser interaction (JavaScript, Alpine.js, modals)
 - PHPFlasher consumes flash session data — do NOT use `assertSessionHas` for flash keys (`success`, `error`, `warning`, `info`)
 - Use `UserFactory::admin()` state for admin user tests
+
+## Dusk (Browser Tests)
+- Run with `php artisan dusk` (requires server running)
+- Create tests with `php artisan make:dusk-test TestName`
+- Dusk tests extend `Laravel\Dusk\TestCase` and live in `tests/Browser/`
+- Use Dusk for flows requiring JavaScript execution (Alpine.js, modals, dynamic UI)
+- Use PHPUnit feature tests for everything else — Dusk is slower and requires a real browser
+- Dusk uses its own `.env.dusk.local` environment file
 
 <laravel-boost-guidelines>
 === foundation rules ===
