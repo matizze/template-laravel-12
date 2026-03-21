@@ -22,7 +22,7 @@ class RegisterController extends Controller
 
         Auth::login($user);
 
-        if ($token = session()->pull('invitation_token')) {
+        if ($token = $request->session()->pull('invitation_token')) {
             return redirect()->route('invitation.accept', $token);
         }
 
