@@ -18,12 +18,15 @@ description: "Task list template for feature implementation"
 - **[Story]**: Which user story this task belongs to (e.g., US1, US2, US3)
 - Include exact file paths in descriptions
 
-## Path Conventions
+## Path Conventions (Laravel 12 Modular Architecture)
 
-- **Single project**: `src/`, `tests/` at repository root
-- **Web app**: `backend/src/`, `frontend/src/`
-- **Mobile**: `api/src/`, `ios/src/` or `android/src/`
-- Paths shown below assume single project - adjust based on plan.md structure
+- **Core**: `app/`, `resources/views/components/`, `resources/views/dashboard.blade.php`
+- **User**: `app/Http/Controllers/`, `app/Http/Requests/`, `app/Console/Commands/`, `resources/views/settings/`
+- **Auth**: `app/Http/Controllers/Auth/`, `app/Http/Requests/`, `resources/views/auth/`, `routes/auth.php`
+- **Workspace**: `app/Models/`, `app/Http/Controllers/`, `app/Notifications/`, `app/Traits/`, `resources/views/dashboard/`
+- **Tests**: `tests/Feature/` (PHPUnit), `tests/Browser/` (Dusk — JavaScript flows only)
+
+> TDD GATE: Tests MUST be written and MUST FAIL before any implementation task is started.
 
 <!-- 
   ============================================================================
@@ -79,12 +82,12 @@ Examples of foundational tasks (adjust based on your project):
 
 **Independent Test**: [How to verify this story works on its own]
 
-### Tests for User Story 1 (OPTIONAL - only if tests requested) ⚠️
+### Tests for User Story 1 — `testing-expert` agent ⚠️ TDD GATE
 
-> **NOTE: Write these tests FIRST, ensure they FAIL before implementation**
+> **MANDATORY: Invoke `testing-expert` agent. Tests MUST be written and MUST FAIL before any implementation.**
 
-- [ ] T010 [P] [US1] Contract test for [endpoint] in tests/contract/test_[name].py
-- [ ] T011 [P] [US1] Integration test for [user journey] in tests/integration/test_[name].py
+- [ ] T010 [P] [US1] Feature test for [HTTP flow] in tests/Feature/[Name]Test.php
+- [ ] T011 [P] [US1] Dusk browser test (only if JS/Alpine interaction) in tests/Browser/[Name]Test.php
 
 ### Implementation for User Story 1
 
@@ -150,6 +153,10 @@ Examples of foundational tasks (adjust based on your project):
 
 **Purpose**: Improvements that affect multiple user stories
 
+- [ ] TXXX Call `mcp__plugin_laravel-boost_laravel-boost__laravel-code-simplifier` on all changed files (Principle VI — NON-NEGOTIABLE gate)
+- [ ] TXXX [P] Invoke `code-reviewer` agent (parallel with security-auditor)
+- [ ] TXXX [P] Invoke `security-auditor` agent (parallel with code-reviewer)
+- [ ] TXXX Run `vendor/bin/pint --dirty --format agent` to format PHP files
 - [ ] TXXX [P] Documentation updates in docs/
 - [ ] TXXX Code cleanup and refactoring
 - [ ] TXXX Performance optimization across all stories

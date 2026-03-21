@@ -262,7 +262,6 @@ class WorkspaceTest extends TestCase
     }
 
 
-
     public function test_owner_can_transfer_ownership(): void
     {
         $owner = User::factory()->create();

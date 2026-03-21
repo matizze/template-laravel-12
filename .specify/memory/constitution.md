@@ -1,50 +1,228 @@
-# [PROJECT_NAME] Constitution
-<!-- Example: Spec Constitution, TaskFlow Constitution, etc. -->
+<!--
+SYNC IMPACT REPORT
+==================
+Version change: 1.1.0 → 1.2.0 (MINOR: Agent Assignments section added)
+Added sections:
+  - Agent Assignments — maps each workflow step to the correct .claude/agents/ specialist
+Modified:
+  - Development Workflow — each step now references its assigned agent
+Templates reviewed:
+  - .specify/templates/plan-template.md ✅ (Constitution Check updated with agent column)
+  - .specify/templates/spec-template.md ✅ (no changes required)
+  - .specify/templates/tasks-template.md ✅ (agent references added per phase)
+Deferred TODOs: none
+-->
+
+# Laravel 12 Template Constitution
 
 ## Core Principles
 
-### [PRINCIPLE_1_NAME]
-<!-- Example: I. Library-First -->
-[PRINCIPLE_1_DESCRIPTION]
-<!-- Example: Every feature starts as a standalone library; Libraries must be self-contained, independently testable, documented; Clear purpose required - no organizational-only libraries -->
+### I. Test-First Development (NON-NEGOTIABLE)
 
-### [PRINCIPLE_2_NAME]
-<!-- Example: II. CLI Interface -->
-[PRINCIPLE_2_DESCRIPTION]
-<!-- Example: Every library exposes functionality via CLI; Text in/out protocol: stdin/args → stdout, errors → stderr; Support JSON + human-readable formats -->
+TDD is mandatory for all feature work. The cycle MUST follow: write tests → confirm they FAIL → implement
+until green → refactor. No code MUST be written without a failing test first.
 
-### [PRINCIPLE_3_NAME]
-<!-- Example: III. Test-First (NON-NEGOTIABLE) -->
-[PRINCIPLE_3_DESCRIPTION]
-<!-- Example: TDD mandatory: Tests written → User approved → Tests fail → Then implement; Red-Green-Refactor cycle strictly enforced -->
+- Use PHPUnit feature tests for HTTP flows, controllers, middleware, and business logic.
+- Use Dusk browser tests exclusively for JavaScript-dependent flows (Alpine.js interactions, modals).
+- Run tests with `php artisan test --compact` using the minimum filter needed.
+- PHPFlasher consumes flash keys — MUST NOT use `assertSessionHas` for `success`, `error`, `warning`, `info`.
+- Every PR MUST include tests covering happy path, failure paths, and edge cases.
 
-### [PRINCIPLE_4_NAME]
-<!-- Example: IV. Integration Testing -->
-[PRINCIPLE_4_DESCRIPTION]
-<!-- Example: Focus areas requiring integration tests: New library contract tests, Contract changes, Inter-service communication, Shared schemas -->
+**Rationale**: Tests written after the fact validate assumptions that are already baked in. Tests written
+first drive design toward testable, minimal implementations and catch regressions across module boundaries.
 
-### [PRINCIPLE_5_NAME]
-<!-- Example: V. Observability, VI. Versioning & Breaking Changes, VII. Simplicity -->
-[PRINCIPLE_5_DESCRIPTION]
-<!-- Example: Text I/O ensures debuggability; Structured logging required; Or: MAJOR.MINOR.BUILD format; Or: Start simple, YAGNI principles -->
+### II. The Laravel Way
 
-## [SECTION_2_NAME]
-<!-- Example: Additional Constraints, Security Requirements, Performance Standards, etc. -->
+All code MUST follow idiomatic Laravel conventions. Artisan generators MUST be used when creating new
+classes. Frameworks and ORM capabilities MUST be used before any custom infrastructure.
 
-[SECTION_2_CONTENT]
-<!-- Example: Technology stack requirements, compliance standards, deployment policies, etc. -->
+- MUST use `php artisan make:*` commands to create controllers, models, requests, migrations, etc.
+- MUST use Eloquent ORM and relationships; avoid raw `DB::` queries (prefer `Model::query()`).
+- MUST use Form Request classes for all validation — never inline validation in controllers.
+- MUST use named routes and `route()` for URL generation.
+- MUST use `config()` helper — never call `env()` outside of config files.
+- MUST use `->with('success'|'error'|'warning'|'info', '...')` for flash messages (PHPFlasher keys).
+- MUST run `vendor/bin/pint --dirty --format agent` after any PHP file change.
+- SHOULD use queued jobs (`ShouldQueue`) for time-consuming operations.
+- SHOULD follow PHP 8.4 features: constructor property promotion, typed properties, match expressions.
 
-## [SECTION_3_NAME]
-<!-- Example: Development Workflow, Review Process, Quality Gates, etc. -->
+**Rationale**: Diverging from Laravel idioms increases onboarding friction and breaks framework tooling
+(IDE helpers, route caching, policy auto-discovery, etc.).
 
-[SECTION_3_CONTENT]
-<!-- Example: Code review requirements, testing gates, deployment approval process, etc. -->
+### III. Modular Architecture
+
+The codebase MUST be organized into four modules — **Core**, **User**, **Auth**, **Workspace** — each with
+clear boundaries. No module MUST depend on a module lower in the dependency chain.
+
+```
+Core ← User ← Auth
+            ← Workspace
+```
+
+Each module owns its models, controllers, requests, views, and tests. Cross-module access MUST go through
+defined extension points (traits, service classes, events) — never via direct model mutation across modules.
+
+**Rationale**: Separation by domain concern enables independent feature delivery, isolated test suites,
+and a codebase that scales without becoming a big ball of mud. The flat dependency tree prevents cycles.
+
+### IV. Simplicity (YAGNI)
+
+Only implement what is required for the current feature. No speculative infrastructure, no premature
+abstractions, no backwards-compatibility shims.
+
+- MUST NOT add patterns (repository, service layer, etc.) unless the feature requires them.
+- MUST NOT create helpers or utilities for one-time operations.
+- MUST NOT introduce backwards-compatibility code for removed functionality.
+- Three similar lines of code MUST NOT be abstracted into a premature utility.
+
+**Rationale**: Every abstraction added "just in case" becomes debt. The right amount of complexity is
+the minimum needed for the current task.
+
+### V. Reference CLAUDE.md and AGENTS.md
+
+All AI agents and human developers MUST treat `CLAUDE.md` and `AGENTS.md` as runtime development
+guidance. These files document stack versions, conventions, tooling, and environment details that
+override general defaults.
+
+- Agents MUST read `CLAUDE.md` at the start of any development session.
+- Agents MUST use Laravel Boost MCP `search-docs` before making architectural decisions.
+- Agents MUST use Herd MCP to discover the correct site URL before running Dusk tests.
+
+**Rationale**: The project uses specific versions of Laravel, Tailwind, Alpine.js, and tooling that
+deviate from common defaults. Ignoring these files produces incompatible code.
+
+### VI. MCP Tooling — Serena, Laravel Boost, Herd
+
+Agents MUST actively use the three MCP plugins throughout every development session. Each plugin has
+a distinct responsibility; they are not interchangeable.
+
+| Plugin | When to use |
+|--------|-------------|
+| **Serena** | Symbol-level code navigation — find symbols, read relationships, targeted edits via `find_symbol`, `get_symbols_overview`, `find_referencing_symbols`, `replace_symbol_body` |
+| **Laravel Boost** | Laravel-specific intelligence — `search-docs` for documentation, `database-schema`/`database-query` for DB inspection, `last-error` for recent exceptions, `browser-logs` for frontend debugging, `get-absolute-url` for URL generation |
+| **Herd** | Local environment discovery — `get_all_sites`/`get_site_information` before any Dusk test or URL sharing, service status, PHP version management |
+
+**Post-implementation gate (NON-NEGOTIABLE)**: After every implementation step is complete and tests
+are green, agents MUST invoke the `mcp__plugin_laravel-boost_laravel-boost__laravel-code-simplifier`
+tool to review changed code for reuse, quality, and efficiency. This gate runs BEFORE committing or
+creating a PR.
+
+**Rationale**: Serena prevents unnecessary full-file reads and enables precise edits at scale. Laravel
+Boost grounds every decision in version-accurate documentation. Herd ensures the correct runtime is
+always targeted. The simplify gate enforces code quality as a non-optional step, not an afterthought.
+
+## Module Boundaries
+
+### Core — Pure Infrastructure
+
+No business logic. No dependency on other modules.
+
+| Type | Files |
+|------|-------|
+| Providers | `AppServiceProvider` |
+| Views/Components | `components/avatar`, `button`, `card`, `modal`, `pagination`, `nav-item`, `user-menu`, `form/*`, `icon/*`, `layout/*` |
+| Views | `dashboard.blade.php` (slot for content injected by other modules) |
+
+### User — Shared Kernel
+
+Base user model + account management + admin user CRUD. Depended on by Auth and Workspace.
+
+| Type | Files |
+|------|-------|
+| Models | `User` (clean — no workspace methods) |
+| Controllers | `UserController`, `SettingsController` |
+| Requests | `StoreUserRequest`, `UpdateUserRoleRequest`, `UpdateProfileRequest`, `UpdatePasswordRequest`, `DeleteAccountRequest` |
+| Commands | `CreateUserCommand` |
+| Views | `settings/` |
+| Tests | `UserManagementTest`, `SettingsTest`, `CreateUserCommandTest` |
+
+### Auth — Authentication & Password Recovery
+
+Depends on Core + User.
+
+| Type | Files |
+|------|-------|
+| Controllers | `LoginController`, `RegisterController`, `ForgotPasswordController`, `ResetPasswordController` |
+| Requests | `MakeLoginRequest`, `MakeRegisterRequest`, `ForgotPasswordRequest`, `ResetPasswordRequest` |
+| Views | `auth/` |
+| Routes | `routes/auth.php` |
+| Tests | `AuthTest`, `PasswordResetTest` |
+
+### Workspace — Workspace Management, Members & Onboarding
+
+Depends on Core + User.
+
+| Type | Files |
+|------|-------|
+| Models | `Workspace`, `Member`, `Invitation` |
+| Traits | `HasWorkspaces` (extends User with `workspaces()`, `roleIn()`, `isMemberOf()`) |
+| Enum | `WorkspaceRole` |
+| Policy | `WorkspacePolicy` |
+| Service | `CurrentWorkspaceManager` |
+| Middleware | `SetCurrentWorkspace` |
+| Notification | `WorkspaceInviteNotification` |
+| Controllers | `WorkspaceController`, `WorkspaceSettingsController`, `MemberController`, `OnboardingController` |
+| Requests | `CreateWorkspaceRequest`, `InviteMemberRequest`, `UpdateMemberRoleRequest`, `TransferOwnershipRequest`, `UpdateWorkspaceSettingsRequest` |
+| Views/Components | `dashboard/`, `onboarding.blade.php`, `workspace-switcher`, `create-workspace-modal`, `invite-modal` |
+| Tests | `WorkspaceTest`, `InviteTest` |
+
+## Agent Assignments
+
+Every workflow step has a designated agent. Agents MUST be invoked at the correct step — not replaced
+by the main session doing the same work unassisted.
+
+| Step | Agent | Trigger |
+|------|-------|---------|
+| **Plan** | `architect` | Invoked by `/speckit.plan` — module placement, pattern selection, dependency boundaries |
+| **Tests (TDD gate)** | `testing-expert` | Invoked before any implementation — writes failing PHPUnit/Dusk tests |
+| **Models / Migrations** | `eloquent-specialist` | Invoked when creating/modifying Eloquent models, migrations, relationships, scopes |
+| **Controllers / Requests** | *(main session)* | Standard implementation following Principles II + VI |
+| **Simplify gate** | `mcp__plugin_laravel-boost_laravel-boost__laravel-code-simplifier` | Invoked after every implementation step is green — Laravel Boost MCP tool for code simplification |
+| **Debug on failure** | `debugger` | Invoked when a test fails unexpectedly or an error cannot be diagnosed in 2 attempts |
+| **Pre-PR review** | `code-reviewer` + `security-auditor` | Invoked in parallel before creating the PR |
+| **Architecture change** | `architecture-reviewer` | Invoked whenever a module boundary is crossed or a new cross-module extension point is added |
+
+**Rules:**
+- `testing-expert` and `eloquent-specialist` MUST run before the main session writes any implementation.
+- After every implementation step is green, agents MUST call
+  `mcp__plugin_laravel-boost_laravel-boost__laravel-code-simplifier` — MUST NOT be replaced by the
+  `/simplify` skill or any other substitute.
+- `code-reviewer` and `security-auditor` MUST run in parallel (not sequentially) to save time.
+- `architect` is the gatekeeper for any cross-module dependency. If a task touches two modules,
+  `architect` MUST approve the extension point before implementation begins.
+
+## Development Workflow
+
+Every feature MUST follow this order:
+
+1. **Spec** — define user stories and acceptance scenarios (`/speckit.specify`).
+2. **Plan** — `architect` designs approach, module placement, constitution check (`/speckit.plan`).
+3. **Tasks** — generate ordered task list with TDD gates (`/speckit.tasks`).
+4. **Tests first** — `testing-expert` writes failing PHPUnit/Dusk tests per task.
+5. **Models** — `eloquent-specialist` creates/updates Eloquent models and migrations.
+6. **Implement** — main session makes tests pass, following Laravel conventions.
+7. **Simplify** — call `mcp__plugin_laravel-boost_laravel-boost__laravel-code-simplifier` on changed code.
+8. **Format** — run `vendor/bin/pint --dirty --format agent`.
+9. **Pre-PR** — `code-reviewer` + `security-auditor` run in parallel.
+10. **PR** — create PR; respond to all review threads before merging.
+
+No step MUST be skipped. If `architect` flags a module boundary violation, implementation MUST stop
+until the design is corrected.
 
 ## Governance
-<!-- Example: Constitution supersedes all other practices; Amendments require documentation, approval, migration plan -->
 
-[GOVERNANCE_RULES]
-<!-- Example: All PRs/reviews must verify compliance; Complexity must be justified; Use [GUIDANCE_FILE] for runtime development guidance -->
+This constitution supersedes all other practices and defaults. Amendments MUST be made via the
+`/speckit.constitution` command, which increments the version and produces a Sync Impact Report.
 
-**Version**: [CONSTITUTION_VERSION] | **Ratified**: [RATIFICATION_DATE] | **Last Amended**: [LAST_AMENDED_DATE]
-<!-- Example: Version: 2.1.1 | Ratified: 2025-06-13 | Last Amended: 2025-07-16 -->
+- **MAJOR bump**: Removal or incompatible redefinition of a principle or module boundary.
+- **MINOR bump**: New principle, module, or materially expanded guidance.
+- **PATCH bump**: Clarifications, wording, non-semantic refinements.
+
+All PRs MUST verify compliance with the Constitution Check in `plan.md` before merging. Complexity
+violations (e.g., adding a pattern not justified by the current feature) MUST be documented in the
+Complexity Tracking table of `plan.md`.
+
+Runtime guidance: `CLAUDE.md` (agent tooling, commands, conventions) and `AGENTS.md` (auth flow,
+testing rules, environment).
+
+**Version**: 1.2.0 | **Ratified**: 2026-03-21 | **Last Amended**: 2026-03-21
