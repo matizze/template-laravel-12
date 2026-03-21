@@ -86,7 +86,7 @@ php artisan create:user --admin      # create admin user
 - Run with `php artisan dusk` — requires a running server via one of:
   - `composer dev` (local dev server on `http://localhost:8000`)
   - **Herd site active** (`https://template-laravel-12.test`) — preferred for production-like testing
-- When using Herd, `APP_URL` in `.env.dusk.local` **must** point to the Herd site: `https://template-laravel-12.test`
+- When using Herd, check the site URL via Herd MCP and set `APP_URL` in `.env.dusk.local` to match
 - When using `composer dev`, set `APP_URL=http://localhost:8000` in `.env.dusk.local`
 - Create tests with `php artisan make:dusk-test TestName`
 - Dusk tests extend `Laravel\Dusk\TestCase` and live in `tests/Browser/`
@@ -96,7 +96,7 @@ php artisan create:user --admin      # create admin user
 
 ### Development Environment (Herd)
 - This project uses **Laravel Herd** as the local development environment
-- Herd site: `https://template-laravel-12.test` (HTTPS via Herd's automatic SSL)
+- Herd site URL varies — use the **Herd MCP** (`mcp__herd__get_all_sites` or `mcp__herd__get_site_information`) to discover the current site URL before running Dusk or generating links
 - **Herd MCP** (`herd` in `.claude/settings.json`) — use it to query site info, PHP versions, services, and debug sessions
 - **Laravel Boost MCP** (`laravel-boost` plugin) — use `search-docs` for Laravel ecosystem documentation, `database-query` for DB inspection, `last-error` for recent errors, and `browser-logs` for frontend debugging
 - Always use the `get-absolute-url` tool from Boost to generate correct URLs for this project
