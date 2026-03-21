@@ -35,6 +35,7 @@
                     <x-form.input
                         label="Nome"
                         name="name"
+                        input-id="workspace-name"
                         type="text"
                         required
                         placeholder="Nome do workspace"

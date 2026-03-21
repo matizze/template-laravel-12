@@ -36,7 +36,6 @@ Route::middleware('auth')->group(function () {
     });
 
     // Workspace routes
-    Route::get('/workspace/create', [WorkspaceController::class, 'create'])->name('workspace.create');
     Route::post('/workspace', [WorkspaceController::class, 'store'])->name('workspace.store');
     Route::post('/workspace/switch/{workspace}', [WorkspaceController::class, 'switch'])->name('workspace.switch');
 

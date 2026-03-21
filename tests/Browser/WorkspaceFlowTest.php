@@ -13,8 +13,8 @@ class WorkspaceFlowTest extends DuskTestCase
 {
     use DatabaseMigrations;
 
-    // T114: test_user_can_navigate_to_create_workspace_via_switcher
-    public function test_user_can_navigate_to_create_workspace_via_switcher(): void
+    // T114: test_user_can_open_create_workspace_modal_via_switcher
+    public function test_user_can_open_create_workspace_modal_via_switcher(): void
     {
         $user = User::factory()->create(['password' => 'password123']);
         $workspace = Workspace::factory()->create(['user_id' => $user->id, 'name' => 'Workspace Teste']);
@@ -27,9 +27,7 @@ class WorkspaceFlowTest extends DuskTestCase
                 ->click('@workspace-switcher')
                 ->waitFor('@open-create-workspace-link', 5)
                 ->click('@open-create-workspace-link')
-                ->waitForText('Criar Workspace')
-                ->assertPathIs('/workspace/create')
-                ->assertSee('Criar Workspace');
+                ->waitForText('Criar Workspace');
         });
     }
 
@@ -52,28 +50,6 @@ class WorkspaceFlowTest extends DuskTestCase
                 ->assertSee('Workspace A')
                 ->assertSee('Workspace B');
         });
-    }
-
-    // T116: test_user_can_create_workspace_via_form
-    public function test_user_can_create_workspace_via_form(): void
-    {
-        $user = User::factory()->create(['password' => 'password123']);
-
-        $this->browse(function (Browser $browser) use ($user) {
-            $browser->loginAs($user)
-                ->visit('/workspace/create')
-                ->waitForText('Criar Workspace')
-                ->type('#name', 'Meu Novo Workspace')
-                ->type('#description', 'Descrição do workspace')
-                ->press('Criar Workspace')
-                ->waitForText('Dashboard')
-                ->assertPathIs('/dashboard');
-        });
-
-        $this->assertDatabaseHas('workspaces', [
-            'name' => 'Meu Novo Workspace',
-            'user_id' => $user->id,
-        ]);
     }
 
     // T117: test_user_can_update_workspace_settings_via_ui

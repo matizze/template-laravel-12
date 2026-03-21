@@ -141,14 +141,6 @@ class WorkspaceTest extends TestCase
         $this->assertEquals($workspace2->id, session('current_workspace_id'));
     }
 
-    // T026: test_guest_cannot_access_workspace_creation_page
-    public function test_guest_cannot_access_workspace_creation_page(): void
-    {
-        $response = $this->get(route('workspace.create'));
-
-        $response->assertRedirect('/auth/login');
-    }
-
     // T061: test_owner_can_update_workspace_name
     public function test_owner_can_update_workspace_name(): void
     {
