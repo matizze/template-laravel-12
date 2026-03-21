@@ -17,7 +17,7 @@ Route::middleware('auth')->group(function () {
     Route::post('/onboarding', [OnboardingController::class, 'store'])->name('onboarding.store');
 
     Route::middleware('workspace')->group(function () {
-        Route::view('/dashboard', 'dashboard')->name('dashboard');
+        Route::view('/dashboard', 'core::dashboard')->name('dashboard');
 
         // Member management routes
         Route::get('/workspace/{workspace}/members', [MemberController::class, 'index'])->name('workspace.members.index');
