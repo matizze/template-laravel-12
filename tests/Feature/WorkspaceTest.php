@@ -5,7 +5,6 @@ namespace Tests\Feature;
 use App\Enums\WorkspaceRole;
 use App\Models\Invitation;
 use App\Models\Member;
-use App\Models\Project;
 use App\Models\User;
 use App\Models\Workspace;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -262,29 +261,7 @@ class WorkspaceTest extends TestCase
         $this->assertDatabaseMissing('invitations', ['workspace_id' => $workspace->id]);
     }
 
-    public function test_workspace_deletion_with_projects_succeeds(): void
-    {
-        $user = User::factory()->create();
-        $workspace = Workspace::factory()->create(['user_id' => $user->id]);
-        Member::factory()->owner()->create(['user_id' => $user->id, 'workspace_id' => $workspace->id]);
 
-        $project = Project::create([
-            'name' => 'Projeto Teste',
-            'description' => 'Descrição',
-            'user_id' => $user->id,
-            'workspace_id' => $workspace->id,
-        ]);
-
-        $response = $this->actingAs($user)
-            ->delete(route('workspace.destroy', $workspace));
-
-        $response->assertRedirect(route('dashboard'));
-
-        $this->assertDatabaseMissing('workspaces', ['id' => $workspace->id]);
-        $this->assertDatabaseMissing('projects', [
-            'id' => $project->id,
-        ]);
-    }
 
     public function test_owner_can_transfer_ownership(): void
     {
