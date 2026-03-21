@@ -16,33 +16,18 @@ class SetCurrentWorkspace
         if ($request->user()) {
             $workspaceId = session('current_workspace_id');
 
-            if ($workspaceId) {
-                $isMember = $request->user()
-                    ->workspaces()
-                    ->where('workspaces.id', $workspaceId)
-                    ->exists();
+            /** @var Workspace|null $workspace */
+            $workspace = $workspaceId
+                ? $request->user()->workspaces()->where('workspaces.id', $workspaceId)->first()
+                : $request->user()->workspaces()->first();
 
-                if ($isMember) {
-                    Workspace::setCurrent($workspaceId);
-                } else {
-                    session()->forget('current_workspace_id');
-                    $this->setDefaultWorkspace($request);
-                }
+            if ($workspace) {
+                Workspace::setCurrentModel($workspace);
             } else {
-                $this->setDefaultWorkspace($request);
+                session()->forget('current_workspace_id');
             }
         }
 
         return $next($request);
-    }
-
-    private function setDefaultWorkspace(Request $request): void
-    {
-        /** @var \App\Models\Workspace|null $firstWorkspace */
-        $firstWorkspace = $request->user()->workspaces()->first();
-
-        if ($firstWorkspace) {
-            Workspace::setCurrent($firstWorkspace->id);
-        }
     }
 }

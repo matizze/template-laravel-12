@@ -19,8 +19,10 @@ trait BelongsToWorkspace
         });
 
         static::creating(function ($model): void {
-            if (! $model->workspace_id && Workspace::current()) {
-                $model->workspace_id = Workspace::current()->id;
+            $current = Workspace::current();
+
+            if (! $model->workspace_id && $current) {
+                $model->workspace_id = $current->id;
             }
         });
     }

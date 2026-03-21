@@ -67,7 +67,6 @@ class SettingsController extends Controller
                 ->with('error', 'Você precisa transferir a propriedade dos seus workspaces antes de excluir sua conta.');
         }
 
-        // Remove all memberships
         Member::where('user_id', $user->id)->delete();
 
         Workspace::forgetCurrent();

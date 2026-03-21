@@ -29,13 +29,20 @@ class Workspace extends Model
 
     public static function setCurrent(?int $workspaceId): void
     {
-        self::$current = $workspaceId ? self::find($workspaceId) : null;
+        if (! $workspaceId) {
+            self::forgetCurrent();
 
-        if ($workspaceId) {
-            session(['current_workspace_id' => $workspaceId]);
-        } else {
-            session()->forget('current_workspace_id');
+            return;
         }
+
+        self::$current = self::find($workspaceId);
+        session(['current_workspace_id' => $workspaceId]);
+    }
+
+    public static function setCurrentModel(self $workspace): void
+    {
+        self::$current = $workspace;
+        session(['current_workspace_id' => $workspace->id]);
     }
 
     public static function forgetCurrent(): void

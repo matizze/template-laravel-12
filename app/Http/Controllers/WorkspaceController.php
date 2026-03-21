@@ -9,6 +9,7 @@ use App\Models\Member;
 use App\Models\Workspace;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Illuminate\View\View;
 
@@ -49,18 +50,17 @@ class WorkspaceController extends Controller
     {
         $newOwnerId = $request->validated('user_id');
 
-        // Demote old owner to admin
-        Member::where('workspace_id', $workspace->id)
-            ->where('user_id', $request->user()->id)
-            ->update(['role' => WorkspaceRole::Admin]);
+        DB::transaction(function () use ($workspace, $request, $newOwnerId): void {
+            Member::where('workspace_id', $workspace->id)
+                ->where('user_id', $request->user()->id)
+                ->update(['role' => WorkspaceRole::Admin]);
 
-        // Promote new owner
-        Member::where('workspace_id', $workspace->id)
-            ->where('user_id', $newOwnerId)
-            ->update(['role' => WorkspaceRole::Owner]);
+            Member::where('workspace_id', $workspace->id)
+                ->where('user_id', $newOwnerId)
+                ->update(['role' => WorkspaceRole::Owner]);
 
-        // Update workspace owner
-        $workspace->update(['user_id' => $newOwnerId]);
+            $workspace->update(['user_id' => $newOwnerId]);
+        });
 
         return redirect()
             ->route('dashboard')
@@ -69,17 +69,12 @@ class WorkspaceController extends Controller
 
     public function switch(Workspace $workspace): RedirectResponse
     {
-        $isMember = auth()->user()
-            ->workspaces()
-            ->where('workspaces.id', $workspace->id)
-            ->exists();
-
-        if (! $isMember) {
+        if (! auth()->user()->isMemberOf($workspace)) {
             return redirect()->route('dashboard')
                 ->with('error', 'Você não tem acesso a este workspace.');
         }
 
-        Workspace::setCurrent($workspace->id);
+        Workspace::setCurrentModel($workspace);
 
         return redirect()->back()
             ->with('success', 'Workspace alterado com sucesso!');

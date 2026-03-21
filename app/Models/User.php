@@ -54,19 +54,28 @@ class User extends Authenticatable
         return $this->hasMany(Workspace::class);
     }
 
+    /** @var array<int, WorkspaceRole|null> */
+    private array $roleCache = [];
+
     public function roleIn(Workspace $workspace): ?WorkspaceRole
     {
+        if (array_key_exists($workspace->id, $this->roleCache)) {
+            return $this->roleCache[$workspace->id];
+        }
+
         /** @var Member|null $member */
         $member = Member::where('workspace_id', $workspace->id)
             ->where('user_id', $this->id)
             ->first();
 
-        if (! $member) {
-            return null;
-        }
+        /** @var WorkspaceRole|null $role */
+        $role = $member?->role;
 
-        return $member->role instanceof WorkspaceRole
-            ? $member->role
-            : WorkspaceRole::from((string) $member->role);
+        return $this->roleCache[$workspace->id] = $role;
+    }
+
+    public function isMemberOf(Workspace $workspace): bool
+    {
+        return $this->roleIn($workspace) !== null;
     }
 }

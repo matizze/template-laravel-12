@@ -12,13 +12,14 @@ use App\Notifications\WorkspaceInviteNotification;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rules\Enum;
 use Illuminate\View\View;
 
 class MemberController extends Controller
 {
     use AuthorizesRequests;
 
-    public function index(Request $request, Workspace $workspace): View
+    public function index(Workspace $workspace): View
     {
         $this->authorize('manageMembers', $workspace);
 
@@ -97,7 +98,7 @@ class MemberController extends Controller
         $this->authorize('manageMembers', $workspace);
 
         $request->validate([
-            'role' => ['required', 'in:'.implode(',', array_column(WorkspaceRole::cases(), 'value'))],
+            'role' => ['required', new Enum(WorkspaceRole::class)],
         ]);
 
         $member->update([
@@ -109,7 +110,7 @@ class MemberController extends Controller
             ->with('success', 'Função do membro atualizada com sucesso!');
     }
 
-    public function remove(Request $request, Workspace $workspace, Member $member): RedirectResponse
+    public function remove(Workspace $workspace, Member $member): RedirectResponse
     {
         $this->authorize('manageMembers', $workspace);
 

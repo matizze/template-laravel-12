@@ -25,12 +25,11 @@ class WorkspaceInviteNotification extends Notification implements ShouldQueue
     public function toMail(object $notifiable): MailMessage
     {
         $acceptUrl = route('invitation.accept', $this->invitation->token);
-
-        /** @var string $workspaceName */
         $workspaceName = $this->invitation->workspace?->name ?? 'Workspace';
-        $roleName = $this->invitation->role instanceof \App\Enums\WorkspaceRole
-            ? $this->invitation->role->value
-            : (string) $this->invitation->role;
+
+        /** @var \App\Enums\WorkspaceRole $role */
+        $role = $this->invitation->role;
+        $roleName = $role->value;
 
         return (new MailMessage)
             ->subject("Convite para o workspace {$workspaceName}")
