@@ -37,14 +37,23 @@ class MemberController extends Controller
 
     public function invite(InviteMemberRequest $request, Workspace $workspace): RedirectResponse
     {
-        $invitation = Invitation::create([
-            'workspace_id' => $workspace->id,
-            'email' => $request->validated('email'),
-            'role' => $request->validated('role'),
-            'user_id' => $request->user()->id,
-        ]);
+        $email = $request->validated('email');
 
-        $invitee = User::where('email', $request->validated('email'))->first();
+        $invitation = DB::transaction(function () use ($workspace, $email, $request): Invitation {
+            Invitation::where('workspace_id', $workspace->id)
+                ->where('email', $email)
+                ->whereNotNull('accepted_at')
+                ->delete();
+
+            return Invitation::create([
+                'workspace_id' => $workspace->id,
+                'email' => $email,
+                'role' => $request->validated('role'),
+                'user_id' => $request->user()->id,
+            ]);
+        });
+
+        $invitee = User::where('email', $email)->first();
 
         if ($invitee) {
             $invitee->notify(new WorkspaceInviteNotification($invitation));
@@ -105,7 +114,7 @@ class MemberController extends Controller
 
     public function updateRole(UpdateMemberRoleRequest $request, Workspace $workspace, User $user): RedirectResponse
     {
-        $member = $workspace->memberships()->where('user_id', $user->id)->firstOrFail();
+        $workspace->memberships()->where('user_id', $user->id)->firstOrFail();
 
         $newRole = WorkspaceRole::from($request->validated('role'));
 

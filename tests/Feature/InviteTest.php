@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Enums\WorkspaceRole;
 use App\Models\Invitation;
 use App\Models\Member;
+use App\Models\Project;
 use App\Models\User;
 use App\Models\Workspace;
 use App\Notifications\WorkspaceInviteNotification;
@@ -678,7 +679,82 @@ class InviteTest extends TestCase
         ]);
     }
 
-    // T094: test_cannot_remove_member_from_another_workspace
+    public function test_former_member_can_be_reinvited(): void
+    {
+        Notification::fake();
+
+        [$owner, $workspace] = $this->createWorkspaceWithOwner();
+        $this->setCurrentWorkspace($workspace);
+
+        // Seed an accepted invitation (former member, no active membership)
+        Invitation::factory()->accepted()->create([
+            'workspace_id' => $workspace->id,
+            'email' => 'former@example.com',
+            'user_id' => $owner->id,
+        ]);
+
+        $response = $this->actingAs($owner)
+            ->post(route('workspace.members.invite', $workspace), [
+                'email' => 'former@example.com',
+                'role' => WorkspaceRole::Member->value,
+            ]);
+
+        $response->assertRedirect();
+
+        $this->assertDatabaseHas('invitations', [
+            'workspace_id' => $workspace->id,
+            'email' => 'former@example.com',
+            'accepted_at' => null,
+        ]);
+
+        $this->assertDatabaseCount('invitations', 1);
+    }
+
+    public function test_reinvite_shows_success_notification(): void
+    {
+        Notification::fake();
+
+        [$owner, $workspace] = $this->createWorkspaceWithOwner();
+        $this->setCurrentWorkspace($workspace);
+
+        Invitation::factory()->accepted()->create([
+            'workspace_id' => $workspace->id,
+            'email' => 'former@example.com',
+            'user_id' => $owner->id,
+        ]);
+
+        $response = $this->actingAs($owner)
+            ->post(route('workspace.members.invite', $workspace), [
+                'email' => 'former@example.com',
+                'role' => WorkspaceRole::Member->value,
+            ]);
+
+        $response->assertRedirect();
+        $response->assertSessionHasNoErrors();
+    }
+
+    public function test_pending_invite_shows_validation_error(): void
+    {
+        Notification::fake();
+
+        [$owner, $workspace] = $this->createWorkspaceWithOwner();
+        $this->setCurrentWorkspace($workspace);
+
+        Invitation::factory()->create([
+            'workspace_id' => $workspace->id,
+            'email' => 'pending@example.com',
+            'user_id' => $owner->id,
+        ]);
+
+        $response = $this->actingAs($owner)
+            ->post(route('workspace.members.invite', $workspace), [
+                'email' => 'pending@example.com',
+                'role' => WorkspaceRole::Member->value,
+            ]);
+
+        $response->assertSessionHasErrors('email');
+    }
+
     public function test_cannot_remove_member_from_another_workspace(): void
     {
         [$owner1, $workspace1] = $this->createWorkspaceWithOwner();
