@@ -384,10 +384,3 @@ $this->app->singleton(Service::class, fn () => new Service(fn () => request()));
 - To filter on a particular test name: `php artisan test --compact --filter=testName` (recommended after making a change to a related file).
 
 </laravel-boost-guidelines>
-
-## Active Technologies
-- PHP 8.4 + Laravel 12, PHPUnit 11 (002-fix-reinvite-constraint)
-- SQLite (dev) / PostgreSQL (prod) — `invitations` table with `UNIQUE(workspace_id, email)` (002-fix-reinvite-constraint)
-
-## Recent Changes
-- 002-fix-reinvite-constraint: Added PHP 8.4 + Laravel 12, PHPUnit 11
