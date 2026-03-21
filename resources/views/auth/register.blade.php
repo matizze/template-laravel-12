@@ -24,6 +24,7 @@
                     </span>
                     <form method="POST" action="{{ route('register') }}" class="space-y-10">
                         @csrf
+                        <input type="hidden" name="redirect" value="{{ old('redirect', request('redirect')) }}">
 
                         <div class="flex flex-col space-y-4">
                             <x-form.input

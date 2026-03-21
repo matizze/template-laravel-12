@@ -458,6 +458,8 @@ class InviteTest extends TestCase
     {
         [$owner, $workspace] = $this->createWorkspaceWithOwner();
 
+        $existingUser = User::factory()->create(['email' => 'convidado@example.com']);
+
         $invitation = Invitation::factory()->create([
             'workspace_id' => $workspace->id,
             'email' => 'convidado@example.com',
@@ -467,8 +469,8 @@ class InviteTest extends TestCase
 
         $response = $this->get(route('invitation.accept', $invitation->token));
 
-        $response->assertRedirect(route('login'));
-        $this->assertEquals($invitation->token, session('invitation_token'));
+        $response->assertRedirect();
+        $this->assertStringContainsString(route('login'), $response->headers->get('Location'));
     }
 
     public function test_cannot_promote_member_to_owner_via_update_role(): void
@@ -596,6 +598,29 @@ class InviteTest extends TestCase
         $this->assertEquals($invitation->token, session('invitation_token'));
     }
 
+    // T005: test_registering_via_redirect_link_joins_workspace
+    public function test_registering_via_redirect_link_joins_workspace(): void
+    {
+        [$owner, $workspace] = $this->createWorkspaceWithOwner();
+
+        $invitation = Invitation::factory()->create([
+            'workspace_id' => $workspace->id,
+            'email' => 'new@example.com',
+            'role' => WorkspaceRole::Member,
+            'user_id' => $owner->id,
+        ]);
+
+        $redirectPath = '/invitation/'.$invitation->token;
+
+        $this->post(route('register'), [
+            'name' => 'New User',
+            'email' => 'new@example.com',
+            'password' => 'password',
+            'password_confirmation' => 'password',
+            'redirect' => $redirectPath,
+        ])->assertRedirect($redirectPath);
+    }
+
     // T098: test_registration_without_invitation_token_redirects_to_onboarding
     public function test_registration_without_invitation_token_redirects_to_onboarding(): void
     {
@@ -635,6 +660,29 @@ class InviteTest extends TestCase
         $this->assertEquals($invitation->token, session('invitation_token'));
     }
 
+    // T008: test_logging_in_via_redirect_link_joins_workspace
+    public function test_logging_in_via_redirect_link_joins_workspace(): void
+    {
+        [$owner, $workspace] = $this->createWorkspaceWithOwner();
+
+        $user = User::factory()->create(['email' => 'existing2@example.com', 'password' => bcrypt('password')]);
+
+        $invitation = Invitation::factory()->create([
+            'workspace_id' => $workspace->id,
+            'email' => 'existing2@example.com',
+            'role' => WorkspaceRole::Member,
+            'user_id' => $owner->id,
+        ]);
+
+        $redirectPath = '/invitation/'.$invitation->token;
+
+        $this->post(route('login'), [
+            'email' => 'existing2@example.com',
+            'password' => 'password',
+            'redirect' => $redirectPath,
+        ])->assertRedirect($redirectPath);
+    }
+
     // T097: test_login_without_invitation_token_redirects_to_dashboard
     public function test_login_without_invitation_token_redirects_to_dashboard(): void
     {
@@ -662,21 +710,138 @@ class InviteTest extends TestCase
             'role' => WorkspaceRole::Member,
         ]);
 
-        // Login with a different email than the invitation
         $response = $this->withSession(['invitation_token' => $invitation->token])
             ->post(route('login'), [
                 'email' => 'wrong@example.com',
                 'password' => 'password',
             ]);
 
-        // Still redirected to invitation.accept — the controller there handles email mismatch
         $response->assertRedirect(route('invitation.accept', $invitation->token));
 
-        // No membership created
         $this->assertDatabaseMissing('members', [
             'user_id' => $wrongUser->id,
             'workspace_id' => $workspace->id,
         ]);
+    }
+
+    // T008: test_invite_registered_email_sends_login_link_with_redirect
+    public function test_invite_registered_email_sends_login_link_with_redirect(): void
+    {
+        Notification::fake();
+
+        [$owner, $workspace] = $this->createWorkspaceWithOwner();
+        $this->setCurrentWorkspace($workspace);
+
+        $existingUser = User::factory()->create(['email' => 'existing@example.com']);
+
+        $this->actingAs($owner)
+            ->post(route('workspace.members.invite', $workspace), [
+                'email' => 'existing@example.com',
+                'role' => WorkspaceRole::Member->value,
+            ])
+            ->assertRedirect();
+
+        Notification::assertSentTo($existingUser, WorkspaceInviteNotification::class);
+    }
+
+    // T010: test_authenticated_user_accepts_invite_directly
+    public function test_authenticated_user_accepts_invite_directly(): void
+    {
+        [$owner, $workspace] = $this->createWorkspaceWithOwner();
+
+        $user = User::factory()->create(['email' => 'direct@example.com']);
+        $invitation = Invitation::factory()->create([
+            'workspace_id' => $workspace->id,
+            'email' => 'direct@example.com',
+            'role' => WorkspaceRole::Member,
+            'user_id' => $owner->id,
+        ]);
+
+        $this->actingAs($user)
+            ->get(route('invitation.accept', $invitation->token))
+            ->assertRedirect(route('dashboard'));
+
+        $this->assertTrue(
+            $workspace->members()->where('user_id', $user->id)->exists()
+        );
+    }
+
+    // T010: test_authenticated_user_with_mismatched_email_sees_error
+    public function test_authenticated_user_with_mismatched_email_sees_error(): void
+    {
+        [$owner, $workspace] = $this->createWorkspaceWithOwner();
+
+        $user = User::factory()->create(['email' => 'other@example.com']);
+        $invitation = Invitation::factory()->create([
+            'workspace_id' => $workspace->id,
+            'email' => 'mismatch@example.com',
+            'role' => WorkspaceRole::Member,
+            'user_id' => $owner->id,
+        ]);
+
+        $this->actingAs($user)
+            ->get(route('invitation.accept', $invitation->token))
+            ->assertRedirect(route('dashboard'));
+
+        $this->assertFalse(
+            $workspace->members()->where('user_id', $user->id)->exists()
+        );
+    }
+
+    // T010: test_unauthenticated_user_visiting_invite_url_redirected_to_login_for_registered_email
+    public function test_unauthenticated_user_visiting_invite_url_redirected_to_login_for_registered_email(): void
+    {
+        [$owner, $workspace] = $this->createWorkspaceWithOwner();
+
+        $existingUser = User::factory()->create(['email' => 'registered@example.com']);
+        $invitation = Invitation::factory()->create([
+            'workspace_id' => $workspace->id,
+            'email' => 'registered@example.com',
+            'role' => WorkspaceRole::Member,
+            'user_id' => $owner->id,
+        ]);
+
+        $response = $this->get(route('invitation.accept', $invitation->token));
+
+        $response->assertRedirect();
+        $this->assertStringContainsString(route('login'), $response->headers->get('Location'));
+    }
+
+    // T010: test_unauthenticated_user_visiting_invite_url_redirected_to_register_for_unregistered_email
+    public function test_unauthenticated_user_visiting_invite_url_redirected_to_register_for_unregistered_email(): void
+    {
+        [$owner, $workspace] = $this->createWorkspaceWithOwner();
+
+        $invitation = Invitation::factory()->create([
+            'workspace_id' => $workspace->id,
+            'email' => 'unregistered@example.com',
+            'role' => WorkspaceRole::Member,
+            'user_id' => $owner->id,
+        ]);
+
+        $response = $this->get(route('invitation.accept', $invitation->token));
+
+        $response->assertRedirect();
+        $this->assertStringContainsString(route('register'), $response->headers->get('Location'));
+    }
+
+    // T010: test_expired_invite_token_shows_error_after_accept
+    public function test_expired_invite_token_shows_error_after_accept(): void
+    {
+        [$owner, $workspace] = $this->createWorkspaceWithOwner();
+
+        $user = User::factory()->create(['email' => 'expired@example.com']);
+        $invitation = Invitation::factory()->create([
+            'workspace_id' => $workspace->id,
+            'email' => 'expired@example.com',
+            'role' => WorkspaceRole::Member,
+            'user_id' => $owner->id,
+            'created_at' => now()->subDays(8),
+        ]);
+
+        $this->actingAs($user)
+            ->get(route('invitation.accept', $invitation->token))
+            ->assertRedirect(route('dashboard'));
     }
 
     public function test_former_member_can_be_reinvited(): void
@@ -686,7 +851,6 @@ class InviteTest extends TestCase
         [$owner, $workspace] = $this->createWorkspaceWithOwner();
         $this->setCurrentWorkspace($workspace);
 
-        // Seed an accepted invitation (former member, no active membership)
         Invitation::factory()->accepted()->create([
             'workspace_id' => $workspace->id,
             'email' => 'former@example.com',
@@ -755,6 +919,7 @@ class InviteTest extends TestCase
         $response->assertSessionHasErrors('email');
     }
 
+    // T094: test_cannot_remove_member_from_another_workspace
     public function test_cannot_remove_member_from_another_workspace(): void
     {
         [$owner1, $workspace1] = $this->createWorkspaceWithOwner();

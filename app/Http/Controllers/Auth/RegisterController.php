@@ -22,10 +22,20 @@ class RegisterController extends Controller
 
         Auth::login($user);
 
+        $redirect = $request->input('redirect');
+        if ($redirect && $this->isValidRedirect($redirect)) {
+            return redirect($redirect);
+        }
+
         if ($token = $request->session()->get('invitation_token')) {
             return redirect()->route('invitation.accept', $token);
         }
 
         return redirect()->route('onboarding');
+    }
+
+    private function isValidRedirect(string $redirect): bool
+    {
+        return str_starts_with($redirect, '/') && ! str_starts_with($redirect, '//');
     }
 }
