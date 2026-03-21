@@ -8,7 +8,8 @@
     },
     "autoload": {
         "psr-4": {
-            "Modules\\User\\": "src/"
+            "Modules\\User\\": "src/",
+            "Modules\\User\\Database\\Factories\\": "database/factories/"
         }
     },
     "extra": {

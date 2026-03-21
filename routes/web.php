@@ -2,8 +2,6 @@
 
 use App\Http\Controllers\MemberController;
 use App\Http\Controllers\OnboardingController;
-use App\Http\Controllers\SettingsController;
-use App\Http\Controllers\UserController;
 use App\Http\Controllers\WorkspaceController;
 use App\Http\Controllers\WorkspaceSettingsController;
 use Illuminate\Support\Facades\Route;
@@ -38,17 +36,6 @@ Route::middleware('auth')->group(function () {
     // Workspace routes
     Route::post('/workspace', [WorkspaceController::class, 'store'])->name('workspace.store');
     Route::post('/workspace/switch/{workspace}', [WorkspaceController::class, 'switch'])->name('workspace.switch');
-
-    Route::get('/settings', [SettingsController::class, 'index'])->name('settings.index');
-    Route::patch('/settings/profile', [SettingsController::class, 'updateProfile'])->name('settings.profile.update');
-    Route::patch('/settings/password', [SettingsController::class, 'updatePassword'])->name('settings.password.update');
-    Route::delete('/settings/account', [SettingsController::class, 'destroy'])->name('settings.account.destroy');
-
-    Route::middleware('can:manage-users')->group(function () {
-        Route::post('/users', [UserController::class, 'store'])->name('users.store');
-        Route::patch('/users/{user}', [UserController::class, 'update'])->name('users.update');
-        Route::delete('/users/{user}', [UserController::class, 'destroy'])->name('users.destroy');
-    });
 });
 
 // Rota de aceite de convite acessível tanto para guests quanto para usuários autenticados

@@ -1,15 +1,13 @@
 <?php
 
-namespace App\Http\Requests;
+namespace Modules\User\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
-use Illuminate\Validation\Rules\Password;
 
 /**
- * @property-read string $current_password
- * @property-read string $password
+ * @property-read string $role
  */
-class UpdatePasswordRequest extends FormRequest
+class UpdateUserRoleRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.
@@ -27,8 +25,7 @@ class UpdatePasswordRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'current_password' => ['required', 'current_password'],
-            'password' => ['required', 'confirmed', Password::defaults()],
+            'role' => ['required', 'in:member,admin'],
         ];
     }
 }

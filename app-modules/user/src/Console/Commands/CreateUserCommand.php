@@ -1,8 +1,8 @@
 <?php
 
-namespace App\Console\Commands;
+namespace Modules\User\Console\Commands;
 
-use App\Models\User;
+use Modules\User\Models\User;
 use Illuminate\Console\Command;
 
 use function Laravel\Prompts\password;

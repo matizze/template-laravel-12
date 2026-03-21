@@ -3,7 +3,7 @@
 namespace Tests\Browser;
 
 use App\Models\Member;
-use App\Models\User;
+use Modules\User\Models\User;
 use App\Models\Workspace;
 use Illuminate\Foundation\Testing\DatabaseMigrations;
 use Laravel\Dusk\Browser;

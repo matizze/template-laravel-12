@@ -2408,7 +2408,7 @@
             "dist": {
                 "type": "path",
                 "url": "app-modules/user",
-                "reference": "96bafef74d74825345eba84b6177542e55ec4837"
+                "reference": "fa776207909bcffcd47c9a9db693dc1eb4b88802"
             },
             "require": {
                 "modules/core": "*@dev"
@@ -2423,7 +2423,8 @@
             },
             "autoload": {
                 "psr-4": {
-                    "Modules\\User\\": "src/"
+                    "Modules\\User\\": "src/",
+                    "Modules\\User\\Database\\Factories\\": "database/factories/"
                 }
             },
             "license": [

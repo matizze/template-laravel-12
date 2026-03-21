@@ -3,7 +3,7 @@
 namespace App\Policies;
 
 use App\Enums\WorkspaceRole;
-use App\Models\User;
+use Modules\User\Models\User;
 use App\Models\Workspace;
 
 class WorkspacePolicy

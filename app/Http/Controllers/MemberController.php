@@ -7,7 +7,7 @@ use App\Http\Requests\InviteMemberRequest;
 use App\Http\Requests\UpdateMemberRoleRequest;
 use App\Models\Invitation;
 use App\Models\Member;
-use App\Models\User;
+use Modules\User\Models\User;
 use App\Models\Workspace;
 use App\Notifications\WorkspaceInviteNotification;
 use Illuminate\Http\RedirectResponse;

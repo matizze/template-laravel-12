@@ -1,13 +1,10 @@
 <?php
 
-namespace App\Http\Controllers;
+namespace Modules\User\Http\Controllers;
 
 use App\Enums\WorkspaceRole;
-use App\Http\Requests\DeleteAccountRequest;
-use App\Http\Requests\UpdatePasswordRequest;
-use App\Http\Requests\UpdateProfileRequest;
+use App\Http\Controllers\Controller;
 use App\Models\Member;
-use App\Models\User;
 use App\Models\Workspace;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -15,6 +12,10 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\View\View;
+use Modules\User\Http\Requests\DeleteAccountRequest;
+use Modules\User\Http\Requests\UpdatePasswordRequest;
+use Modules\User\Http\Requests\UpdateProfileRequest;
+use Modules\User\Models\User;
 
 class SettingsController extends Controller
 {
@@ -32,7 +33,7 @@ class SettingsController extends Controller
             $data['users'] = User::all();
         }
 
-        return view('settings.index', $data);
+        return view('user::settings.index', $data);
     }
 
     public function updateProfile(UpdateProfileRequest $request): RedirectResponse

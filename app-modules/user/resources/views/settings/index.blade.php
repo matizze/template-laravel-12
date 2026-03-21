@@ -57,13 +57,13 @@
             <main class="overflow-y-auto">
                 @switch($active)
                     @case('profile')
-                        @include('settings.partials.profile')
+                        @include('user::settings.partials.profile')
                         @break
                     @case('password')
-                        @include('settings.partials.password')
+                        @include('user::settings.partials.password')
                         @break
                     @case('users')
-                        @include('settings.partials.users')
+                        @include('user::settings.partials.users')
                         @break
                 @endswitch
             </main>
