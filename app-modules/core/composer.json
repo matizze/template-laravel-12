@@ -2,7 +2,7 @@
     "name": "modules/core",
     "description": "Core module — infrastructure and shared components",
     "type": "library",
-    "license": "proprietary",
+    "license": "MIT",
     "autoload": {
         "psr-4": {
             "Modules\\Core\\": "src/"
@@ -14,5 +14,6 @@
                 "Modules\\Core\\Providers\\CoreServiceProvider"
             ]
         }
-    }
+    },
+    "minimum-stability": "dev"
 }

@@ -2,7 +2,7 @@
     "name": "modules/auth",
     "description": "Auth module — authentication and password recovery",
     "type": "library",
-    "license": "proprietary",
+    "license": "MIT",
     "require": {
         "modules/core": "*@dev",
         "modules/user": "*@dev"
@@ -18,5 +18,6 @@
                 "Modules\\Auth\\Providers\\AuthServiceProvider"
             ]
         }
-    }
+    },
+    "minimum-stability": "dev"
 }

@@ -2346,7 +2346,7 @@
             "dist": {
                 "type": "path",
                 "url": "app-modules/auth",
-                "reference": "c3f19b08cb2fbe40e902e61fc758eb20e0dd51e3"
+                "reference": "ea2d9b8304d20e9faeef7e2966197e14790d34eb"
             },
             "require": {
                 "modules/core": "*@dev",
@@ -2366,7 +2366,7 @@
                 }
             },
             "license": [
-                "proprietary"
+                "MIT"
             ],
             "description": "Auth module — authentication and password recovery",
             "transport-options": {
@@ -2379,7 +2379,7 @@
             "dist": {
                 "type": "path",
                 "url": "app-modules/core",
-                "reference": "e4b028f145c947eb2bee4a08759f27c132a8f974"
+                "reference": "926902f44fe55c85f80b1a817345ab920789fc00"
             },
             "type": "library",
             "extra": {
@@ -2395,7 +2395,7 @@
                 }
             },
             "license": [
-                "proprietary"
+                "MIT"
             ],
             "description": "Core module — infrastructure and shared components",
             "transport-options": {
@@ -2408,7 +2408,7 @@
             "dist": {
                 "type": "path",
                 "url": "app-modules/user",
-                "reference": "6d5153b57dbbf819bc72e36a135b70c09d86c165"
+                "reference": "96bafef74d74825345eba84b6177542e55ec4837"
             },
             "require": {
                 "modules/core": "*@dev"
@@ -2427,9 +2427,9 @@
                 }
             },
             "license": [
-                "proprietary"
+                "MIT"
             ],
-            "description": "User module — user model, account management, admin CRUD",
+            "description": "User module — shared kernel for user management",
             "transport-options": {
                 "relative": true
             }
@@ -2440,7 +2440,7 @@
             "dist": {
                 "type": "path",
                 "url": "app-modules/workspace",
-                "reference": "429cc40f1c3e60b9dcd3c2eb8dd983ebbe1b00e7"
+                "reference": "4acf86f5a5a287f58dba80441ec13bddb4349764"
             },
             "require": {
                 "modules/core": "*@dev",
@@ -2460,9 +2460,9 @@
                 }
             },
             "license": [
-                "proprietary"
+                "MIT"
             ],
-            "description": "Workspace module — workspace management, members, onboarding",
+            "description": "Workspace module — workspace management, members and onboarding",
             "transport-options": {
                 "relative": true
             }

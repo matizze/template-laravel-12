@@ -1,8 +1,8 @@
 {
     "name": "modules/workspace",
-    "description": "Workspace module — workspace management, members, onboarding",
+    "description": "Workspace module — workspace management, members and onboarding",
     "type": "library",
-    "license": "proprietary",
+    "license": "MIT",
     "require": {
         "modules/core": "*@dev",
         "modules/user": "*@dev"
@@ -18,5 +18,6 @@
                 "Modules\\Workspace\\Providers\\WorkspaceServiceProvider"
             ]
         }
-    }
+    },
+    "minimum-stability": "dev"
 }

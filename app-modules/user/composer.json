@@ -1,8 +1,8 @@
 {
     "name": "modules/user",
-    "description": "User module — user model, account management, admin CRUD",
+    "description": "User module — shared kernel for user management",
     "type": "library",
-    "license": "proprietary",
+    "license": "MIT",
     "require": {
         "modules/core": "*@dev"
     },
@@ -17,5 +17,6 @@
                 "Modules\\User\\Providers\\UserServiceProvider"
             ]
         }
-    }
+    },
+    "minimum-stability": "dev"
 }
