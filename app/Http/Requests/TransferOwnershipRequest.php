@@ -2,7 +2,6 @@
 
 namespace App\Http\Requests;
 
-use App\Models\Member;
 use Illuminate\Foundation\Http\FormRequest;
 
 class TransferOwnershipRequest extends FormRequest
@@ -24,7 +23,7 @@ class TransferOwnershipRequest extends FormRequest
                 'required',
                 'exists:users,id',
                 function (string $attribute, mixed $value, \Closure $fail) use ($workspace): void {
-                    $isMember = Member::where('workspace_id', $workspace->id)
+                    $isMember = $workspace->memberships()
                         ->where('user_id', $value)
                         ->exists();
 

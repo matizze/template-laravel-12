@@ -3,8 +3,6 @@
 namespace App\Http\Requests;
 
 use App\Enums\WorkspaceRole;
-use App\Models\Invitation;
-use App\Models\Member;
 use App\Models\User;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
@@ -28,7 +26,7 @@ class InviteMemberRequest extends FormRequest
                 'required',
                 'email',
                 function (string $attribute, mixed $value, \Closure $fail) use ($workspace): void {
-                    $pendingInvitation = Invitation::where('workspace_id', $workspace->id)
+                    $pendingInvitation = $workspace->invitations()
                         ->where('email', $value)
                         ->whereNull('accepted_at')
                         ->exists();
@@ -39,7 +37,7 @@ class InviteMemberRequest extends FormRequest
 
                     $existingMember = User::where('email', $value)->first();
                     if ($existingMember) {
-                        $isMember = Member::where('workspace_id', $workspace->id)
+                        $isMember = $workspace->memberships()
                             ->where('user_id', $existingMember->id)
                             ->exists();
 

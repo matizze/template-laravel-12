@@ -1,6 +1,6 @@
 <div class="space-y-8 w-full">
     {{-- Workspace Information --}}
-    <x-card class="w-2/3">
+    <x-card class="w-full lg:w-2/3">
         <div class="space-y-6 w-full">
             <div>
                 <h2 class="text-xl font-bold text-blue-dark">Informações do Workspace</h2>
@@ -27,22 +27,12 @@
                     required
                 />
 
-                <div class="group">
-                    <label for="description" class="uppercase transition-colors text-xss block text-gray-400 group-focus-within:text-indigo-500">Descrição</label>
-                    <textarea
-                        name="description"
-                        id="description"
-                        rows="3"
-                        class="w-full text-sm text-gray-500 border-0 border-b border-gray-200 placeholder:text-gray-300 placeholder:text-sm focus:outline-none focus:border-indigo-500 focus:border-b-2 transition-colors"
-                        placeholder="Descrição do workspace"
-                    >{{ old('description', $workspace->description) }}</textarea>
-                    @error('description')
-                        <div class="text-red-500 text-xs mt-2 flex gap-1">
-                            <x-icon.circle-alert size='16' />
-                            {{ $message }}
-                        </div>
-                    @enderror
-                </div>
+                <x-form.textarea
+                    label="Descrição"
+                    name="description"
+                    :value="$workspace->description"
+                    placeholder="Descrição do workspace"
+                />
 
                 <x-button type="submit" variant="default">
                     Salvar

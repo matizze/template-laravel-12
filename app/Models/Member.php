@@ -4,13 +4,17 @@ namespace App\Models;
 
 use App\Enums\WorkspaceRole;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\Pivot;
 
-class Member extends Model
+class Member extends Pivot
 {
     /** @use HasFactory<\Database\Factories\MemberFactory> */
     use HasFactory;
+
+    protected $table = 'members';
+
+    public $incrementing = true;
 
     protected $fillable = ['user_id', 'workspace_id', 'role'];
 

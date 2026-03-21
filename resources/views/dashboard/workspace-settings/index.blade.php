@@ -46,7 +46,7 @@
                         @include('dashboard.workspace-settings.partials.geral', ['workspace' => $workspace])
                         @break
                     @case('membros')
-                        @include('dashboard.workspace-settings.partials.membros', ['workspace' => $workspace])
+                        @include('dashboard.workspace-settings.partials.membros', ['workspace' => $workspace, 'members' => $members])
                         @break
                 @endswitch
             </main>

@@ -13,8 +13,8 @@ return new class extends Migration
     {
         Schema::create('members', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('user_id')->constrained()->onDelete('cascade');
-            $table->foreignId('workspace_id')->constrained()->onDelete('cascade');
+            $table->foreignId('user_id')->constrained()->cascadeOnDelete();
+            $table->foreignId('workspace_id')->constrained()->cascadeOnDelete();
             $table->string('role')->default('member');
             $table->timestamps();
 

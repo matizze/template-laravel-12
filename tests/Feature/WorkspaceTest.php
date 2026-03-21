@@ -306,10 +306,9 @@ class WorkspaceTest extends TestCase
         $response->assertRedirect(route('dashboard'));
 
         $this->assertDatabaseMissing('workspaces', ['id' => $workspace->id]);
-        // Project still exists but workspace_id is set to null (onDelete: set null)
-        $this->assertDatabaseHas('projects', [
+        // Projetos são excluídos em cascata junto com o workspace (onDelete: cascade)
+        $this->assertDatabaseMissing('projects', [
             'id' => $project->id,
-            'workspace_id' => null,
         ]);
     }
 

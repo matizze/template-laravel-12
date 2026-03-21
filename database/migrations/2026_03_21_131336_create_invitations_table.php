@@ -13,8 +13,8 @@ return new class extends Migration
     {
         Schema::create('invitations', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('user_id')->nullable()->constrained()->onDelete('cascade');
-            $table->foreignId('workspace_id')->constrained()->onDelete('cascade');
+            $table->foreignId('user_id')->nullable()->constrained()->cascadeOnDelete();
+            $table->foreignId('workspace_id')->constrained()->cascadeOnDelete();
             $table->string('email');
             $table->string('role');
             $table->string('token')->unique();

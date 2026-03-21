@@ -9,16 +9,11 @@
                     alt="Dashboard"
                     class="size-11 select-none pointer-events-none"
                 />
-                <span>
+                <div>
                     <h1 class="text-lg font-bold text-gray-100">{{ config('app.name') }}</h1>
                     <p class="text-xss uppercase text-blue-light">{{ auth()->user()->role }}</p>
-                </span>
+                </div>
             </header>
-
-            @php
-                $workspaces = auth()->user()->workspaces;
-                $currentWorkspace = \App\Models\Workspace::current();
-            @endphp
 
             <div class="px-4 py-2">
                 <x-workspace-switcher :workspaces="$workspaces" :currentWorkspace="$currentWorkspace" />

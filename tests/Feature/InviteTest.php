@@ -269,21 +269,24 @@ class InviteTest extends TestCase
         $this->setCurrentWorkspace($workspace);
 
         $memberUser = User::factory()->create();
-        $member = Member::factory()->create([
+        Member::factory()->create([
             'user_id' => $memberUser->id,
             'workspace_id' => $workspace->id,
             'role' => WorkspaceRole::Member,
         ]);
 
         $response = $this->actingAs($owner)
-            ->patch(route('workspace.members.updateRole', [$workspace, $member]), [
+            ->patch(route('workspace.members.updateRole', [$workspace, $memberUser]), [
                 'role' => WorkspaceRole::Admin->value,
             ]);
 
         $response->assertRedirect();
 
-        $member->refresh();
-        $this->assertEquals(WorkspaceRole::Admin, $member->role);
+        $this->assertDatabaseHas('members', [
+            'user_id' => $memberUser->id,
+            'workspace_id' => $workspace->id,
+            'role' => WorkspaceRole::Admin->value,
+        ]);
     }
 
     // T048: test_owner_can_remove_member
@@ -293,19 +296,20 @@ class InviteTest extends TestCase
         $this->setCurrentWorkspace($workspace);
 
         $memberUser = User::factory()->create();
-        $member = Member::factory()->create([
+        Member::factory()->create([
             'user_id' => $memberUser->id,
             'workspace_id' => $workspace->id,
             'role' => WorkspaceRole::Member,
         ]);
 
         $response = $this->actingAs($owner)
-            ->delete(route('workspace.members.remove', [$workspace, $member]));
+            ->delete(route('workspace.members.remove', [$workspace, $memberUser]));
 
         $response->assertRedirect();
 
         $this->assertDatabaseMissing('members', [
-            'id' => $member->id,
+            'user_id' => $memberUser->id,
+            'workspace_id' => $workspace->id,
         ]);
     }
 
@@ -379,7 +383,7 @@ class InviteTest extends TestCase
         $this->setCurrentWorkspace($workspace);
 
         $member = User::factory()->create();
-        $membership = Member::factory()->create([
+        Member::factory()->create([
             'user_id' => $member->id,
             'workspace_id' => $workspace->id,
             'role' => WorkspaceRole::Member,
@@ -389,7 +393,8 @@ class InviteTest extends TestCase
             ->post(route('workspace.members.leave', $workspace));
 
         $this->assertDatabaseMissing('members', [
-            'id' => $membership->id,
+            'user_id' => $member->id,
+            'workspace_id' => $workspace->id,
         ]);
     }
 
@@ -451,6 +456,172 @@ class InviteTest extends TestCase
         $this->assertDatabaseHas('projects', [
             'name' => 'Member Project',
             'workspace_id' => $workspace->id,
+        ]);
+    }
+
+    // T083: test_user_cannot_accept_invitation_for_different_email
+    public function test_user_cannot_accept_invitation_for_different_email(): void
+    {
+        [$owner, $workspace] = $this->createWorkspaceWithOwner();
+
+        $invitation = Invitation::factory()->create([
+            'workspace_id' => $workspace->id,
+            'email' => 'destinatario@example.com',
+            'user_id' => $owner->id,
+            'role' => WorkspaceRole::Member,
+        ]);
+
+        $wrongUser = User::factory()->create(['email' => 'outro@example.com']);
+
+        $response = $this->actingAs($wrongUser)
+            ->get(route('invitation.accept', $invitation->token));
+
+        $response->assertRedirect(route('dashboard'));
+
+        // Convite nao deve ser aceito
+        $invitation->refresh();
+        $this->assertNull($invitation->accepted_at);
+
+        // Membro nao deve ser criado
+        $this->assertDatabaseMissing('members', [
+            'user_id' => $wrongUser->id,
+            'workspace_id' => $workspace->id,
+        ]);
+    }
+
+    // T084: test_guest_is_redirected_to_login_when_accepting_invitation
+    public function test_guest_is_redirected_to_login_when_accepting_invitation(): void
+    {
+        [$owner, $workspace] = $this->createWorkspaceWithOwner();
+
+        $invitation = Invitation::factory()->create([
+            'workspace_id' => $workspace->id,
+            'email' => 'convidado@example.com',
+            'user_id' => $owner->id,
+            'role' => WorkspaceRole::Member,
+        ]);
+
+        $response = $this->get(route('invitation.accept', $invitation->token));
+
+        $response->assertRedirect(route('login'));
+        $this->assertEquals($invitation->token, session('invitation_token'));
+    }
+
+    // T085: test_cannot_promote_member_to_owner_via_update_role
+    public function test_cannot_promote_member_to_owner_via_update_role(): void
+    {
+        [$owner, $workspace] = $this->createWorkspaceWithOwner();
+        $this->setCurrentWorkspace($workspace);
+
+        $memberUser = User::factory()->create();
+        Member::factory()->create([
+            'user_id' => $memberUser->id,
+            'workspace_id' => $workspace->id,
+            'role' => WorkspaceRole::Member,
+        ]);
+
+        $response = $this->actingAs($owner)
+            ->patch(route('workspace.members.updateRole', [$workspace, $memberUser]), [
+                'role' => WorkspaceRole::Owner->value,
+            ]);
+
+        $response->assertRedirect();
+
+        // Role nao deve ter sido alterada para Owner
+        $this->assertDatabaseHas('members', [
+            'user_id' => $memberUser->id,
+            'workspace_id' => $workspace->id,
+            'role' => WorkspaceRole::Member->value,
+        ]);
+    }
+
+    // T086: test_cannot_remove_workspace_owner
+    public function test_cannot_remove_workspace_owner(): void
+    {
+        [$owner, $workspace] = $this->createWorkspaceWithOwner();
+        $this->setCurrentWorkspace($workspace);
+
+        // Adiciona um admin que tentara remover o owner
+        $admin = User::factory()->create();
+        Member::factory()->admin()->create([
+            'user_id' => $admin->id,
+            'workspace_id' => $workspace->id,
+        ]);
+
+        $response = $this->actingAs($admin)
+            ->delete(route('workspace.members.remove', [$workspace, $owner]));
+
+        $response->assertRedirect();
+
+        // Owner continua no workspace
+        $this->assertDatabaseHas('members', [
+            'user_id' => $owner->id,
+            'workspace_id' => $workspace->id,
+            'role' => WorkspaceRole::Owner->value,
+        ]);
+    }
+
+    // T093: test_cannot_update_role_of_member_from_another_workspace
+    public function test_cannot_update_role_of_member_from_another_workspace(): void
+    {
+        [$owner1, $workspace1] = $this->createWorkspaceWithOwner();
+        $this->setCurrentWorkspace($workspace1);
+
+        // Cria outro workspace com um membro
+        $owner2 = User::factory()->create();
+        $workspace2 = Workspace::factory()->create(['user_id' => $owner2->id]);
+        Member::factory()->owner()->create([
+            'user_id' => $owner2->id,
+            'workspace_id' => $workspace2->id,
+        ]);
+
+        $memberUser = User::factory()->create();
+        Member::factory()->create([
+            'user_id' => $memberUser->id,
+            'workspace_id' => $workspace2->id,
+            'role' => WorkspaceRole::Member,
+        ]);
+
+        // Tenta alterar role de membro do workspace2 usando rota do workspace1
+        $response = $this->actingAs($owner1)
+            ->patch(route('workspace.members.updateRole', [$workspace1, $memberUser]), [
+                'role' => WorkspaceRole::Admin->value,
+            ]);
+
+        $response->assertStatus(404);
+    }
+
+    // T094: test_cannot_remove_member_from_another_workspace
+    public function test_cannot_remove_member_from_another_workspace(): void
+    {
+        [$owner1, $workspace1] = $this->createWorkspaceWithOwner();
+        $this->setCurrentWorkspace($workspace1);
+
+        // Cria outro workspace com um membro
+        $owner2 = User::factory()->create();
+        $workspace2 = Workspace::factory()->create(['user_id' => $owner2->id]);
+        Member::factory()->owner()->create([
+            'user_id' => $owner2->id,
+            'workspace_id' => $workspace2->id,
+        ]);
+
+        $memberUser = User::factory()->create();
+        Member::factory()->create([
+            'user_id' => $memberUser->id,
+            'workspace_id' => $workspace2->id,
+            'role' => WorkspaceRole::Member,
+        ]);
+
+        // Tenta remover membro do workspace2 usando rota do workspace1
+        $response = $this->actingAs($owner1)
+            ->delete(route('workspace.members.remove', [$workspace1, $memberUser]));
+
+        $response->assertStatus(404);
+
+        // Membro continua no workspace2
+        $this->assertDatabaseHas('members', [
+            'user_id' => $memberUser->id,
+            'workspace_id' => $workspace2->id,
         ]);
     }
 }

@@ -15,6 +15,10 @@ trait BelongsToWorkspace
 
             if ($currentWorkspace) {
                 $query->where('workspace_id', $currentWorkspace->id);
+            } else {
+                // Previne vazamento de dados retornando zero resultados quando nenhum workspace está definido
+                $model = $query->getModel();
+                $query->whereNull($model->getTable().'.id');
             }
         });
 

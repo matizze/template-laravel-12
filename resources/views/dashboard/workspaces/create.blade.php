@@ -5,50 +5,26 @@
         <form method="POST" action="{{ route('workspace.store') }}" class="space-y-4">
             @csrf
 
-            <div>
-                <label for="name" class="block text-sm font-medium text-gray-700 mb-1">Nome</label>
-                <input
-                    type="text"
-                    name="name"
-                    id="name"
-                    value="{{ old('name') }}"
-                    required
-                    class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
-                    placeholder="Nome do workspace"
-                />
-                @error('name')
-                    <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
-                @enderror
-            </div>
+            <x-form.input
+                label="Nome"
+                name="name"
+                type="text"
+                required
+                placeholder="Nome do workspace"
+            />
 
-            <div>
-                <label for="slug" class="block text-sm font-medium text-gray-700 mb-1">Slug (opcional)</label>
-                <input
-                    type="text"
-                    name="slug"
-                    id="slug"
-                    value="{{ old('slug') }}"
-                    class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
-                    placeholder="meu-workspace"
-                />
-                @error('slug')
-                    <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
-                @enderror
-            </div>
+            <x-form.input
+                label="Slug (opcional)"
+                name="slug"
+                type="text"
+                placeholder="meu-workspace"
+            />
 
-            <div>
-                <label for="description" class="block text-sm font-medium text-gray-700 mb-1">Descrição (opcional)</label>
-                <textarea
-                    name="description"
-                    id="description"
-                    rows="3"
-                    class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
-                    placeholder="Descrição do workspace"
-                >{{ old('description') }}</textarea>
-                @error('description')
-                    <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
-                @enderror
-            </div>
+            <x-form.textarea
+                label="Descrição (opcional)"
+                name="description"
+                placeholder="Descrição do workspace"
+            />
 
             <div class="flex justify-end gap-3 pt-4">
                 <a

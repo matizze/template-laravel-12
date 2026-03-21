@@ -2,6 +2,8 @@
 
 namespace App\Models;
 
+use App\Enums\WorkspaceRole;
+use App\Services\CurrentWorkspaceManager;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -16,39 +18,40 @@ class Workspace extends Model
 
     protected $fillable = ['name', 'slug', 'description', 'logo_path', 'user_id'];
 
-    private static ?self $current = null;
-
+    /**
+     * Retorna o workspace atual da requisicao via CurrentWorkspaceManager.
+     */
     public static function current(): ?self
     {
-        if (! self::$current && session('current_workspace_id')) {
-            self::$current = self::find(session('current_workspace_id'));
-        }
-
-        return self::$current;
+        return app(CurrentWorkspaceManager::class)->get();
     }
 
+    /**
+     * Define o workspace atual pelo ID.
+     */
     public static function setCurrent(?int $workspaceId): void
     {
-        if (! $workspaceId) {
-            self::forgetCurrent();
-
-            return;
+        if ($workspaceId) {
+            app(CurrentWorkspaceManager::class)->setById($workspaceId);
+        } else {
+            app(CurrentWorkspaceManager::class)->forget();
         }
-
-        self::$current = self::find($workspaceId);
-        session(['current_workspace_id' => $workspaceId]);
     }
 
+    /**
+     * Define o workspace atual a partir de uma instancia do modelo.
+     */
     public static function setCurrentModel(self $workspace): void
     {
-        self::$current = $workspace;
-        session(['current_workspace_id' => $workspace->id]);
+        app(CurrentWorkspaceManager::class)->set($workspace);
     }
 
+    /**
+     * Limpa o workspace atual da memoria e da sessao.
+     */
     public static function forgetCurrent(): void
     {
-        self::$current = null;
-        session()->forget('current_workspace_id');
+        app(CurrentWorkspaceManager::class)->forget();
     }
 
     protected static function booted(): void
@@ -68,13 +71,20 @@ class Workspace extends Model
     public function members(): BelongsToMany
     {
         return $this->belongsToMany(User::class, 'members')
-            ->withPivot('role')
+            ->using(Member::class)
+            ->withPivot('id', 'role')
+            ->withCasts(['role' => WorkspaceRole::class])
             ->withTimestamps();
     }
 
     public function memberships(): HasMany
     {
         return $this->hasMany(Member::class);
+    }
+
+    public function projects(): HasMany
+    {
+        return $this->hasMany(Project::class);
     }
 
     public function invitations(): HasMany

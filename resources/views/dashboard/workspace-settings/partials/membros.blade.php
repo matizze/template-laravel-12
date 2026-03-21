@@ -1,5 +1,5 @@
 <div class="space-y-8 w-full">
-    <x-card class="w-2/3">
+    <x-card class="w-full lg:w-2/3">
         <div class="space-y-6 w-full">
             <div>
                 <h2 class="text-xl font-bold text-blue-dark">Membros</h2>
@@ -7,7 +7,7 @@
             </div>
 
             <div class="space-y-3">
-                @foreach ($workspace->memberships()->with('user')->get() as $membership)
+                @foreach ($members as $membership)
                     <div class="flex items-center justify-between py-3 border-b border-gray-100 last:border-0">
                         <div class="flex items-center gap-3">
                             <x-avatar :name="$membership->user->name" size="sm" />

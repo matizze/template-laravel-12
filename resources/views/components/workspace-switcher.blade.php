@@ -4,6 +4,9 @@
     <button
         @click="open = !open"
         class="flex items-center gap-2 text-sm text-gray-300 hover:text-white transition-colors w-full px-3 py-2 rounded-lg hover:bg-white/5"
+        aria-label="Alternar workspace"
+        aria-haspopup="listbox"
+        x-bind:aria-expanded="open.toString()"
         dusk="workspace-switcher"
     >
         <x-icon name="lucide-layers" class="size-4" />
@@ -15,6 +18,7 @@
 
     <div
         x-show="open"
+        x-cloak
         x-transition
         @click.outside="open = false"
         class="absolute left-0 top-full mt-1 w-64 bg-gray-800 border border-gray-700 rounded-lg shadow-lg z-50"
@@ -39,14 +43,17 @@
         </div>
 
         <div class="border-t border-gray-700 p-2">
-            <a
-                href="{{ route('workspace.create') }}"
+            <button
+                type="button"
+                @click="open = false; $dispatch('open-create-workspace-modal')"
                 class="flex items-center gap-2 w-full px-3 py-2 text-sm text-gray-300 hover:text-white hover:bg-white/5 rounded-lg transition-colors"
                 dusk="open-create-workspace-link"
             >
                 <x-icon name="lucide-plus" class="size-4" />
                 <span>Criar Workspace</span>
-            </a>
+            </button>
         </div>
     </div>
+
+    <x-create-workspace-modal />
 </div>

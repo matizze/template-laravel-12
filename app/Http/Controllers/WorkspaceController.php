@@ -7,15 +7,12 @@ use App\Http\Requests\CreateWorkspaceRequest;
 use App\Http\Requests\TransferOwnershipRequest;
 use App\Models\Member;
 use App\Models\Workspace;
-use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\DB;
 use Illuminate\View\View;
 
 class WorkspaceController extends Controller
 {
-    use AuthorizesRequests;
-
     public function create(): View
     {
         return view('dashboard.workspaces.create');
@@ -23,20 +20,24 @@ class WorkspaceController extends Controller
 
     public function store(CreateWorkspaceRequest $request): RedirectResponse
     {
-        $workspace = Workspace::create([
-            'name' => $request->validated('name'),
-            'slug' => $request->validated('slug'),
-            'description' => $request->validated('description'),
-            'user_id' => $request->user()->id,
-        ]);
+        $workspace = DB::transaction(function () use ($request): Workspace {
+            $workspace = Workspace::create([
+                'name' => $request->validated('name'),
+                'slug' => $request->validated('slug'),
+                'description' => $request->validated('description'),
+                'user_id' => $request->user()->id,
+            ]);
 
-        Member::create([
-            'user_id' => $request->user()->id,
-            'workspace_id' => $workspace->id,
-            'role' => WorkspaceRole::Owner,
-        ]);
+            Member::create([
+                'user_id' => $request->user()->id,
+                'workspace_id' => $workspace->id,
+                'role' => WorkspaceRole::Owner,
+            ]);
 
-        Workspace::setCurrent($workspace->id);
+            return $workspace;
+        });
+
+        Workspace::setCurrentModel($workspace);
 
         return redirect()->route('dashboard')
             ->with('success', 'Workspace criado com sucesso!');
@@ -47,13 +48,13 @@ class WorkspaceController extends Controller
         $newOwnerId = $request->validated('user_id');
 
         DB::transaction(function () use ($workspace, $request, $newOwnerId): void {
-            Member::where('workspace_id', $workspace->id)
-                ->where('user_id', $request->user()->id)
-                ->update(['role' => WorkspaceRole::Admin]);
+            $workspace->members()->updateExistingPivot($request->user()->id, [
+                'role' => WorkspaceRole::Admin,
+            ]);
 
-            Member::where('workspace_id', $workspace->id)
-                ->where('user_id', $newOwnerId)
-                ->update(['role' => WorkspaceRole::Owner]);
+            $workspace->members()->updateExistingPivot($newOwnerId, [
+                'role' => WorkspaceRole::Owner,
+            ]);
 
             $workspace->update(['user_id' => $newOwnerId]);
         });
@@ -65,10 +66,7 @@ class WorkspaceController extends Controller
 
     public function switch(Workspace $workspace): RedirectResponse
     {
-        if (! auth()->user()->isMemberOf($workspace)) {
-            return redirect()->route('dashboard')
-                ->with('error', 'Você não tem acesso a este workspace.');
-        }
+        $this->authorize('view', $workspace);
 
         Workspace::setCurrentModel($workspace);
 

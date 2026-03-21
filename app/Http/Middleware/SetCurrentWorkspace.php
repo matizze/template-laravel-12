@@ -11,8 +11,6 @@ class SetCurrentWorkspace
 {
     public function handle(Request $request, Closure $next): Response
     {
-        Workspace::forgetCurrent();
-
         if ($request->user()) {
             $workspaceId = session('current_workspace_id');
 

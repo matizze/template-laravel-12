@@ -34,38 +34,42 @@
                             </span>
 
                             @if($member->role->value !== 'owner')
-                                <div class="flex items-center gap-1">
-                                    <form method="POST" action="{{ route('workspace.members.updateRole', [$workspace, $member]) }}">
-                                        @csrf
-                                        @method('PATCH')
-                                        <select
-                                            name="role"
-                                            onchange="this.form.submit()"
-                                            class="text-xs border border-gray-200 rounded-md px-2 py-1"
-                                        >
-                                            @foreach (\App\Enums\WorkspaceRole::cases() as $role)
-                                                @if($role->value !== 'owner')
-                                                    <option value="{{ $role->value }}" @selected($member->role === $role)>
-                                                        {{ ucfirst($role->value) }}
-                                                    </option>
-                                                @endif
-                                            @endforeach
-                                        </select>
-                                    </form>
+                                @can('manageMembers', $workspace)
+                                    <div class="flex items-center gap-1">
+                                        <form method="POST" action="{{ route('workspace.members.updateRole', [$workspace, $member->user]) }}">
+                                            @csrf
+                                            @method('PATCH')
+                                            <x-form.select
+                                                name="role"
+                                                x-on:change="$el.form.submit()"
+                                                aria-label="Alterar função do membro {{ $member->user->name }}"
+                                                class="text-xs border border-gray-200 rounded-md px-2 py-1 !h-auto !border-b-0"
+                                            >
+                                                @foreach (\App\Enums\WorkspaceRole::cases() as $role)
+                                                    @if($role->value !== 'owner')
+                                                        <option value="{{ $role->value }}" @selected($member->role === $role)>
+                                                            {{ ucfirst($role->value) }}
+                                                        </option>
+                                                    @endif
+                                                @endforeach
+                                            </x-form.select>
+                                        </form>
 
-                                    <form method="POST" action="{{ route('workspace.members.remove', [$workspace, $member]) }}">
-                                        @csrf
-                                        @method('DELETE')
-                                        <button
-                                            type="submit"
-                                            class="text-red-500 hover:text-red-700 p-1"
-                                            title="Remover membro"
-                                            onclick="return confirm('Tem certeza que deseja remover este membro?')"
-                                        >
-                                            <x-icon name="lucide-trash-2" class="size-4" />
-                                        </button>
-                                    </form>
-                                </div>
+                                        <form method="POST" action="{{ route('workspace.members.remove', [$workspace, $member->user]) }}">
+                                            @csrf
+                                            @method('DELETE')
+                                            <button
+                                                type="submit"
+                                                class="text-red-500 hover:text-red-700 p-1"
+                                                title="Remover membro"
+                                                aria-label="Remover membro"
+                                                onclick="return confirm('Tem certeza que deseja remover este membro?')"
+                                            >
+                                                <x-icon name="lucide-trash-2" class="size-4" />
+                                            </button>
+                                        </form>
+                                    </div>
+                                @endcan
                             @endif
                         </div>
                     </div>

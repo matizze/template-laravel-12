@@ -45,7 +45,9 @@ class User extends Authenticatable
     public function workspaces(): BelongsToMany
     {
         return $this->belongsToMany(Workspace::class, 'members')
-            ->withPivot('role')
+            ->using(Member::class)
+            ->withPivot('id', 'role')
+            ->withCasts(['role' => WorkspaceRole::class])
             ->withTimestamps();
     }
 
@@ -64,7 +66,7 @@ class User extends Authenticatable
         }
 
         /** @var Member|null $member */
-        $member = Member::where('workspace_id', $workspace->id)
+        $member = $workspace->memberships()
             ->where('user_id', $this->id)
             ->first();
 

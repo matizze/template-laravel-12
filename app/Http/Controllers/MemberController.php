@@ -4,21 +4,19 @@ namespace App\Http\Controllers;
 
 use App\Enums\WorkspaceRole;
 use App\Http\Requests\InviteMemberRequest;
+use App\Http\Requests\UpdateMemberRoleRequest;
 use App\Models\Invitation;
 use App\Models\Member;
 use App\Models\User;
 use App\Models\Workspace;
 use App\Notifications\WorkspaceInviteNotification;
-use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Validation\Rules\Enum;
+use Illuminate\Support\Facades\DB;
 use Illuminate\View\View;
 
 class MemberController extends Controller
 {
-    use AuthorizesRequests;
-
     public function index(Workspace $workspace): View
     {
         $this->authorize('manageMembers', $workspace);
@@ -27,9 +25,7 @@ class MemberController extends Controller
             ->with('user')
             ->get();
 
-        $pendingInvitations = Invitation::where('workspace_id', $workspace->id)
-            ->pending()
-            ->get();
+        $pendingInvitations = $workspace->invitations()->whereNull('accepted_at')->get();
 
         return view('dashboard.members.index', [
             'workspace' => $workspace,
@@ -72,37 +68,52 @@ class MemberController extends Controller
 
         $user = $request->user();
 
+        // Se nao esta autenticado, salva o token na sessao e redireciona para login
         if (! $user) {
             session(['invitation_token' => $token]);
 
             return redirect()->route('login');
         }
 
-        Member::create([
-            'user_id' => $user->id,
-            'workspace_id' => $invitation->workspace_id,
-            'role' => $invitation->role,
-        ]);
+        // Verifica se o e-mail do usuario autenticado corresponde ao e-mail do convite
+        if ($user->email !== $invitation->email) {
+            return redirect()
+                ->route('dashboard')
+                ->with('error', 'Este convite foi enviado para outro endereço de e-mail.');
+        }
 
-        $invitation->update(['accepted_at' => now()]);
+        DB::transaction(function () use ($user, $invitation): void {
+            Member::create([
+                'user_id' => $user->id,
+                'workspace_id' => $invitation->workspace_id,
+                'role' => $invitation->role,
+            ]);
 
-        Workspace::setCurrent($invitation->workspace_id);
+            $invitation->update(['accepted_at' => now()]);
+        });
+
+        Workspace::setCurrentModel($invitation->workspace);
 
         return redirect()
             ->route('dashboard')
             ->with('success', 'Convite aceito com sucesso!');
     }
 
-    public function updateRole(Request $request, Workspace $workspace, Member $member): RedirectResponse
+    public function updateRole(UpdateMemberRoleRequest $request, Workspace $workspace, User $user): RedirectResponse
     {
-        $this->authorize('manageMembers', $workspace);
+        $member = $workspace->memberships()->where('user_id', $user->id)->firstOrFail();
 
-        $request->validate([
-            'role' => ['required', new Enum(WorkspaceRole::class)],
-        ]);
+        // Impede promocao para Owner via updateRole; use transferOwnership() para isso
+        $novoRole = WorkspaceRole::from($request->validated('role'));
 
-        $member->update([
-            'role' => $request->input('role'),
+        if ($novoRole === WorkspaceRole::Owner) {
+            return redirect()
+                ->route('workspace.members.index', $workspace)
+                ->with('error', 'Não é possível promover um membro a proprietário. Use a transferência de propriedade.');
+        }
+
+        $workspace->members()->updateExistingPivot($user->id, [
+            'role' => $novoRole,
         ]);
 
         return redirect()
@@ -110,11 +121,21 @@ class MemberController extends Controller
             ->with('success', 'Função do membro atualizada com sucesso!');
     }
 
-    public function remove(Workspace $workspace, Member $member): RedirectResponse
+    public function remove(Workspace $workspace, User $user): RedirectResponse
     {
         $this->authorize('manageMembers', $workspace);
 
-        $member->delete();
+        /** @var Member $member */
+        $member = $workspace->memberships()->where('user_id', $user->id)->firstOrFail();
+
+        // Impede a remocao do proprietario do workspace
+        if ($member->role === WorkspaceRole::Owner) {
+            return redirect()
+                ->route('workspace.members.index', $workspace)
+                ->with('error', 'Não é possível remover o proprietário do workspace.');
+        }
+
+        $workspace->members()->detach($user->id);
 
         return redirect()
             ->route('workspace.members.index', $workspace)
@@ -125,9 +146,8 @@ class MemberController extends Controller
     {
         $user = $request->user();
 
-        $member = Member::where('workspace_id', $workspace->id)
-            ->where('user_id', $user->id)
-            ->firstOrFail();
+        /** @var Member $member */
+        $member = $workspace->memberships()->where('user_id', $user->id)->firstOrFail();
 
         if ($member->role === WorkspaceRole::Owner) {
             return redirect()
@@ -135,7 +155,7 @@ class MemberController extends Controller
                 ->with('error', 'O proprietário não pode sair do workspace. Transfira a propriedade antes de sair.');
         }
 
-        $member->delete();
+        $workspace->members()->detach($user->id);
 
         Workspace::forgetCurrent();
 
