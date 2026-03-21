@@ -1,15 +1,13 @@
 <?php
 
-namespace App\Http\Requests;
+namespace Modules\Auth\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
 
 /**
- * @property-read string $name
  * @property-read string $email
- * @property-read string $password
  */
-class MakeRegisterRequest extends FormRequest
+class ForgotPasswordRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.
@@ -27,9 +25,7 @@ class MakeRegisterRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'name' => ['required', 'string'],
-            'email' => ['required', 'string', 'email', 'unique:users'],
-            'password' => ['required', 'string', 'min:8'],
+            'email' => ['required', 'string', 'email'],
         ];
     }
 }

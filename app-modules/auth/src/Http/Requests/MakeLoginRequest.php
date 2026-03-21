@@ -1,13 +1,16 @@
 <?php
 
-namespace App\Http\Requests;
+namespace Modules\Auth\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
 
 /**
+ * Handle Login Request
+ *
  * @property-read string $email
+ * @property-read string $password
  */
-class ForgotPasswordRequest extends FormRequest
+class MakeLoginRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.
@@ -26,6 +29,7 @@ class ForgotPasswordRequest extends FormRequest
     {
         return [
             'email' => ['required', 'string', 'email'],
+            'password' => ['required', 'string', 'min:8'],
         ];
     }
 }

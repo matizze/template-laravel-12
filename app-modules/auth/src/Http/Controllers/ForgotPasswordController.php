@@ -1,9 +1,9 @@
 <?php
 
-namespace App\Http\Controllers\Auth;
+namespace Modules\Auth\Http\Controllers;
 
 use App\Http\Controllers\Controller;
-use App\Http\Requests\ForgotPasswordRequest;
+use Modules\Auth\Http\Requests\ForgotPasswordRequest;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Password;
 use Illuminate\View\View;
@@ -12,7 +12,7 @@ class ForgotPasswordController extends Controller
 {
     public function index(): View
     {
-        return view('auth.forgot-password');
+        return view('auth::auth.forgot-password');
     }
 
     public function store(ForgotPasswordRequest $request): RedirectResponse

@@ -1,9 +1,9 @@
 <?php
 
-namespace App\Http\Controllers\Auth;
+namespace Modules\Auth\Http\Controllers;
 
 use App\Http\Controllers\Controller;
-use App\Http\Requests\MakeRegisterRequest;
+use Modules\Auth\Http\Requests\MakeRegisterRequest;
 use Modules\User\Models\User;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Auth;
@@ -13,7 +13,7 @@ class RegisterController extends Controller
 {
     public function index(): View
     {
-        return view('auth.register');
+        return view('auth::auth.register');
     }
 
     public function store(MakeRegisterRequest $request): RedirectResponse

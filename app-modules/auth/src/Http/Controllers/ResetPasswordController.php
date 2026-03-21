@@ -1,9 +1,9 @@
 <?php
 
-namespace App\Http\Controllers\Auth;
+namespace Modules\Auth\Http\Controllers;
 
 use App\Http\Controllers\Controller;
-use App\Http\Requests\ResetPasswordRequest;
+use Modules\Auth\Http\Requests\ResetPasswordRequest;
 use Modules\User\Models\User;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Hash;
@@ -15,7 +15,7 @@ class ResetPasswordController extends Controller
 {
     public function index(string $token): View
     {
-        return view('auth.reset-password', ['token' => $token]);
+        return view('auth::auth.reset-password', ['token' => $token]);
     }
 
     public function store(ResetPasswordRequest $request): RedirectResponse

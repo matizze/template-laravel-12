@@ -40,5 +40,3 @@ Route::middleware('auth')->group(function () {
 
 // Rota de aceite de convite acessível tanto para guests quanto para usuários autenticados
 Route::get('/invitation/{token}', [MemberController::class, 'accept'])->name('invitation.accept');
-
-require __DIR__.'/auth.php';

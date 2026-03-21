@@ -1,16 +1,15 @@
 <?php
 
-namespace App\Http\Requests;
+namespace Modules\Auth\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
-use Illuminate\Validation\Rules\Password;
 
 /**
- * @property-read string $token
+ * @property-read string $name
  * @property-read string $email
  * @property-read string $password
  */
-class ResetPasswordRequest extends FormRequest
+class MakeRegisterRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.
@@ -28,9 +27,9 @@ class ResetPasswordRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'token' => ['required', 'string'],
-            'email' => ['required', 'string', 'email'],
-            'password' => ['required', 'confirmed', Password::defaults()],
+            'name' => ['required', 'string'],
+            'email' => ['required', 'string', 'email', 'unique:users'],
+            'password' => ['required', 'string', 'min:8'],
         ];
     }
 }
