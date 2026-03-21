@@ -76,10 +76,21 @@ php artisan create:user --admin      # create admin user
 - **Production env:** `deployment/.env.example`
 
 ### Testing
-- PHPUnit with in-memory SQLite, array session/cache drivers
-- Test suites: `tests/Unit/`, `tests/Feature/`
-- Feature tests: `AuthTest`, `SettingsTest`, `UserManagementTest`, `PasswordResetTest`, `CreateUserCommandTest`
-- PHPFlasher consumes flash session data — do NOT use `assertSessionHas` for flash keys (`success`, `error`, etc.)
+
+**Test-Driven Development (TDD)** — All features MUST have tests written FIRST (RED → GREEN → REFACTOR):
+
+- **PHPUnit** (Feature + Unit tests): `php artisan test --compact`
+  - Feature tests: Use real SQLite database (in-memory), test full request/response cycle
+  - Unit tests: With `--unit` flag, test isolated logic, can use mocks
+  - Test suites: `tests/Unit/`, `tests/Feature/`
+  - Existing tests: `AuthTest`, `SettingsTest`, `UserManagementTest`, `PasswordResetTest`, `CreateUserCommandTest`
+  - PHPFlasher consumes flash session data — do NOT use `assertSessionHas` for flash keys (`success`, `error`, etc.)
+
+- **Browser Tests (Dusk)** — For user journeys with JavaScript/DOM interactions: `php artisan dusk`
+  - Use when: Modal clicks, form validation visual feedback, Alpine.js behavior, flash notifications
+  - Add `dusk="button-name"` attributes to interactive elements for reliable selectors
+  - Existing tests in `tests/Browser/`: LoginFlowTest, RegisterFlowTest, ValidationTest, ModalTest, etc.
+  - Strategy: Test critical user journeys with browser tests; test everything else with feature tests
 
 ## Conventions
 

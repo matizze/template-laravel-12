@@ -15,6 +15,8 @@
                 </span>
             </header>
 
+            <x-workspace-switcher />
+
             <nav class="flex px-4 py-5 flex-col space-y-1">
                 <x-nav-item icon="layout-dashboard" route="dashboard">
                     Dashboard

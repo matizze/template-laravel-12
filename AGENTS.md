@@ -2,6 +2,8 @@
 
 Laravel 12 starter template with role-based access (admin/member), settings management, user CRUD, and production-ready deployment (Docker + Octane).
 
+**Governance:** See [`.specify/memory/constitution.md`](./.specify/memory/constitution.md) for project principles, testing discipline, and code standards.
+
 ## Auth Flow
 - Custom controllers: `LoginController`, `RegisterController`, `ForgotPasswordController`, `ResetPasswordController`
 - All validation via Form Request classes (array-based rules, PHPDoc `@property-read` annotations)
@@ -15,9 +17,30 @@ Laravel 12 starter template with role-based access (admin/member), settings mana
 - User CRUD routes protected via `can:manage-users` middleware
 
 ## Testing
+
+### Test-Driven Development (TDD)
+**All features MUST be written test-first.** Follow the RED → GREEN → REFACTOR cycle:
+- **RED:** Write a failing test that describes the desired behavior
+- **GREEN:** Write minimal code to make the test pass
+- **REFACTOR:** Improve code quality without changing behavior
+
+### Unit & Feature Tests
 - PHPUnit (NOT Pest) — feature tests: `AuthTest`, `SettingsTest`, `UserManagementTest`, `PasswordResetTest`, `CreateUserCommandTest`
 - PHPFlasher consumes flash session data — do NOT use `assertSessionHas` for flash keys (`success`, `error`, `warning`, `info`)
 - Use `UserFactory::admin()` state for admin user tests
+- Test all happy paths, failure paths, and edge cases
+
+### Browser Tests (Laravel Dusk)
+- Use browser tests (`tests/Browser/`) for critical user journeys that involve UI interaction, JavaScript, or multi-step workflows
+- Examples: login flow, registration, password reset, form validation with real browser rendering
+- Test everything else with feature tests (faster, simpler)
+- Browser tests: `LoginFlowTest`, `RegisterFlowTest`, `ForgotPasswordFlowTest`, `UserManagementFlowTest`
+
+### Code Clarity & Comments
+- **Do NOT write idiotic comments.** Comments must explain WHY, not WHAT (code explains WHAT)
+- ❌ Bad: `$count++; // increment count` (code already shows this)
+- ✅ Good: `// Delay notification to avoid overwhelming user inbox` before async notification code
+- Prefer self-documenting code: descriptive variable/method names over comments
 
 <laravel-boost-guidelines>
 === foundation rules ===
@@ -308,3 +331,10 @@ $this->app->singleton(Service::class, fn () => new Service(fn () => request()));
 
 - Never append to static properties, as they accumulate in memory across requests.
 </laravel-boost-guidelines>
+
+## Active Technologies
+- PHP 8.4.1+ + Laravel 12, Eloquent ORM, Laravel Policies & Gates, PHPFlasher with Noty, Alpine.js v3, Tailwind CSS v4, Blade-Lucide-Icons, Laravel Dusk (001-workspace-management)
+- SQLite (development/testing), PostgreSQL (production) (001-workspace-management)
+
+## Recent Changes
+- 001-workspace-management: Added PHP 8.4.1+ + Laravel 12, Eloquent ORM, Laravel Policies & Gates, PHPFlasher with Noty, Alpine.js v3, Tailwind CSS v4, Blade-Lucide-Icons, Laravel Dusk

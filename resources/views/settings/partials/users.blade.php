@@ -18,10 +18,10 @@
                     @csrf
 
                     <div class="grid grid-cols-1 gap-6">
-                        <x-form.input label="Nome" name="name" />
-                        <x-form.input label="E-mail" name="email" type="email" />
-                        <x-form.input label="Senha" name="password" type="password" />
-                        <x-form.input label="Confirmar Senha" name="password_confirmation" type="password" />
+                        <x-form.input label="Nome" name="name" input-id="create-user-name" />
+                        <x-form.input label="E-mail" name="email" input-id="create-user-email" type="email" />
+                        <x-form.input label="Senha" name="password" input-id="create-user-password" type="password" />
+                        <x-form.input label="Confirmar Senha" name="password_confirmation" input-id="create-user-password-confirmation" type="password" />
 
                         <div class="group">
                             <label for="role" class="uppercase text-xss block text-gray-400 group-focus-within:text-indigo-500">

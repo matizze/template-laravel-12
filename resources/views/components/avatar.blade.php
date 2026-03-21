@@ -1,8 +1,10 @@
 @php
-    $parts = explode(' ', trim($name));
-    $initials = strtoupper(($parts[0][0] ?? '') . ($parts[1][0] ?? ''));
+    $initials = collect(explode(' ', $name))
+        ->map(fn($word) => substr($word, 0, 1))
+        ->slice(0, 2)
+        ->join('');
 @endphp
 
-<div class="flex items-center justify-center size-6 bg-blue-dark text-white rounded-full text-xs shrink-0">
-    {{ $initials }}
+<div class="w-10 h-10 rounded-full bg-blue-600 text-white flex items-center justify-center font-semibold text-sm">
+    {{ strtoupper($initials) }}
 </div>
