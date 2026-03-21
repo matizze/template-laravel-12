@@ -5,3 +5,10 @@ parameters:
     level: 3
     paths:
         - app
+        - app-modules
+
+    scanDirectories:
+        - phpstan
+
+rules:
+    - App\PHPStan\ModuleDependencyRule
