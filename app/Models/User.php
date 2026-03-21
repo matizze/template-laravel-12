@@ -3,7 +3,10 @@
 namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
+use App\Enums\WorkspaceRole;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 
@@ -37,5 +40,33 @@ class User extends Authenticatable
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
         ];
+    }
+
+    public function workspaces(): BelongsToMany
+    {
+        return $this->belongsToMany(Workspace::class, 'members')
+            ->withPivot('role')
+            ->withTimestamps();
+    }
+
+    public function ownedWorkspaces(): HasMany
+    {
+        return $this->hasMany(Workspace::class);
+    }
+
+    public function roleIn(Workspace $workspace): ?WorkspaceRole
+    {
+        /** @var Member|null $member */
+        $member = Member::where('workspace_id', $workspace->id)
+            ->where('user_id', $this->id)
+            ->first();
+
+        if (! $member) {
+            return null;
+        }
+
+        return $member->role instanceof WorkspaceRole
+            ? $member->role
+            : WorkspaceRole::from((string) $member->role);
     }
 }

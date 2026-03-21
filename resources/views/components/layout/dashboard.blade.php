@@ -15,6 +15,15 @@
                 </span>
             </header>
 
+            @php
+                $workspaces = auth()->user()->workspaces;
+                $currentWorkspace = \App\Models\Workspace::current();
+            @endphp
+
+            <div class="px-4 py-2">
+                <x-workspace-switcher :workspaces="$workspaces" :currentWorkspace="$currentWorkspace" />
+            </div>
+
             <nav class="flex px-4 py-5 flex-col space-y-1">
                 <x-nav-item icon="layout-dashboard" route="dashboard">
                     Dashboard
