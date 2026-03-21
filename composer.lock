@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "44bca4a224f5b1e8ad1b119aee2d3aae",
+    "content-hash": "20606a514c9410d8715a030e904e319c",
     "packages": [
         {
             "name": "blade-ui-kit/blade-icons",
@@ -2339,6 +2339,135 @@
                 "source": "https://github.com/mallardduck/blade-lucide-icons/tree/1.26.8"
             },
             "time": "2026-03-05T00:22:54+00:00"
+        },
+        {
+            "name": "modules/auth",
+            "version": "dev-003-modular-migration",
+            "dist": {
+                "type": "path",
+                "url": "app-modules/auth",
+                "reference": "ea2d9b8304d20e9faeef7e2966197e14790d34eb"
+            },
+            "require": {
+                "modules/core": "*@dev",
+                "modules/user": "*@dev"
+            },
+            "type": "library",
+            "extra": {
+                "laravel": {
+                    "providers": [
+                        "Modules\\Auth\\Providers\\AuthServiceProvider"
+                    ]
+                }
+            },
+            "autoload": {
+                "psr-4": {
+                    "Modules\\Auth\\": "src/"
+                }
+            },
+            "license": [
+                "MIT"
+            ],
+            "description": "Auth module — authentication and password recovery",
+            "transport-options": {
+                "relative": true
+            }
+        },
+        {
+            "name": "modules/core",
+            "version": "dev-003-modular-migration",
+            "dist": {
+                "type": "path",
+                "url": "app-modules/core",
+                "reference": "926902f44fe55c85f80b1a817345ab920789fc00"
+            },
+            "type": "library",
+            "extra": {
+                "laravel": {
+                    "providers": [
+                        "Modules\\Core\\Providers\\CoreServiceProvider"
+                    ]
+                }
+            },
+            "autoload": {
+                "psr-4": {
+                    "Modules\\Core\\": "src/"
+                }
+            },
+            "license": [
+                "MIT"
+            ],
+            "description": "Core module — infrastructure and shared components",
+            "transport-options": {
+                "relative": true
+            }
+        },
+        {
+            "name": "modules/user",
+            "version": "dev-003-modular-migration",
+            "dist": {
+                "type": "path",
+                "url": "app-modules/user",
+                "reference": "fa776207909bcffcd47c9a9db693dc1eb4b88802"
+            },
+            "require": {
+                "modules/core": "*@dev"
+            },
+            "type": "library",
+            "extra": {
+                "laravel": {
+                    "providers": [
+                        "Modules\\User\\Providers\\UserServiceProvider"
+                    ]
+                }
+            },
+            "autoload": {
+                "psr-4": {
+                    "Modules\\User\\": "src/",
+                    "Modules\\User\\Database\\Factories\\": "database/factories/"
+                }
+            },
+            "license": [
+                "MIT"
+            ],
+            "description": "User module — shared kernel for user management",
+            "transport-options": {
+                "relative": true
+            }
+        },
+        {
+            "name": "modules/workspace",
+            "version": "dev-003-modular-migration",
+            "dist": {
+                "type": "path",
+                "url": "app-modules/workspace",
+                "reference": "b442e7690494604ed3f220584f662268f26178e3"
+            },
+            "require": {
+                "modules/core": "*@dev",
+                "modules/user": "*@dev"
+            },
+            "type": "library",
+            "extra": {
+                "laravel": {
+                    "providers": [
+                        "Modules\\Workspace\\Providers\\WorkspaceServiceProvider"
+                    ]
+                }
+            },
+            "autoload": {
+                "psr-4": {
+                    "Modules\\Workspace\\": "src/",
+                    "Modules\\Workspace\\Database\\Factories\\": "database/factories/"
+                }
+            },
+            "license": [
+                "MIT"
+            ],
+            "description": "Workspace module — workspace management, members and onboarding",
+            "transport-options": {
+                "relative": true
+            }
         },
         {
             "name": "monolog/monolog",
@@ -9752,7 +9881,12 @@
     ],
     "aliases": [],
     "minimum-stability": "stable",
-    "stability-flags": {},
+    "stability-flags": {
+        "modules/auth": 20,
+        "modules/core": 20,
+        "modules/user": 20,
+        "modules/workspace": 20
+    },
     "prefer-stable": true,
     "prefer-lowest": false,
     "platform": {

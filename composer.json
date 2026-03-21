@@ -8,12 +8,22 @@
         "framework"
     ],
     "license": "MIT",
+    "repositories": [
+        {"type": "path", "url": "app-modules/core"},
+        {"type": "path", "url": "app-modules/user"},
+        {"type": "path", "url": "app-modules/auth"},
+        {"type": "path", "url": "app-modules/workspace"}
+    ],
     "require": {
         "php": "^8.2",
         "laravel/framework": "^13.0",
         "laravel/octane": "^2.15",
         "laravel/tinker": "^3.0",
         "mallardduck/blade-lucide-icons": "^1.24",
+        "modules/core": "*@dev",
+        "modules/user": "*@dev",
+        "modules/auth": "*@dev",
+        "modules/workspace": "*@dev",
         "php-flasher/flasher-noty-laravel": "^2.5"
     },
     "require-dev": {
@@ -32,6 +42,7 @@
     "autoload": {
         "psr-4": {
             "App\\": "app/",
+            "App\\PHPStan\\": "phpstan/",
             "Database\\Factories\\": "database/factories/",
             "Database\\Seeders\\": "database/seeders/"
         }

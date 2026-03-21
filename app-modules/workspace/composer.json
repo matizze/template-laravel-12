@@ -1,0 +1,24 @@
+{
+    "name": "modules/workspace",
+    "description": "Workspace module — workspace management, members and onboarding",
+    "type": "library",
+    "license": "MIT",
+    "require": {
+        "modules/core": "*@dev",
+        "modules/user": "*@dev"
+    },
+    "autoload": {
+        "psr-4": {
+            "Modules\\Workspace\\": "src/",
+            "Modules\\Workspace\\Database\\Factories\\": "database/factories/"
+        }
+    },
+    "extra": {
+        "laravel": {
+            "providers": [
+                "Modules\\Workspace\\Providers\\WorkspaceServiceProvider"
+            ]
+        }
+    },
+    "minimum-stability": "dev"
+}

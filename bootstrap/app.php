@@ -13,7 +13,7 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->trustProxies(at: '*');
         $middleware->alias([
-            'workspace' => \App\Http\Middleware\SetCurrentWorkspace::class,
+            'workspace' => \Modules\Workspace\Http\Middleware\SetCurrentWorkspace::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

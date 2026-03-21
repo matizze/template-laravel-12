@@ -1,0 +1,23 @@
+{
+    "name": "modules/user",
+    "description": "User module — shared kernel for user management",
+    "type": "library",
+    "license": "MIT",
+    "require": {
+        "modules/core": "*@dev"
+    },
+    "autoload": {
+        "psr-4": {
+            "Modules\\User\\": "src/",
+            "Modules\\User\\Database\\Factories\\": "database/factories/"
+        }
+    },
+    "extra": {
+        "laravel": {
+            "providers": [
+                "Modules\\User\\Providers\\UserServiceProvider"
+            ]
+        }
+    },
+    "minimum-stability": "dev"
+}
