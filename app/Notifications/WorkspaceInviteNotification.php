@@ -2,6 +2,7 @@
 
 namespace App\Notifications;
 
+use App\Enums\WorkspaceRole;
 use App\Models\Invitation;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -25,9 +26,10 @@ class WorkspaceInviteNotification extends Notification implements ShouldQueue
     public function toMail(object $notifiable): MailMessage
     {
         $acceptUrl = route('invitation.accept', $this->invitation->token);
+
         $workspaceName = $this->invitation->workspace?->name ?? 'Workspace';
 
-        /** @var \App\Enums\WorkspaceRole $role */
+        /** @var WorkspaceRole $role */
         $role = $this->invitation->role;
         $roleName = $role->value;
 

@@ -82,9 +82,14 @@ class MemberController extends Controller
         $user = $request->user();
 
         if (! $user) {
-            session(['invitation_token' => $token]);
+            $inviteeExists = User::where('email', $invitation->email)->exists();
+            $acceptPath = route('invitation.accept', $token, false);
 
-            return redirect()->route('login');
+            if ($inviteeExists) {
+                return redirect(route('login').'?redirect='.urlencode($acceptPath));
+            }
+
+            return redirect(route('register').'?redirect='.urlencode($acceptPath));
         }
 
         if ($user->email !== $invitation->email) {
