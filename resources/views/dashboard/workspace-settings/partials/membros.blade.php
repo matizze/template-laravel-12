@@ -10,7 +10,6 @@
         @endcan
     </div>
 
-    {{-- Tabela de Membros --}}
     <section class="border-dotted border border-gray-200 rounded-lg">
         <table class="w-full">
             <thead>
@@ -47,9 +46,8 @@
                         <td class="flex gap-2 px-4 py-4">
                             @can('manageMembers', $workspace)
                                 @if($membership->role !== \App\Enums\WorkspaceRole::Owner)
-                                    {{-- Alterar função --}}
                                     <form method="POST" action="{{ route('workspace.members.updateRole', [$workspace, $membership->user]) }}">
-                                        @method('PUT')
+                                        @method('PATCH')
                                         @csrf
                                         <x-form.select
                                             name="role"
@@ -66,7 +64,6 @@
                                         </x-form.select>
                                     </form>
 
-                                    {{-- Remover membro --}}
                                     <div x-data="{
                                         confirmRemove() {
                                             return confirm('Tem certeza que deseja remover este membro?');
@@ -104,7 +101,6 @@
         </table>
     </section>
 
-    {{-- Convites Pendentes --}}
     @if($pendingInvitations->isNotEmpty())
         <div>
             <h3 class="text-lg font-bold text-blue-dark mb-3">Convites pendentes</h3>

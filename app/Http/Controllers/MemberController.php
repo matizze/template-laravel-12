@@ -120,7 +120,7 @@ class MemberController extends Controller
 
         if ($newRole === WorkspaceRole::Owner) {
             return redirect()
-                ->route('workspace.settings.show', $workspace)
+                ->route('workspace.members.index', $workspace)
                 ->with('error', 'Não é possível promover um membro a proprietário. Use a transferência de propriedade.');
         }
 
@@ -129,7 +129,7 @@ class MemberController extends Controller
         ]);
 
         return redirect()
-            ->route('workspace.settings.show', $workspace)
+            ->route('workspace.members.index', $workspace)
             ->with('success', 'Função do membro atualizada com sucesso!');
     }
 

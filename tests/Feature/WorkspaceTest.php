@@ -15,7 +15,6 @@ class WorkspaceTest extends TestCase
 {
     use RefreshDatabase;
 
-    // T018: test_user_can_create_workspace
     public function test_user_can_create_workspace(): void
     {
         $user = User::factory()->create();
@@ -35,14 +34,12 @@ class WorkspaceTest extends TestCase
             'description' => 'Descrição do workspace',
         ]);
 
-        // Verifica que o criador é membro com role owner
         $this->assertDatabaseHas('members', [
             'user_id' => $user->id,
             'role' => WorkspaceRole::Owner->value,
         ]);
     }
 
-    // T019: test_workspace_slug_is_generated_if_not_provided
     public function test_workspace_slug_is_generated_if_not_provided(): void
     {
         $user = User::factory()->create();
@@ -57,7 +54,6 @@ class WorkspaceTest extends TestCase
         ]);
     }
 
-    // T020: test_workspace_creation_requires_name
     public function test_workspace_creation_requires_name(): void
     {
         $user = User::factory()->create();
@@ -70,7 +66,6 @@ class WorkspaceTest extends TestCase
         $response->assertSessionHasErrors('name');
     }
 
-    // T021: test_workspace_slug_must_be_unique
     public function test_workspace_slug_must_be_unique(): void
     {
         $user = User::factory()->create();
@@ -86,7 +81,6 @@ class WorkspaceTest extends TestCase
         $response->assertSessionHasErrors('slug');
     }
 
-    // T022: test_workspace_name_has_max_length
     public function test_workspace_name_has_max_length(): void
     {
         $user = User::factory()->create();
@@ -99,7 +93,6 @@ class WorkspaceTest extends TestCase
         $response->assertSessionHasErrors('name');
     }
 
-    // T023: test_user_is_switched_to_new_workspace_after_creation
     public function test_user_is_switched_to_new_workspace_after_creation(): void
     {
         $user = User::factory()->create();
@@ -114,7 +107,6 @@ class WorkspaceTest extends TestCase
         $this->assertEquals($workspace->id, session('current_workspace_id'));
     }
 
-    // T024: test_guest_cannot_create_workspace
     public function test_guest_cannot_create_workspace(): void
     {
         $response = $this->post(route('workspace.store'), [
@@ -124,7 +116,6 @@ class WorkspaceTest extends TestCase
         $response->assertRedirect('/auth/login');
     }
 
-    // T025: test_user_can_switch_between_workspaces
     public function test_user_can_switch_between_workspaces(): void
     {
         $user = User::factory()->create();
@@ -141,7 +132,6 @@ class WorkspaceTest extends TestCase
         $this->assertEquals($workspace2->id, session('current_workspace_id'));
     }
 
-    // T061: test_owner_can_update_workspace_name
     public function test_owner_can_update_workspace_name(): void
     {
         $user = User::factory()->create();
@@ -162,7 +152,6 @@ class WorkspaceTest extends TestCase
         ]);
     }
 
-    // T062: test_owner_can_update_workspace_description
     public function test_owner_can_update_workspace_description(): void
     {
         $user = User::factory()->create();
@@ -184,7 +173,6 @@ class WorkspaceTest extends TestCase
         ]);
     }
 
-    // T063: test_workspace_slug_validation_on_update
     public function test_workspace_slug_validation_on_update(): void
     {
         $user = User::factory()->create();
@@ -202,7 +190,6 @@ class WorkspaceTest extends TestCase
         $response->assertSessionHasErrors('slug');
     }
 
-    // T064: test_member_cannot_update_workspace
     public function test_member_cannot_update_workspace(): void
     {
         $owner = User::factory()->create();
@@ -221,7 +208,6 @@ class WorkspaceTest extends TestCase
         $response->assertForbidden();
     }
 
-    // T065: test_owner_can_delete_workspace
     public function test_owner_can_delete_workspace(): void
     {
         $user = User::factory()->create();
@@ -238,7 +224,6 @@ class WorkspaceTest extends TestCase
         ]);
     }
 
-    // T066: test_member_cannot_delete_workspace
     public function test_member_cannot_delete_workspace(): void
     {
         $owner = User::factory()->create();
@@ -258,7 +243,6 @@ class WorkspaceTest extends TestCase
         ]);
     }
 
-    // T067: test_workspace_deletion_removes_associated_data
     public function test_workspace_deletion_removes_associated_data(): void
     {
         $user = User::factory()->create();
@@ -278,7 +262,6 @@ class WorkspaceTest extends TestCase
         $this->assertDatabaseMissing('invitations', ['workspace_id' => $workspace->id]);
     }
 
-    // T068: test_workspace_deletion_with_projects_succeeds
     public function test_workspace_deletion_with_projects_succeeds(): void
     {
         $user = User::factory()->create();
@@ -298,13 +281,11 @@ class WorkspaceTest extends TestCase
         $response->assertRedirect(route('dashboard'));
 
         $this->assertDatabaseMissing('workspaces', ['id' => $workspace->id]);
-        // Projetos são excluídos em cascata junto com o workspace (onDelete: cascade)
         $this->assertDatabaseMissing('projects', [
             'id' => $project->id,
         ]);
     }
 
-    // T087: test_owner_can_transfer_ownership
     public function test_owner_can_transfer_ownership(): void
     {
         $owner = User::factory()->create();
@@ -332,7 +313,6 @@ class WorkspaceTest extends TestCase
         ]);
     }
 
-    // T088: test_ownership_transfer_demotes_old_owner
     public function test_ownership_transfer_demotes_old_owner(): void
     {
         $owner = User::factory()->create();
@@ -358,7 +338,6 @@ class WorkspaceTest extends TestCase
         ]);
     }
 
-    // T089: test_ownership_transfer_promotes_new_owner
     public function test_ownership_transfer_promotes_new_owner(): void
     {
         $owner = User::factory()->create();
@@ -387,7 +366,6 @@ class WorkspaceTest extends TestCase
         $this->assertEquals($newOwner->id, $workspace->user_id);
     }
 
-    // T090: test_cannot_transfer_to_non_member
     public function test_cannot_transfer_to_non_member(): void
     {
         $owner = User::factory()->create();
@@ -403,7 +381,6 @@ class WorkspaceTest extends TestCase
 
         $response->assertSessionHasErrors('user_id');
 
-        // Owner should still be the owner
         $this->assertDatabaseHas('members', [
             'user_id' => $owner->id,
             'workspace_id' => $workspace->id,
@@ -411,7 +388,6 @@ class WorkspaceTest extends TestCase
         ]);
     }
 
-    // T091: test_admin_cannot_transfer_ownership
     public function test_admin_cannot_transfer_ownership(): void
     {
         $owner = User::factory()->create();
@@ -436,10 +412,9 @@ class WorkspaceTest extends TestCase
                 'user_id' => $anotherMember->id,
             ]);
 
-        $response->assertStatus(403);
+        $response->assertForbidden();
     }
 
-    // T092: test_member_cannot_transfer_ownership
     public function test_member_cannot_transfer_ownership(): void
     {
         $owner = User::factory()->create();
@@ -458,6 +433,113 @@ class WorkspaceTest extends TestCase
                 'user_id' => $owner->id,
             ]);
 
-        $response->assertStatus(403);
+        $response->assertForbidden();
+    }
+
+    public function test_owner_can_update_member_role_via_patch(): void
+    {
+        $owner = User::factory()->create();
+        $workspace = Workspace::factory()->create(['user_id' => $owner->id]);
+        Member::factory()->owner()->create(['user_id' => $owner->id, 'workspace_id' => $workspace->id]);
+
+        $member = User::factory()->create();
+        Member::factory()->create([
+            'user_id' => $member->id,
+            'workspace_id' => $workspace->id,
+            'role' => WorkspaceRole::Member,
+        ]);
+
+        $response = $this->actingAs($owner)
+            ->patch(route('workspace.members.updateRole', [$workspace, $member]), [
+                'role' => WorkspaceRole::Admin->value,
+            ]);
+
+        $response->assertRedirect();
+        $this->assertDatabaseHas('members', [
+            'user_id' => $member->id,
+            'workspace_id' => $workspace->id,
+            'role' => WorkspaceRole::Admin->value,
+        ]);
+    }
+
+    public function test_admin_can_update_member_role_via_patch(): void
+    {
+        $owner = User::factory()->create();
+        $workspace = Workspace::factory()->create(['user_id' => $owner->id]);
+        Member::factory()->owner()->create(['user_id' => $owner->id, 'workspace_id' => $workspace->id]);
+
+        $admin = User::factory()->create();
+        Member::factory()->admin()->create([
+            'user_id' => $admin->id,
+            'workspace_id' => $workspace->id,
+        ]);
+
+        $member = User::factory()->create();
+        Member::factory()->create([
+            'user_id' => $member->id,
+            'workspace_id' => $workspace->id,
+            'role' => WorkspaceRole::Member,
+        ]);
+
+        $response = $this->actingAs($admin)
+            ->patch(route('workspace.members.updateRole', [$workspace, $member]), [
+                'role' => WorkspaceRole::Viewer->value,
+            ]);
+
+        $response->assertRedirect();
+        $this->assertDatabaseHas('members', [
+            'user_id' => $member->id,
+            'workspace_id' => $workspace->id,
+            'role' => WorkspaceRole::Viewer->value,
+        ]);
+    }
+
+    public function test_member_without_permission_receives_403_on_role_update(): void
+    {
+        $owner = User::factory()->create();
+        $workspace = Workspace::factory()->create(['user_id' => $owner->id]);
+        Member::factory()->owner()->create(['user_id' => $owner->id, 'workspace_id' => $workspace->id]);
+
+        $member = User::factory()->create();
+        Member::factory()->create([
+            'user_id' => $member->id,
+            'workspace_id' => $workspace->id,
+            'role' => WorkspaceRole::Member,
+        ]);
+
+        $anotherMember = User::factory()->create();
+        Member::factory()->create([
+            'user_id' => $anotherMember->id,
+            'workspace_id' => $workspace->id,
+            'role' => WorkspaceRole::Member,
+        ]);
+
+        $response = $this->actingAs($member)
+            ->patch(route('workspace.members.updateRole', [$workspace, $anotherMember]), [
+                'role' => WorkspaceRole::Admin->value,
+            ]);
+
+        $response->assertForbidden();
+    }
+
+    public function test_put_request_to_update_role_returns_405(): void
+    {
+        $owner = User::factory()->create();
+        $workspace = Workspace::factory()->create(['user_id' => $owner->id]);
+        Member::factory()->owner()->create(['user_id' => $owner->id, 'workspace_id' => $workspace->id]);
+
+        $member = User::factory()->create();
+        Member::factory()->create([
+            'user_id' => $member->id,
+            'workspace_id' => $workspace->id,
+            'role' => WorkspaceRole::Member,
+        ]);
+
+        $response = $this->actingAs($owner)
+            ->put(route('workspace.members.updateRole', [$workspace, $member]), [
+                'role' => WorkspaceRole::Admin->value,
+            ]);
+
+        $response->assertStatus(405);
     }
 }
