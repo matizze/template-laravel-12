@@ -384,3 +384,10 @@ $this->app->singleton(Service::class, fn () => new Service(fn () => request()));
 - To filter on a particular test name: `php artisan test --compact --filter=testName` (recommended after making a change to a related file).
 
 </laravel-boost-guidelines>
+
+## Active Technologies
+- PHP 8.4 / Laravel 12 + Laravel Blade templating, Laravel HTTP method spoofing (002-fix-role-form-method)
+- SQLite (dev) / PostgreSQL (prod) — `members` table with `role` column (002-fix-role-form-method)
+
+## Recent Changes
+- 002-fix-role-form-method: Added PHP 8.4 / Laravel 12 + Laravel Blade templating, Laravel HTTP method spoofing

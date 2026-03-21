@@ -460,4 +460,115 @@ class WorkspaceTest extends TestCase
 
         $response->assertStatus(403);
     }
+
+    // T002: test_owner_can_update_member_role_via_patch
+    public function test_owner_can_update_member_role_via_patch(): void
+    {
+        $owner = User::factory()->create();
+        $workspace = Workspace::factory()->create(['user_id' => $owner->id]);
+        Member::factory()->owner()->create(['user_id' => $owner->id, 'workspace_id' => $workspace->id]);
+
+        $member = User::factory()->create();
+        Member::factory()->create([
+            'user_id' => $member->id,
+            'workspace_id' => $workspace->id,
+            'role' => WorkspaceRole::Member,
+        ]);
+
+        $response = $this->actingAs($owner)
+            ->patch(route('workspace.members.updateRole', [$workspace, $member]), [
+                'role' => WorkspaceRole::Admin->value,
+            ]);
+
+        $response->assertRedirect();
+        $this->assertDatabaseHas('members', [
+            'user_id' => $member->id,
+            'workspace_id' => $workspace->id,
+            'role' => WorkspaceRole::Admin->value,
+        ]);
+    }
+
+    // T003: test_admin_can_update_member_role_via_patch
+    public function test_admin_can_update_member_role_via_patch(): void
+    {
+        $owner = User::factory()->create();
+        $workspace = Workspace::factory()->create(['user_id' => $owner->id]);
+        Member::factory()->owner()->create(['user_id' => $owner->id, 'workspace_id' => $workspace->id]);
+
+        $admin = User::factory()->create();
+        Member::factory()->admin()->create([
+            'user_id' => $admin->id,
+            'workspace_id' => $workspace->id,
+        ]);
+
+        $member = User::factory()->create();
+        Member::factory()->create([
+            'user_id' => $member->id,
+            'workspace_id' => $workspace->id,
+            'role' => WorkspaceRole::Member,
+        ]);
+
+        $response = $this->actingAs($admin)
+            ->patch(route('workspace.members.updateRole', [$workspace, $member]), [
+                'role' => WorkspaceRole::Viewer->value,
+            ]);
+
+        $response->assertRedirect();
+        $this->assertDatabaseHas('members', [
+            'user_id' => $member->id,
+            'workspace_id' => $workspace->id,
+            'role' => WorkspaceRole::Viewer->value,
+        ]);
+    }
+
+    // T004: test_member_without_permission_receives_403_on_role_update
+    public function test_member_without_permission_receives_403_on_role_update(): void
+    {
+        $owner = User::factory()->create();
+        $workspace = Workspace::factory()->create(['user_id' => $owner->id]);
+        Member::factory()->owner()->create(['user_id' => $owner->id, 'workspace_id' => $workspace->id]);
+
+        $member = User::factory()->create();
+        Member::factory()->create([
+            'user_id' => $member->id,
+            'workspace_id' => $workspace->id,
+            'role' => WorkspaceRole::Member,
+        ]);
+
+        $anotherMember = User::factory()->create();
+        Member::factory()->create([
+            'user_id' => $anotherMember->id,
+            'workspace_id' => $workspace->id,
+            'role' => WorkspaceRole::Member,
+        ]);
+
+        $response = $this->actingAs($member)
+            ->patch(route('workspace.members.updateRole', [$workspace, $anotherMember]), [
+                'role' => WorkspaceRole::Admin->value,
+            ]);
+
+        $response->assertStatus(403);
+    }
+
+    // T005: test_put_request_to_update_role_returns_405
+    public function test_put_request_to_update_role_returns_405(): void
+    {
+        $owner = User::factory()->create();
+        $workspace = Workspace::factory()->create(['user_id' => $owner->id]);
+        Member::factory()->owner()->create(['user_id' => $owner->id, 'workspace_id' => $workspace->id]);
+
+        $member = User::factory()->create();
+        Member::factory()->create([
+            'user_id' => $member->id,
+            'workspace_id' => $workspace->id,
+            'role' => WorkspaceRole::Member,
+        ]);
+
+        $response = $this->actingAs($owner)
+            ->put(route('workspace.members.updateRole', [$workspace, $member]), [
+                'role' => WorkspaceRole::Admin->value,
+            ]);
+
+        $response->assertStatus(405);
+    }
 }

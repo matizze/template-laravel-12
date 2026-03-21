@@ -49,7 +49,7 @@
                                 @if($membership->role !== \App\Enums\WorkspaceRole::Owner)
                                     {{-- Alterar função --}}
                                     <form method="POST" action="{{ route('workspace.members.updateRole', [$workspace, $membership->user]) }}">
-                                        @method('PUT')
+                                        @method('PATCH')
                                         @csrf
                                         <x-form.select
                                             name="role"
