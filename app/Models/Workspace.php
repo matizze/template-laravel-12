@@ -82,11 +82,6 @@ class Workspace extends Model
         return $this->hasMany(Member::class);
     }
 
-    public function projects(): HasMany
-    {
-        return $this->hasMany(Project::class);
-    }
-
     public function invitations(): HasMany
     {
         return $this->hasMany(Invitation::class);
