@@ -384,10 +384,3 @@ $this->app->singleton(Service::class, fn () => new Service(fn () => request()));
 - To filter on a particular test name: `php artisan test --compact --filter=testName` (recommended after making a change to a related file).
 
 </laravel-boost-guidelines>
-
-## Active Technologies
-- PHP 8.4 (requires ^8.2) + Laravel 13 (framework), Laravel Octane 2 (runtime), PHPUnit 11 (testing), PHPFlasher/Noty (flash messages) (002-fix-invite-notification)
-- SQLite (development), PostgreSQL (production); `invitations` table stores workspace invites (002-fix-invite-notification)
-
-## Recent Changes
-- 002-fix-invite-notification: Added PHP 8.4 (requires ^8.2) + Laravel 13 (framework), Laravel Octane 2 (runtime), PHPUnit 11 (testing), PHPFlasher/Noty (flash messages)
