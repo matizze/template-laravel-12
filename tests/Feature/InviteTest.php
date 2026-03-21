@@ -591,8 +591,8 @@ class InviteTest extends TestCase
 
         $response->assertRedirect(route('invitation.accept', $invitation->token));
 
-        // Token consumed — no longer in session
-        $this->assertNull(session('invitation_token'));
+        // Token kept in session until accept() clears it on success
+        $this->assertEquals($invitation->token, session('invitation_token'));
     }
 
     // T098: test_registration_without_invitation_token_redirects_to_onboarding
@@ -630,8 +630,8 @@ class InviteTest extends TestCase
 
         $response->assertRedirect(route('invitation.accept', $invitation->token));
 
-        // Token consumed — no longer in session
-        $this->assertNull(session('invitation_token'));
+        // Token kept in session until accept() clears it on success
+        $this->assertEquals($invitation->token, session('invitation_token'));
     }
 
     // T097: test_login_without_invitation_token_redirects_to_dashboard

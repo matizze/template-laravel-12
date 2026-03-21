@@ -94,6 +94,8 @@ class MemberController extends Controller
             $invitation->update(['accepted_at' => now()]);
         });
 
+        $request->session()->forget('invitation_token');
+
         Workspace::setCurrentModel($invitation->workspace);
 
         return redirect()
