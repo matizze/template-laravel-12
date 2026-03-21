@@ -13,6 +13,7 @@ use App\Notifications\WorkspaceInviteNotification;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Notification;
 use Illuminate\View\View;
 
 class MemberController extends Controller
@@ -47,6 +48,9 @@ class MemberController extends Controller
 
         if ($invitee) {
             $invitee->notify(new WorkspaceInviteNotification($invitation));
+        } else {
+            Notification::route('mail', $request->validated('email'))
+                ->notify(new WorkspaceInviteNotification($invitation));
         }
 
         return redirect()

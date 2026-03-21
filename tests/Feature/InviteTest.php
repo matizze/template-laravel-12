@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Enums\WorkspaceRole;
 use App\Models\Invitation;
 use App\Models\Member;
+use App\Models\Project;
 use App\Models\User;
 use App\Models\Workspace;
 use App\Notifications\WorkspaceInviteNotification;
@@ -435,7 +436,7 @@ class InviteTest extends TestCase
         ]);
 
         // Create a project belonging to this member in the workspace
-        \App\Models\Project::create([
+        Project::create([
             'name' => 'Member Project',
             'description' => 'Test project',
             'user_id' => $member->id,
@@ -589,6 +590,30 @@ class InviteTest extends TestCase
             ]);
 
         $response->assertStatus(404);
+    }
+
+    // T003: test_invite_sends_notification_to_unregistered_email
+    public function test_invite_sends_notification_to_unregistered_email(): void
+    {
+        Notification::fake();
+
+        [$owner, $workspace] = $this->createWorkspaceWithOwner();
+        $this->setCurrentWorkspace($workspace);
+
+        $unregisteredEmail = 'unregistered@example.com';
+
+        $this->actingAs($owner)
+            ->post(route('workspace.members.invite', $workspace), [
+                'email' => $unregisteredEmail,
+                'role' => WorkspaceRole::Member->value,
+            ]);
+
+        Notification::assertSentOnDemand(
+            WorkspaceInviteNotification::class,
+            function ($notification, $channels, $notifiable) use ($unregisteredEmail) {
+                return $notifiable->routes['mail'] === $unregisteredEmail;
+            }
+        );
     }
 
     // T094: test_cannot_remove_member_from_another_workspace
