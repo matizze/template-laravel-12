@@ -16,11 +16,11 @@
             {{-- Previous --}}
             @if ($paginator->onFirstPage())
                 <span class="px-3 py-2 text-sm text-gray-300 bg-gray-100 cursor-not-allowed">
-                    <x-lucide-chevron-left class="size-4" />
+                    <x-icon name="lucide-chevron-left" class="size-4" />
                 </span>
             @else
                 <a href="{{ $paginator->previousPageUrl() }}" class="px-3 py-2 text-sm text-gray-400 bg-gray-100 hover:bg-gray-200/30">
-                    <x-lucide-chevron-left class="size-4" />
+                    <x-icon name="lucide-chevron-left" class="size-4" />
                 </a>
             @endif
 
@@ -36,11 +36,11 @@
             {{-- Next --}}
             @if ($paginator->hasMorePages())
                 <a href="{{ $paginator->nextPageUrl() }}" class="px-3 py-2 text-sm text-gray-400 bg-gray-100 hover:bg-gray-200/40">
-                    <x-lucide-chevron-right class="size-4" />
+                    <x-icon name="lucide-chevron-right" class="size-4" />
                 </a>
             @else
                 <span class="px-3 py-2 text-sm text-gray-300 bg-gray-100 cursor-not-allowed">
-                    <x-lucide-chevron-right class="size-4" />
+                    <x-icon name="lucide-chevron-right" class="size-4" />
                 </span>
             @endif
         </div>

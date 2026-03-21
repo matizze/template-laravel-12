@@ -9,11 +9,15 @@
                     alt="Dashboard"
                     class="size-11 select-none pointer-events-none"
                 />
-                <span>
+                <div>
                     <h1 class="text-lg font-bold text-gray-100">{{ config('app.name') }}</h1>
                     <p class="text-xss uppercase text-blue-light">{{ auth()->user()->role }}</p>
-                </span>
+                </div>
             </header>
+
+            <div class="px-4 py-2">
+                <x-workspace-switcher :workspaces="$workspaces" :currentWorkspace="$currentWorkspace" />
+            </div>
 
             <nav class="flex px-4 py-5 flex-col space-y-1">
                 <x-nav-item icon="layout-dashboard" route="dashboard">

@@ -22,7 +22,7 @@
                         'border-transparent text-gray-400 hover:text-gray-600 hover:border-gray-200' => $active !== 'profile',
                     ])
                 >
-                    <x-lucide-user class="size-4" />
+                    <x-icon name="lucide-user" class="size-4" />
                     <span>Perfil</span>
                 </a>
 
@@ -34,7 +34,7 @@
                         'border-transparent text-gray-400 hover:text-gray-600 hover:border-gray-200' => $active !== 'password',
                     ])
                 >
-                    <x-lucide-lock class="size-4" />
+                    <x-icon name="lucide-lock" class="size-4" />
                     <span>Redefinir Senha</span>
                 </a>
 
@@ -47,7 +47,7 @@
                             'border-transparent text-gray-400 hover:text-gray-600 hover:border-gray-200' => $active !== 'users',
                         ])
                     >
-                        <x-lucide-shield class="size-4" />
+                        <x-icon name="lucide-shield" class="size-4" />
                         <span>Usuários</span>
                     </a>
                 @endcan

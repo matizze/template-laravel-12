@@ -22,6 +22,6 @@ class RegisterController extends Controller
 
         Auth::login($user);
 
-        return redirect('dashboard')->with('success', 'Registro realizado com sucesso!');
+        return redirect()->route('onboarding');
     }
 }

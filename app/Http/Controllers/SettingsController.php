@@ -2,10 +2,13 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\WorkspaceRole;
 use App\Http\Requests\DeleteAccountRequest;
 use App\Http\Requests\UpdatePasswordRequest;
 use App\Http\Requests\UpdateProfileRequest;
+use App\Models\Member;
 use App\Models\User;
+use App\Models\Workspace;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -53,6 +56,20 @@ class SettingsController extends Controller
     public function destroy(DeleteAccountRequest $request): RedirectResponse
     {
         $user = Auth::user();
+
+        $ownsWorkspaces = Member::where('user_id', $user->id)
+            ->where('role', WorkspaceRole::Owner)
+            ->exists();
+
+        if ($ownsWorkspaces) {
+            return redirect()
+                ->route('settings.index', ['tab' => 'profile'])
+                ->with('error', 'Você precisa transferir a propriedade dos seus workspaces antes de excluir sua conta.');
+        }
+
+        Member::where('user_id', $user->id)->delete();
+
+        Workspace::forgetCurrent();
 
         Auth::logout();
 

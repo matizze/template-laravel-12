@@ -1,0 +1,16 @@
+{
+  "enabledPlugins": {
+    "laravel-boost@claude-plugins-official": true
+  },
+  "mcpServers": {
+    "herd": {
+      "command": "php",
+      "args": [
+        "/Applications/Herd.app/Contents/Resources/herd-mcp.phar"
+      ],
+      "env": {
+        "SITE_PATH": "${PROJECT_CWD}"
+      }
+    }
+  }
+}

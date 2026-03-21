@@ -18,6 +18,9 @@ class RegisterFlowTest extends DuskTestCase
                 ->type('#email', 'novo@example.com')
                 ->type('#password', 'password123')
                 ->press('Cadastrar')
+                ->waitForText('Criar workspace')
+                ->assertPathIs('/onboarding')
+                ->press('Criar workspace')
                 ->waitForText('Dashboard')
                 ->assertPathIs('/dashboard')
                 ->assertSee('Novo Usuário');

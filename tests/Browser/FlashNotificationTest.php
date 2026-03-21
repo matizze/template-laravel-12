@@ -2,7 +2,9 @@
 
 namespace Tests\Browser;
 
+use App\Models\Member;
 use App\Models\User;
+use App\Models\Workspace;
 use Illuminate\Foundation\Testing\DatabaseMigrations;
 use Laravel\Dusk\Browser;
 use Tests\DuskTestCase;
@@ -31,6 +33,8 @@ class FlashNotificationTest extends DuskTestCase
     public function test_flash_notification_appears_after_profile_update(): void
     {
         $user = User::factory()->create();
+        $workspace = Workspace::factory()->for($user, 'owner')->create();
+        Member::factory()->owner()->create(['user_id' => $user->id, 'workspace_id' => $workspace->id]);
 
         $this->browse(function (Browser $browser) use ($user) {
             $browser->loginAs($user)
@@ -49,6 +53,8 @@ class FlashNotificationTest extends DuskTestCase
         $user = User::factory()->create([
             'password' => 'password123',
         ]);
+        $workspace = Workspace::factory()->for($user, 'owner')->create();
+        Member::factory()->owner()->create(['user_id' => $user->id, 'workspace_id' => $workspace->id]);
 
         $this->browse(function (Browser $browser) use ($user) {
             $browser->loginAs($user)
