@@ -384,3 +384,7 @@ $this->app->singleton(Service::class, fn () => new Service(fn () => request()));
 - To filter on a particular test name: `php artisan test --compact --filter=testName` (recommended after making a change to a related file).
 
 </laravel-boost-guidelines>
+
+## Active Technologies
+- PHP 8.4 / Laravel 12 + InterNACHI/modular, PHPStan (larastan), Laravel Pin (003-modular-migration)
+- SQLite (dev), PostgreSQL (prod) — sem alterações de schema (003-modular-migration)
