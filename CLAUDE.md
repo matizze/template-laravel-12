@@ -83,12 +83,23 @@ php artisan create:user --admin      # create admin user
 - PHPFlasher consumes flash session data — do NOT use `assertSessionHas` for flash keys (`success`, `error`, etc.)
 
 ### Dusk (Browser Tests)
-- Run with `php artisan dusk` (requires `composer dev` or server running)
+- Run with `php artisan dusk` — requires a running server via one of:
+  - `composer dev` (local dev server on `http://localhost:8000`)
+  - **Herd site active** (`https://template-laravel-12.test`) — preferred for production-like testing
+- When using Herd, `APP_URL` in `.env.dusk.local` **must** point to the Herd site: `https://template-laravel-12.test`
+- When using `composer dev`, set `APP_URL=http://localhost:8000` in `.env.dusk.local`
 - Create tests with `php artisan make:dusk-test TestName`
 - Dusk tests extend `Laravel\Dusk\TestCase` and live in `tests/Browser/`
 - Use Dusk for flows that require JavaScript execution (Alpine.js interactions, modals, dynamic UI)
 - Use PHPUnit feature tests for everything else — Dusk is slower and requires a running browser
-- Dusk uses its own `.env.dusk.local` environment file
+- Dusk uses its own `.env.dusk.local` environment file (never commit secrets in this file)
+
+### Development Environment (Herd)
+- This project uses **Laravel Herd** as the local development environment
+- Herd site: `https://template-laravel-12.test` (HTTPS via Herd's automatic SSL)
+- **Herd MCP** (`herd` in `.claude/settings.json`) — use it to query site info, PHP versions, services, and debug sessions
+- **Laravel Boost MCP** (`laravel-boost` plugin) — use `search-docs` for Laravel ecosystem documentation, `database-query` for DB inspection, `last-error` for recent errors, and `browser-logs` for frontend debugging
+- Always use the `get-absolute-url` tool from Boost to generate correct URLs for this project
 
 ## Conventions
 
