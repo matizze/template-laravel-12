@@ -384,10 +384,3 @@ $this->app->singleton(Service::class, fn () => new Service(fn () => request()));
 - To filter on a particular test name: `php artisan test --compact --filter=testName` (recommended after making a change to a related file).
 
 </laravel-boost-guidelines>
-
-## Active Technologies
-- PHP 8.4 + Laravel 13, PHPUnit 11 (002-fix-invitation-token-session)
-- SQLite (dev) / PostgreSQL (prod) — no schema changes required (002-fix-invitation-token-session)
-
-## Recent Changes
-- 002-fix-invitation-token-session: Added PHP 8.4 + Laravel 13, PHPUnit 11
