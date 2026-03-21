@@ -37,6 +37,11 @@ class MemberController extends Controller
 
     public function invite(InviteMemberRequest $request, Workspace $workspace): RedirectResponse
     {
+        Invitation::where('workspace_id', $workspace->id)
+            ->where('email', $request->validated('email'))
+            ->whereNotNull('accepted_at')
+            ->delete();
+
         $invitation = Invitation::create([
             'workspace_id' => $workspace->id,
             'email' => $request->validated('email'),

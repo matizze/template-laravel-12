@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Enums\WorkspaceRole;
 use App\Models\Invitation;
 use App\Models\Member;
+use App\Models\Project;
 use App\Models\User;
 use App\Models\Workspace;
 use App\Notifications\WorkspaceInviteNotification;
@@ -676,6 +677,91 @@ class InviteTest extends TestCase
             'user_id' => $wrongUser->id,
             'workspace_id' => $workspace->id,
         ]);
+    }
+
+    // T001: test_former_member_can_be_reinvited
+    public function test_former_member_can_be_reinvited(): void
+    {
+        Notification::fake();
+
+        [$owner, $workspace] = $this->createWorkspaceWithOwner();
+        $this->setCurrentWorkspace($workspace);
+
+        // Seed an accepted invitation (former member, no active membership)
+        Invitation::factory()->accepted()->create([
+            'workspace_id' => $workspace->id,
+            'email' => 'former@example.com',
+            'user_id' => $owner->id,
+        ]);
+
+        $response = $this->actingAs($owner)
+            ->post(route('workspace.members.invite', $workspace), [
+                'email' => 'former@example.com',
+                'role' => WorkspaceRole::Member->value,
+            ]);
+
+        $response->assertRedirect();
+
+        // New pending invitation must exist
+        $this->assertDatabaseHas('invitations', [
+            'workspace_id' => $workspace->id,
+            'email' => 'former@example.com',
+            'accepted_at' => null,
+        ]);
+
+        // Old accepted invitation must be gone
+        $this->assertDatabaseMissing('invitations', [
+            'workspace_id' => $workspace->id,
+            'email' => 'former@example.com',
+            'accepted_at' => now()->toDateTimeString(),
+        ]);
+    }
+
+    // T003: test_reinvite_shows_success_notification
+    public function test_reinvite_shows_success_notification(): void
+    {
+        Notification::fake();
+
+        [$owner, $workspace] = $this->createWorkspaceWithOwner();
+        $this->setCurrentWorkspace($workspace);
+
+        Invitation::factory()->accepted()->create([
+            'workspace_id' => $workspace->id,
+            'email' => 'former@example.com',
+            'user_id' => $owner->id,
+        ]);
+
+        $response = $this->actingAs($owner)
+            ->post(route('workspace.members.invite', $workspace), [
+                'email' => 'former@example.com',
+                'role' => WorkspaceRole::Member->value,
+            ]);
+
+        $response->assertRedirect();
+        $response->assertSessionHasNoErrors();
+    }
+
+    // T004: test_pending_invite_shows_validation_error
+    public function test_pending_invite_shows_validation_error(): void
+    {
+        Notification::fake();
+
+        [$owner, $workspace] = $this->createWorkspaceWithOwner();
+        $this->setCurrentWorkspace($workspace);
+
+        Invitation::factory()->create([
+            'workspace_id' => $workspace->id,
+            'email' => 'pending@example.com',
+            'user_id' => $owner->id,
+        ]);
+
+        $response = $this->actingAs($owner)
+            ->post(route('workspace.members.invite', $workspace), [
+                'email' => 'pending@example.com',
+                'role' => WorkspaceRole::Member->value,
+            ]);
+
+        $response->assertSessionHasErrors('email');
     }
 
     // T094: test_cannot_remove_member_from_another_workspace
