@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Enums\WorkspaceRole;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -40,6 +41,15 @@ class Invitation extends Model
     public function workspace(): BelongsTo
     {
         return $this->belongsTo(Workspace::class);
+    }
+
+    /**
+     * @param  Builder<Invitation>  $query
+     * @return Builder<Invitation>
+     */
+    public function scopePending(Builder $query): Builder
+    {
+        return $query->whereNull('accepted_at');
     }
 
     public function isExpired(): bool

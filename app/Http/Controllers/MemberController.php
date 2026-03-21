@@ -27,8 +27,8 @@ class MemberController extends Controller
             ->with('user')
             ->get();
 
-        $pendingInvitations = $workspace->invitations()
-            ->whereNull('accepted_at')
+        $pendingInvitations = Invitation::where('workspace_id', $workspace->id)
+            ->pending()
             ->get();
 
         return view('dashboard.members.index', [
@@ -61,7 +61,7 @@ class MemberController extends Controller
     public function accept(Request $request, string $token): RedirectResponse
     {
         $invitation = Invitation::where('token', $token)
-            ->whereNull('accepted_at')
+            ->pending()
             ->firstOrFail();
 
         if ($invitation->isExpired()) {

@@ -10,7 +10,6 @@ use App\Models\Workspace;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Str;
 use Illuminate\View\View;
 
 class WorkspaceController extends Controller
@@ -24,12 +23,9 @@ class WorkspaceController extends Controller
 
     public function store(CreateWorkspaceRequest $request): RedirectResponse
     {
-        $name = $request->validated('name');
-        $slug = $request->validated('slug') ?: Str::slug($name);
-
         $workspace = Workspace::create([
-            'name' => $name,
-            'slug' => $slug,
+            'name' => $request->validated('name'),
+            'slug' => $request->validated('slug'),
             'description' => $request->validated('description'),
             'user_id' => $request->user()->id,
         ]);
