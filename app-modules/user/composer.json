@@ -1,0 +1,21 @@
+{
+    "name": "modules/user",
+    "description": "User module — user model, account management, admin CRUD",
+    "type": "library",
+    "license": "proprietary",
+    "require": {
+        "modules/core": "*@dev"
+    },
+    "autoload": {
+        "psr-4": {
+            "Modules\\User\\": "src/"
+        }
+    },
+    "extra": {
+        "laravel": {
+            "providers": [
+                "Modules\\User\\Providers\\UserServiceProvider"
+            ]
+        }
+    }
+}

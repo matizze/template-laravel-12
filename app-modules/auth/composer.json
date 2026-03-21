@@ -1,0 +1,22 @@
+{
+    "name": "modules/auth",
+    "description": "Auth module — authentication and password recovery",
+    "type": "library",
+    "license": "proprietary",
+    "require": {
+        "modules/core": "*@dev",
+        "modules/user": "*@dev"
+    },
+    "autoload": {
+        "psr-4": {
+            "Modules\\Auth\\": "src/"
+        }
+    },
+    "extra": {
+        "laravel": {
+            "providers": [
+                "Modules\\Auth\\Providers\\AuthServiceProvider"
+            ]
+        }
+    }
+}

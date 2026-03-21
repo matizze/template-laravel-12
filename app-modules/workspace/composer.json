@@ -1,0 +1,22 @@
+{
+    "name": "modules/workspace",
+    "description": "Workspace module — workspace management, members, onboarding",
+    "type": "library",
+    "license": "proprietary",
+    "require": {
+        "modules/core": "*@dev",
+        "modules/user": "*@dev"
+    },
+    "autoload": {
+        "psr-4": {
+            "Modules\\Workspace\\": "src/"
+        }
+    },
+    "extra": {
+        "laravel": {
+            "providers": [
+                "Modules\\Workspace\\Providers\\WorkspaceServiceProvider"
+            ]
+        }
+    }
+}
