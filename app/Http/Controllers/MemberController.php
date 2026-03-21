@@ -13,6 +13,7 @@ use App\Notifications\WorkspaceInviteNotification;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Notification;
 use Illuminate\View\View;
 
 class MemberController extends Controller
@@ -47,6 +48,9 @@ class MemberController extends Controller
 
         if ($invitee) {
             $invitee->notify(new WorkspaceInviteNotification($invitation));
+        } else {
+            Notification::route('mail', $request->validated('email'))
+                ->notify(new WorkspaceInviteNotification($invitation));
         }
 
         return redirect()
@@ -68,14 +72,12 @@ class MemberController extends Controller
 
         $user = $request->user();
 
-        // Se nao esta autenticado, salva o token na sessao e redireciona para login
         if (! $user) {
             session(['invitation_token' => $token]);
 
             return redirect()->route('login');
         }
 
-        // Verifica se o e-mail do usuario autenticado corresponde ao e-mail do convite
         if ($user->email !== $invitation->email) {
             return redirect()
                 ->route('dashboard')
@@ -103,17 +105,16 @@ class MemberController extends Controller
     {
         $member = $workspace->memberships()->where('user_id', $user->id)->firstOrFail();
 
-        // Impede promocao para Owner via updateRole; use transferOwnership() para isso
-        $novoRole = WorkspaceRole::from($request->validated('role'));
+        $newRole = WorkspaceRole::from($request->validated('role'));
 
-        if ($novoRole === WorkspaceRole::Owner) {
+        if ($newRole === WorkspaceRole::Owner) {
             return redirect()
                 ->route('workspace.settings.show', $workspace)
                 ->with('error', 'Não é possível promover um membro a proprietário. Use a transferência de propriedade.');
         }
 
         $workspace->members()->updateExistingPivot($user->id, [
-            'role' => $novoRole,
+            'role' => $newRole,
         ]);
 
         return redirect()
@@ -128,7 +129,6 @@ class MemberController extends Controller
         /** @var Member $member */
         $member = $workspace->memberships()->where('user_id', $user->id)->firstOrFail();
 
-        // Impede a remocao do proprietario do workspace
         if ($member->role === WorkspaceRole::Owner) {
             return redirect()
                 ->route('workspace.settings.show', $workspace)

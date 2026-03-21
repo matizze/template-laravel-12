@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Enums\WorkspaceRole;
 use App\Models\Invitation;
 use App\Models\Member;
+use App\Models\Project;
 use App\Models\User;
 use App\Models\Workspace;
 use App\Notifications\WorkspaceInviteNotification;
@@ -33,7 +34,6 @@ class InviteTest extends TestCase
         session(['current_workspace_id' => $workspace->id]);
     }
 
-    // T037: test_owner_can_invite_member
     public function test_owner_can_invite_member(): void
     {
         Notification::fake();
@@ -56,7 +56,6 @@ class InviteTest extends TestCase
         ]);
     }
 
-    // T038: test_admin_can_invite_member
     public function test_admin_can_invite_member(): void
     {
         Notification::fake();
@@ -85,7 +84,6 @@ class InviteTest extends TestCase
         ]);
     }
 
-    // T039: test_member_cannot_invite_member
     public function test_member_cannot_invite_member(): void
     {
         [$owner, $workspace] = $this->createWorkspaceWithOwner();
@@ -111,7 +109,6 @@ class InviteTest extends TestCase
         ]);
     }
 
-    // T040: test_invitation_is_created_and_email_sent
     public function test_invitation_is_created_and_email_sent(): void
     {
         Notification::fake();
@@ -138,7 +135,6 @@ class InviteTest extends TestCase
         );
     }
 
-    // T041: test_duplicate_invitation_prevented_for_same_email
     public function test_duplicate_invitation_prevented_for_same_email(): void
     {
         Notification::fake();
@@ -161,7 +157,6 @@ class InviteTest extends TestCase
         $response->assertSessionHasErrors('email');
     }
 
-    // T042: test_invitation_prevented_for_existing_member
     public function test_invitation_prevented_for_existing_member(): void
     {
         Notification::fake();
@@ -184,7 +179,6 @@ class InviteTest extends TestCase
         $response->assertSessionHasErrors('email');
     }
 
-    // T043: test_invitee_can_accept_invitation
     public function test_invitee_can_accept_invitation(): void
     {
         [$owner, $workspace] = $this->createWorkspaceWithOwner();
@@ -207,7 +201,6 @@ class InviteTest extends TestCase
         $this->assertNotNull($invitation->accepted_at);
     }
 
-    // T044: test_invitation_acceptance_creates_membership
     public function test_invitation_acceptance_creates_membership(): void
     {
         [$owner, $workspace] = $this->createWorkspaceWithOwner();
@@ -231,7 +224,6 @@ class InviteTest extends TestCase
         ]);
     }
 
-    // T045: test_owner_can_view_members_list
     public function test_owner_can_view_members_list(): void
     {
         [$owner, $workspace] = $this->createWorkspaceWithOwner();
@@ -243,7 +235,6 @@ class InviteTest extends TestCase
         $response->assertStatus(200);
     }
 
-    // T046: test_members_list_shows_pending_invitations
     public function test_members_list_shows_pending_invitations(): void
     {
         [$owner, $workspace] = $this->createWorkspaceWithOwner();
@@ -262,7 +253,6 @@ class InviteTest extends TestCase
         $response->assertSee('pending@example.com');
     }
 
-    // T047: test_owner_can_change_member_role
     public function test_owner_can_change_member_role(): void
     {
         [$owner, $workspace] = $this->createWorkspaceWithOwner();
@@ -289,7 +279,6 @@ class InviteTest extends TestCase
         ]);
     }
 
-    // T048: test_owner_can_remove_member
     public function test_owner_can_remove_member(): void
     {
         [$owner, $workspace] = $this->createWorkspaceWithOwner();
@@ -313,7 +302,6 @@ class InviteTest extends TestCase
         ]);
     }
 
-    // T049: test_viewer_cannot_manage_members
     public function test_viewer_cannot_manage_members(): void
     {
         [$owner, $workspace] = $this->createWorkspaceWithOwner();
@@ -334,7 +322,6 @@ class InviteTest extends TestCase
         $response->assertStatus(403);
     }
 
-    // T078: test_non_owner_member_can_leave_workspace
     public function test_non_owner_member_can_leave_workspace(): void
     {
         [$owner, $workspace] = $this->createWorkspaceWithOwner();
@@ -358,7 +345,6 @@ class InviteTest extends TestCase
         ]);
     }
 
-    // T079: test_owner_cannot_leave_workspace
     public function test_owner_cannot_leave_workspace(): void
     {
         [$owner, $workspace] = $this->createWorkspaceWithOwner();
@@ -376,7 +362,6 @@ class InviteTest extends TestCase
         ]);
     }
 
-    // T080: test_leaving_workspace_removes_membership
     public function test_leaving_workspace_removes_membership(): void
     {
         [$owner, $workspace] = $this->createWorkspaceWithOwner();
@@ -398,7 +383,6 @@ class InviteTest extends TestCase
         ]);
     }
 
-    // T081: test_leaving_workspace_revokes_access
     public function test_leaving_workspace_revokes_access(): void
     {
         [$owner, $workspace] = $this->createWorkspaceWithOwner();
@@ -414,14 +398,12 @@ class InviteTest extends TestCase
         $this->actingAs($member)
             ->post(route('workspace.members.leave', $workspace));
 
-        // After leaving, member has no workspaces and is redirected to onboarding
         $response = $this->actingAs($member)
             ->get(route('workspace.members.index', $workspace));
 
         $response->assertRedirect(route('onboarding'));
     }
 
-    // T082: test_member_with_projects_can_leave
     public function test_member_with_projects_can_leave(): void
     {
         [$owner, $workspace] = $this->createWorkspaceWithOwner();
@@ -434,8 +416,7 @@ class InviteTest extends TestCase
             'role' => WorkspaceRole::Member,
         ]);
 
-        // Create a project belonging to this member in the workspace
-        \App\Models\Project::create([
+        Project::create([
             'name' => 'Member Project',
             'description' => 'Test project',
             'user_id' => $member->id,
@@ -452,14 +433,12 @@ class InviteTest extends TestCase
             'workspace_id' => $workspace->id,
         ]);
 
-        // Project still exists
         $this->assertDatabaseHas('projects', [
             'name' => 'Member Project',
             'workspace_id' => $workspace->id,
         ]);
     }
 
-    // T083: test_user_cannot_accept_invitation_for_different_email
     public function test_user_cannot_accept_invitation_for_different_email(): void
     {
         [$owner, $workspace] = $this->createWorkspaceWithOwner();
@@ -478,18 +457,15 @@ class InviteTest extends TestCase
 
         $response->assertRedirect(route('dashboard'));
 
-        // Convite nao deve ser aceito
         $invitation->refresh();
         $this->assertNull($invitation->accepted_at);
 
-        // Membro nao deve ser criado
         $this->assertDatabaseMissing('members', [
             'user_id' => $wrongUser->id,
             'workspace_id' => $workspace->id,
         ]);
     }
 
-    // T084: test_guest_is_redirected_to_login_when_accepting_invitation
     public function test_guest_is_redirected_to_login_when_accepting_invitation(): void
     {
         [$owner, $workspace] = $this->createWorkspaceWithOwner();
@@ -507,7 +483,6 @@ class InviteTest extends TestCase
         $this->assertEquals($invitation->token, session('invitation_token'));
     }
 
-    // T085: test_cannot_promote_member_to_owner_via_update_role
     public function test_cannot_promote_member_to_owner_via_update_role(): void
     {
         [$owner, $workspace] = $this->createWorkspaceWithOwner();
@@ -527,7 +502,6 @@ class InviteTest extends TestCase
 
         $response->assertRedirect();
 
-        // Role nao deve ter sido alterada para Owner
         $this->assertDatabaseHas('members', [
             'user_id' => $memberUser->id,
             'workspace_id' => $workspace->id,
@@ -535,13 +509,11 @@ class InviteTest extends TestCase
         ]);
     }
 
-    // T086: test_cannot_remove_workspace_owner
     public function test_cannot_remove_workspace_owner(): void
     {
         [$owner, $workspace] = $this->createWorkspaceWithOwner();
         $this->setCurrentWorkspace($workspace);
 
-        // Adiciona um admin que tentara remover o owner
         $admin = User::factory()->create();
         Member::factory()->admin()->create([
             'user_id' => $admin->id,
@@ -553,7 +525,6 @@ class InviteTest extends TestCase
 
         $response->assertRedirect();
 
-        // Owner continua no workspace
         $this->assertDatabaseHas('members', [
             'user_id' => $owner->id,
             'workspace_id' => $workspace->id,
@@ -561,13 +532,11 @@ class InviteTest extends TestCase
         ]);
     }
 
-    // T093: test_cannot_update_role_of_member_from_another_workspace
     public function test_cannot_update_role_of_member_from_another_workspace(): void
     {
         [$owner1, $workspace1] = $this->createWorkspaceWithOwner();
         $this->setCurrentWorkspace($workspace1);
 
-        // Cria outro workspace com um membro
         $owner2 = User::factory()->create();
         $workspace2 = Workspace::factory()->create(['user_id' => $owner2->id]);
         Member::factory()->owner()->create([
@@ -582,7 +551,6 @@ class InviteTest extends TestCase
             'role' => WorkspaceRole::Member,
         ]);
 
-        // Tenta alterar role de membro do workspace2 usando rota do workspace1
         $response = $this->actingAs($owner1)
             ->patch(route('workspace.members.updateRole', [$workspace1, $memberUser]), [
                 'role' => WorkspaceRole::Admin->value,
@@ -591,13 +559,34 @@ class InviteTest extends TestCase
         $response->assertStatus(404);
     }
 
-    // T094: test_cannot_remove_member_from_another_workspace
+    public function test_invite_sends_notification_to_unregistered_email(): void
+    {
+        Notification::fake();
+
+        [$owner, $workspace] = $this->createWorkspaceWithOwner();
+        $this->setCurrentWorkspace($workspace);
+
+        $unregisteredEmail = 'unregistered@example.com';
+
+        $this->actingAs($owner)
+            ->post(route('workspace.members.invite', $workspace), [
+                'email' => $unregisteredEmail,
+                'role' => WorkspaceRole::Member->value,
+            ]);
+
+        Notification::assertSentOnDemand(
+            WorkspaceInviteNotification::class,
+            function ($notification, $channels, $notifiable) use ($unregisteredEmail) {
+                return $notifiable->routes['mail'] === $unregisteredEmail;
+            }
+        );
+    }
+
     public function test_cannot_remove_member_from_another_workspace(): void
     {
         [$owner1, $workspace1] = $this->createWorkspaceWithOwner();
         $this->setCurrentWorkspace($workspace1);
 
-        // Cria outro workspace com um membro
         $owner2 = User::factory()->create();
         $workspace2 = Workspace::factory()->create(['user_id' => $owner2->id]);
         Member::factory()->owner()->create([
@@ -612,13 +601,11 @@ class InviteTest extends TestCase
             'role' => WorkspaceRole::Member,
         ]);
 
-        // Tenta remover membro do workspace2 usando rota do workspace1
         $response = $this->actingAs($owner1)
             ->delete(route('workspace.members.remove', [$workspace1, $memberUser]));
 
         $response->assertStatus(404);
 
-        // Membro continua no workspace2
         $this->assertDatabaseHas('members', [
             'user_id' => $memberUser->id,
             'workspace_id' => $workspace2->id,
