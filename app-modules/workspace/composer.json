@@ -9,7 +9,8 @@
     },
     "autoload": {
         "psr-4": {
-            "Modules\\Workspace\\": "src/"
+            "Modules\\Workspace\\": "src/",
+            "Modules\\Workspace\\Database\\Factories\\": "database/factories/"
         }
     },
     "extra": {

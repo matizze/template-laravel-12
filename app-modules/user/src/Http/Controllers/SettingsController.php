@@ -2,10 +2,10 @@
 
 namespace Modules\User\Http\Controllers;
 
-use App\Enums\WorkspaceRole;
+use Modules\Workspace\Enums\WorkspaceRole;
 use App\Http\Controllers\Controller;
-use App\Models\Member;
-use App\Models\Workspace;
+use Modules\Workspace\Models\Member;
+use Modules\Workspace\Models\Workspace;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;

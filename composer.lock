@@ -2441,7 +2441,7 @@
             "dist": {
                 "type": "path",
                 "url": "app-modules/workspace",
-                "reference": "4acf86f5a5a287f58dba80441ec13bddb4349764"
+                "reference": "b442e7690494604ed3f220584f662268f26178e3"
             },
             "require": {
                 "modules/core": "*@dev",
@@ -2457,7 +2457,8 @@
             },
             "autoload": {
                 "psr-4": {
-                    "Modules\\Workspace\\": "src/"
+                    "Modules\\Workspace\\": "src/",
+                    "Modules\\Workspace\\Database\\Factories\\": "database/factories/"
                 }
             },
             "license": [

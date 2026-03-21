@@ -2,10 +2,10 @@
 
 namespace Tests\Feature;
 
-use App\Enums\WorkspaceRole;
-use App\Models\Member;
+use Modules\Workspace\Enums\WorkspaceRole;
+use Modules\Workspace\Models\Member;
 use Modules\User\Models\User;
-use App\Models\Workspace;
+use Modules\Workspace\Models\Workspace;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 

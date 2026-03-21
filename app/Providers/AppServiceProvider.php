@@ -2,8 +2,8 @@
 
 namespace App\Providers;
 
-use App\Models\Workspace;
-use App\Services\CurrentWorkspaceManager;
+use Modules\Workspace\Models\Workspace;
+use Modules\Workspace\Services\CurrentWorkspaceManager;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\View;
 use Illuminate\Support\ServiceProvider;

@@ -16,7 +16,7 @@
             </header>
 
             <div class="px-4 py-2">
-                <x-workspace-switcher :workspaces="$workspaces" :currentWorkspace="$currentWorkspace" />
+                <x-workspace::workspace-switcher :workspaces="$workspaces" :currentWorkspace="$currentWorkspace" />
             </div>
 
             <nav class="flex px-4 py-5 flex-col space-y-1">

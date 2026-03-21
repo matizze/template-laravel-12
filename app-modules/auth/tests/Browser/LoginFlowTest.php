@@ -2,10 +2,10 @@
 
 namespace Tests\Browser;
 
-use App\Enums\WorkspaceRole;
-use App\Models\Member;
+use Modules\Workspace\Enums\WorkspaceRole;
+use Modules\Workspace\Models\Member;
 use Modules\User\Models\User;
-use App\Models\Workspace;
+use Modules\Workspace\Models\Workspace;
 use Illuminate\Foundation\Testing\DatabaseMigrations;
 use Laravel\Dusk\Browser;
 use Tests\DuskTestCase;
