@@ -13,7 +13,7 @@ class WorkspaceInviteNotification extends Notification implements ShouldQueue
 {
     use Queueable;
 
-    public function __construct(public Invitation $invitation, public bool $isRegistered = true) {}
+    public function __construct(public Invitation $invitation) {}
 
     /**
      * @return array<int, string>
@@ -25,9 +25,7 @@ class WorkspaceInviteNotification extends Notification implements ShouldQueue
 
     public function toMail(object $notifiable): MailMessage
     {
-        $redirectPath = route('invitation.accept', $this->invitation->token, false);
-        $baseRoute = $this->isRegistered ? route('login') : route('register');
-        $acceptUrl = $baseRoute.'?redirect='.urlencode($redirectPath);
+        $acceptUrl = route('invitation.accept', $this->invitation->token);
 
         $workspaceName = $this->invitation->workspace?->name ?? 'Workspace';
 
