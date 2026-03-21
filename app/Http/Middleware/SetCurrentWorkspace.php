@@ -23,6 +23,8 @@ class SetCurrentWorkspace
                 Workspace::setCurrentModel($workspace);
             } else {
                 session()->forget('current_workspace_id');
+
+                return redirect()->route('onboarding');
             }
         }
 

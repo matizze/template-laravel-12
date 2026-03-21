@@ -414,11 +414,11 @@ class InviteTest extends TestCase
         $this->actingAs($member)
             ->post(route('workspace.members.leave', $workspace));
 
-        // After leaving, member should not be able to access workspace members list
+        // After leaving, member has no workspaces and is redirected to onboarding
         $response = $this->actingAs($member)
             ->get(route('workspace.members.index', $workspace));
 
-        $response->assertStatus(403);
+        $response->assertRedirect(route('onboarding'));
     }
 
     // T082: test_member_with_projects_can_leave

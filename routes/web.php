@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\MemberController;
+use App\Http\Controllers\OnboardingController;
 use App\Http\Controllers\SettingsController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\WorkspaceController;
@@ -12,6 +13,9 @@ Route::middleware('guest')->group(function () {
 });
 
 Route::middleware('auth')->group(function () {
+    Route::get('/onboarding', [OnboardingController::class, 'index'])->name('onboarding');
+    Route::post('/onboarding', [OnboardingController::class, 'store'])->name('onboarding.store');
+
     Route::middleware('workspace')->group(function () {
         Route::view('/dashboard', 'dashboard')->name('dashboard');
 
