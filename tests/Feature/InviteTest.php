@@ -679,7 +679,6 @@ class InviteTest extends TestCase
         ]);
     }
 
-    // T001: test_former_member_can_be_reinvited
     public function test_former_member_can_be_reinvited(): void
     {
         Notification::fake();
@@ -702,22 +701,15 @@ class InviteTest extends TestCase
 
         $response->assertRedirect();
 
-        // New pending invitation must exist
         $this->assertDatabaseHas('invitations', [
             'workspace_id' => $workspace->id,
             'email' => 'former@example.com',
             'accepted_at' => null,
         ]);
 
-        // Old accepted invitation must be gone
-        $this->assertDatabaseMissing('invitations', [
-            'workspace_id' => $workspace->id,
-            'email' => 'former@example.com',
-            'accepted_at' => now()->toDateTimeString(),
-        ]);
+        $this->assertDatabaseCount('invitations', 1);
     }
 
-    // T003: test_reinvite_shows_success_notification
     public function test_reinvite_shows_success_notification(): void
     {
         Notification::fake();
@@ -741,7 +733,6 @@ class InviteTest extends TestCase
         $response->assertSessionHasNoErrors();
     }
 
-    // T004: test_pending_invite_shows_validation_error
     public function test_pending_invite_shows_validation_error(): void
     {
         Notification::fake();
@@ -764,7 +755,6 @@ class InviteTest extends TestCase
         $response->assertSessionHasErrors('email');
     }
 
-    // T094: test_cannot_remove_member_from_another_workspace
     public function test_cannot_remove_member_from_another_workspace(): void
     {
         [$owner1, $workspace1] = $this->createWorkspaceWithOwner();
