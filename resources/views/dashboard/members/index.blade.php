@@ -58,15 +58,16 @@
                                         <form method="POST" action="{{ route('workspace.members.remove', [$workspace, $member->user]) }}">
                                             @csrf
                                             @method('DELETE')
-                                            <button
+                                            <x-button
                                                 type="submit"
-                                                class="text-red-500 hover:text-red-700 p-1"
+                                                variant="destructive-outline"
+                                                class="!h-auto !p-1"
                                                 title="Remover membro"
                                                 aria-label="Remover membro"
                                                 onclick="return confirm('Tem certeza que deseja remover este membro?')"
                                             >
                                                 <x-icon name="lucide-trash-2" class="size-4" />
-                                            </button>
+                                            </x-button>
                                         </form>
                                     </div>
                                 @endcan

@@ -1,51 +1,63 @@
-<x-modal title="Criar Workspace" size="max-w-md">
-    <x-slot name="trigger">
-        <button
-            class="flex items-center gap-2 text-sm text-gray-300 hover:text-white transition-colors px-3 py-2 rounded-lg hover:bg-white/5"
-            dusk="open-create-workspace-modal"
+<div
+    x-data="{ open: false }"
+    x-cloak
+    x-on:keydown.window.escape="open = false"
+    x-on:close-modal.window="open = false"
+    x-on:open-create-workspace-modal.window="open = true"
+>
+    {{-- Backdrop / Modal --}}
+    <div
+        x-show="open"
+        x-transition.opacity.duration.200ms
+        x-trap.inert.noscroll="open"
+        x-on:click.self="open = false"
+        class="fixed inset-0 z-30 flex items-center justify-center bg-black/60 backdrop-blur-md p-4"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="modal-title-create-workspace"
+    >
+        <div
+            x-show="open"
+            x-transition.scale.duration.200ms
+            x-cloak
+            @click.stop
+            class="relative w-full max-w-md max-h-[90vh] overflow-auto"
+            role="document"
         >
-            <x-icon name="lucide-plus" class="size-4" />
-            <span>Novo Workspace</span>
-        </button>
-    </x-slot>
+            <h2 id="modal-title-create-workspace" class="sr-only">Criar Workspace</h2>
 
-    <x-card class="bg-white" dusk="create-workspace-modal">
-        <h2 class="text-lg font-bold text-gray-900 mb-4">Criar Workspace</h2>
+            <x-card class="bg-white" dusk="create-workspace-modal">
+                <h2 class="text-lg font-bold text-gray-900 mb-4">Criar Workspace</h2>
 
-        <form method="POST" action="{{ route('workspace.store') }}">
-            @csrf
+                <form method="POST" action="{{ route('workspace.store') }}">
+                    @csrf
 
-            <div class="space-y-4">
-                <x-form.input
-                    label="Nome"
-                    name="name"
-                    type="text"
-                    required
-                    placeholder="Nome do workspace"
-                />
+                    <div class="space-y-4">
+                        <x-form.input
+                            label="Nome"
+                            name="name"
+                            type="text"
+                            required
+                            placeholder="Nome do workspace"
+                        />
 
-                <x-form.textarea
-                    label="Descrição (opcional)"
-                    name="description"
-                    placeholder="Descrição do workspace"
-                />
-            </div>
+                        <x-form.textarea
+                            label="Descrição (opcional)"
+                            name="description"
+                            placeholder="Descrição do workspace"
+                        />
+                    </div>
 
-            <div class="flex justify-end gap-3 mt-6">
-                <button
-                    type="button"
-                    @click="$dispatch('close-modal')"
-                    class="px-4 py-2 text-sm text-gray-600 hover:text-gray-900 transition-colors"
-                >
-                    Cancelar
-                </button>
-                <button
-                    type="submit"
-                    class="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors"
-                >
-                    Criar
-                </button>
-            </div>
-        </form>
-    </x-card>
-</x-modal>
+                    <div class="flex justify-end gap-3 mt-6">
+                        <x-button type="button" variant="ghost" @click="open = false">
+                            Cancelar
+                        </x-button>
+                        <x-button type="submit">
+                            Criar
+                        </x-button>
+                    </div>
+                </form>
+            </x-card>
+        </div>
+    </div>
+</div>

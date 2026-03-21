@@ -2,12 +2,10 @@
 
 <x-modal title="Convidar membro" size="max-w-md">
     <x-slot name="trigger">
-        <button
-            class="flex items-center gap-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors px-4 py-2"
-        >
+        <x-button>
             <x-icon name="lucide-user-plus" class="size-4" />
             <span>Convidar</span>
-        </button>
+        </x-button>
     </x-slot>
 
     <x-card class="bg-white">
@@ -40,19 +38,12 @@
             </div>
 
             <div class="flex justify-end gap-3 mt-6">
-                <button
-                    type="button"
-                    @click="$dispatch('close-modal')"
-                    class="px-4 py-2 text-sm text-gray-600 hover:text-gray-900 transition-colors"
-                >
+                <x-button type="button" variant="ghost" @click="$dispatch('close-modal')">
                     Cancelar
-                </button>
-                <button
-                    type="submit"
-                    class="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors"
-                >
+                </x-button>
+                <x-button type="submit">
                     Enviar convite
-                </button>
+                </x-button>
             </div>
         </form>
     </x-card>

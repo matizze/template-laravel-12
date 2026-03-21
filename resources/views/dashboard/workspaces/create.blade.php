@@ -27,18 +27,12 @@
             />
 
             <div class="flex justify-end gap-3 pt-4">
-                <a
-                    href="{{ route('dashboard') }}"
-                    class="px-4 py-2 text-sm text-gray-600 hover:text-gray-900 transition-colors"
-                >
+                <x-button tag="a" href="{{ route('dashboard') }}" variant="ghost">
                     Cancelar
-                </a>
-                <button
-                    type="submit"
-                    class="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors"
-                >
+                </x-button>
+                <x-button type="submit">
                     Criar Workspace
-                </button>
+                </x-button>
             </div>
         </form>
     </div>
