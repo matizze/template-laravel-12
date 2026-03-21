@@ -22,6 +22,10 @@ class RegisterController extends Controller
 
         Auth::login($user);
 
+        if ($token = $request->session()->get('invitation_token')) {
+            return redirect()->route('invitation.accept', $token);
+        }
+
         return redirect()->route('onboarding');
     }
 }

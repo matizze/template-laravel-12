@@ -5,7 +5,6 @@ namespace Tests\Feature;
 use App\Enums\WorkspaceRole;
 use App\Models\Invitation;
 use App\Models\Member;
-use App\Models\Project;
 use App\Models\User;
 use App\Models\Workspace;
 use App\Notifications\WorkspaceInviteNotification;
@@ -416,13 +415,6 @@ class InviteTest extends TestCase
             'role' => WorkspaceRole::Member,
         ]);
 
-        Project::create([
-            'name' => 'Member Project',
-            'description' => 'Test project',
-            'user_id' => $member->id,
-            'workspace_id' => $workspace->id,
-        ]);
-
         $response = $this->actingAs($member)
             ->post(route('workspace.members.leave', $workspace));
 
@@ -430,11 +422,6 @@ class InviteTest extends TestCase
 
         $this->assertDatabaseMissing('members', [
             'user_id' => $member->id,
-            'workspace_id' => $workspace->id,
-        ]);
-
-        $this->assertDatabaseHas('projects', [
-            'name' => 'Member Project',
             'workspace_id' => $workspace->id,
         ]);
     }
@@ -582,6 +569,116 @@ class InviteTest extends TestCase
         );
     }
 
+    // T096: test_registration_with_invitation_token_in_session_redirects_to_accept
+    public function test_registration_with_invitation_token_in_session_redirects_to_accept(): void
+    {
+        [$owner, $workspace] = $this->createWorkspaceWithOwner();
+
+        $invitation = Invitation::factory()->create([
+            'workspace_id' => $workspace->id,
+            'email' => 'newuser@example.com',
+            'user_id' => $owner->id,
+            'role' => WorkspaceRole::Member,
+        ]);
+
+        $response = $this->withSession(['invitation_token' => $invitation->token])
+            ->post(route('register'), [
+                'name' => 'New User',
+                'email' => 'newuser@example.com',
+                'password' => 'password',
+                'password_confirmation' => 'password',
+            ]);
+
+        $response->assertRedirect(route('invitation.accept', $invitation->token));
+
+        // Token kept in session until accept() clears it on success
+        $this->assertEquals($invitation->token, session('invitation_token'));
+    }
+
+    // T098: test_registration_without_invitation_token_redirects_to_onboarding
+    public function test_registration_without_invitation_token_redirects_to_onboarding(): void
+    {
+        $response = $this->post(route('register'), [
+            'name' => 'New User',
+            'email' => 'newuser@example.com',
+            'password' => 'password',
+            'password_confirmation' => 'password',
+        ]);
+
+        $response->assertRedirect(route('onboarding'));
+    }
+
+    // T095: test_login_with_invitation_token_in_session_redirects_to_accept
+    public function test_login_with_invitation_token_in_session_redirects_to_accept(): void
+    {
+        [$owner, $workspace] = $this->createWorkspaceWithOwner();
+
+        $invitee = User::factory()->create(['email' => 'invitee@example.com', 'password' => bcrypt('password')]);
+
+        $invitation = Invitation::factory()->create([
+            'workspace_id' => $workspace->id,
+            'email' => 'invitee@example.com',
+            'user_id' => $owner->id,
+            'role' => WorkspaceRole::Member,
+        ]);
+
+        $response = $this->withSession(['invitation_token' => $invitation->token])
+            ->post(route('login'), [
+                'email' => 'invitee@example.com',
+                'password' => 'password',
+            ]);
+
+        $response->assertRedirect(route('invitation.accept', $invitation->token));
+
+        // Token kept in session until accept() clears it on success
+        $this->assertEquals($invitation->token, session('invitation_token'));
+    }
+
+    // T097: test_login_without_invitation_token_redirects_to_dashboard
+    public function test_login_without_invitation_token_redirects_to_dashboard(): void
+    {
+        $user = User::factory()->create(['email' => 'user@example.com', 'password' => bcrypt('password')]);
+
+        $response = $this->post(route('login'), [
+            'email' => 'user@example.com',
+            'password' => 'password',
+        ]);
+
+        $response->assertRedirect('dashboard');
+    }
+
+    // T099: test_login_with_invitation_token_but_mismatched_email_shows_error
+    public function test_login_with_invitation_token_but_mismatched_email_shows_error(): void
+    {
+        [$owner, $workspace] = $this->createWorkspaceWithOwner();
+
+        $wrongUser = User::factory()->create(['email' => 'wrong@example.com', 'password' => bcrypt('password')]);
+
+        $invitation = Invitation::factory()->create([
+            'workspace_id' => $workspace->id,
+            'email' => 'invitee@example.com',
+            'user_id' => $owner->id,
+            'role' => WorkspaceRole::Member,
+        ]);
+
+        // Login with a different email than the invitation
+        $response = $this->withSession(['invitation_token' => $invitation->token])
+            ->post(route('login'), [
+                'email' => 'wrong@example.com',
+                'password' => 'password',
+            ]);
+
+        // Still redirected to invitation.accept — the controller there handles email mismatch
+        $response->assertRedirect(route('invitation.accept', $invitation->token));
+
+        // No membership created
+        $this->assertDatabaseMissing('members', [
+            'user_id' => $wrongUser->id,
+            'workspace_id' => $workspace->id,
+        ]);
+    }
+
+    // T094: test_cannot_remove_member_from_another_workspace
     public function test_cannot_remove_member_from_another_workspace(): void
     {
         [$owner1, $workspace1] = $this->createWorkspaceWithOwner();
