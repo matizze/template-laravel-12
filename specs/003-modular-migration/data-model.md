@@ -36,8 +36,9 @@ Sem entidades próprias. Usa `Modules\User\Models\User` para autenticação.
 | `Member` | `Modules\Workspace\Models\Member` | `members` | Pivot model (user_id, workspace_id, role) |
 | `Invitation` | `Modules\Workspace\Models\Invitation` | `invitations` | Convites pendentes |
 
-**Traits fornecidas**:
-- `HasWorkspaces` — adicionada ao User model via `use`. Fornece: `workspaces()`, `ownedWorkspaces()`, `roleIn()`, `isMemberOf()`
+**Extensão dinâmica do User**:
+- Relationships `workspaces()` e `ownedWorkspaces()` registados dinamicamente via `User::resolveRelationUsing()` no `WorkspaceServiceProvider::boot()` — User model NÃO importa nada do módulo Workspace
+- `HasWorkspaces` trait mantida apenas com métodos utilitários (`roleIn()`, `isMemberOf()`) usados internamente pelo módulo Workspace (ex: policies)
 
 **Enums**:
 - `WorkspaceRole` — `Modules\Workspace\Enums\WorkspaceRole` (admin/member)
@@ -64,7 +65,7 @@ Member N──1 User
 | Auth → User | Sim | `use Modules\User\Models\User` |
 | Workspace → Core | Sim | Imports directos |
 | Workspace → User | Sim | `use Modules\User\Models\User` |
-| User → Workspace | Proibido | Workspace estende User via trait |
+| User → Workspace | Proibido | Workspace regista relationships no User via resolveRelationUsing() — User não tem nenhum import de Workspace |
 | Auth → Workspace | Proibido | Sem dependência |
 | Workspace → Auth | Proibido | Sem dependência |
 
