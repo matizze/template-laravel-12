@@ -132,7 +132,7 @@
 
 ## Phase 5: Migrar módulo Workspace (US5, Priority: P2)
 
-**Goal**: Extrair toda a lógica de workspaces. Criar trait HasWorkspaces. Componentes com prefixo `<x-workspace::*>`.
+**Goal**: Extrair toda a lógica de workspaces. Registar relationships dinamicamente via `resolveRelationUsing()` no WorkspaceServiceProvider. Componentes com prefixo `<x-workspace::*>`.
 
 **Independent Test**: Workspaces, membros, convites, onboarding funcionam. Testes em `app-modules/workspace/tests/` passam.
 
@@ -142,8 +142,8 @@
 - [x] T067 [P] [US5] Mover Member model para `app-modules/workspace/src/Models/Member.php`
 - [x] T068 [P] [US5] Mover Invitation model para `app-modules/workspace/src/Models/Invitation.php`
 - [x] T069 [P] [US5] Mover WorkspaceRole enum para `app-modules/workspace/src/Enums/WorkspaceRole.php`
-- [x] T070 [US5] Criar trait `HasWorkspaces` em `app-modules/workspace/src/Traits/HasWorkspaces.php` com métodos extraídos do User: workspaces(), ownedWorkspaces(), roleIn(), isMemberOf(), roleCache
-- [x] T071 [US5] Adicionar `use \Modules\Workspace\Traits\HasWorkspaces;` ao User model em `app-modules/user/src/Models/User.php`
+- [x] T070 [US5] Registar relationships (workspaces, ownedWorkspaces) dinamicamente no User via resolveRelationUsing() no WorkspaceServiceProvider::boot(). Manter HasWorkspaces trait apenas com métodos utilitários (roleIn, isMemberOf) que dependem dos relationships dinâmicos
+- [x] T071 [US5] Remover qualquer referência ao módulo Workspace do User model em app-modules/user/src/Models/User.php — User DEVE ficar limpo sem imports de Workspace
 - [x] T072 [US5] Remover trait `BelongsToWorkspace` de `app/Traits/` (substituída por HasWorkspaces)
 - [x] T073 [P] [US5] Mover WorkspacePolicy para `app-modules/workspace/src/Policies/WorkspacePolicy.php`
 - [x] T074 [P] [US5] Mover CurrentWorkspaceManager para `app-modules/workspace/src/Services/CurrentWorkspaceManager.php`
@@ -172,7 +172,7 @@
 - [x] T097 [P] [US5] Mover testes Dusk: WorkspaceFlowTest, ModalTest para `app-modules/workspace/tests/Browser/`
 - [x] T098 [US5] Executar `php artisan test --compact` e confirmar que todos os testes passam
 
-**Checkpoint**: Workspace migrado. HasWorkspaces trait funciona. Componentes com prefixo. Testes passam.
+**Checkpoint**: Workspace migrado. Relationships registados dinamicamente via resolveRelationUsing. Componentes com prefixo. Testes passam.
 
 ---
 
@@ -189,7 +189,7 @@
 - [x] T101 [US6] Adicionar regra PHPStan à configuração `phpstan.neon`
 - [x] T102 [US6] Executar script de enforcement e confirmar zero violações
 - [x] T103 [US6] Executar PHPStan e confirmar zero violações de dependência
-- [x] T104 [US6] Testar desacoplamento: remover `use HasWorkspaces` do User model, remover `app-modules/workspace/`, remover entries do root `composer.json`
+- [x] T104 [US6] Testar desacoplamento: remover app-modules/workspace/ e remover entries do root composer.json (sem necessidade de editar User.php — User não tem referências ao Workspace)
 - [x] T105 [US6] Verificar que `php artisan test app-modules/core/tests/ app-modules/user/tests/ app-modules/auth/tests/` passa
 - [x] T106 [US6] Reverter remoção do Workspace (restore via git)
 - [x] T107 [US6] Executar `php artisan test --compact` final — todos os testes passam
@@ -218,6 +218,30 @@
 
 ---
 
+## Phase 8: Desacoplamento User ↔ Workspace via resolveRelationUsing (US5+US6 refinement)
+
+**Goal**: Eliminar o acoplamento directo entre User e Workspace. User model DEVE ter zero imports de `Modules\Workspace`. Relationships registados dinamicamente via `resolveRelationUsing()` no WorkspaceServiceProvider. Remover Workspace não deve exigir edição de nenhum ficheiro de outro módulo.
+
+**Independent Test**: Todos os testes passam. PHPStan sem violações. User.php não contém nenhum `use Modules\Workspace\*`. Remover `app-modules/workspace/` + entry do `composer.json` → app arranca sem erros e testes Core/User/Auth passam (sem editar User.php).
+
+### Implementation
+
+- [x] T119 [US5] Adicionar `resolveRelationUsing('workspaces', ...)` e `resolveRelationUsing('ownedWorkspaces', ...)` no `WorkspaceServiceProvider::boot()` em `app-modules/workspace/src/Providers/WorkspaceServiceProvider.php` — copiar a lógica exacta dos métodos `workspaces()` e `ownedWorkspaces()` do trait `HasWorkspaces`
+- [x] T120 [US5] Refactorizar `app-modules/workspace/src/Traits/HasWorkspaces.php` — remover métodos `workspaces()` e `ownedWorkspaces()` (agora registados dinamicamente). Manter apenas `roleIn()` e `isMemberOf()` como métodos utilitários
+- [x] T121 [US5] Remover `use Modules\Workspace\Traits\HasWorkspaces;` e `HasWorkspaces` do `use` statement no User model em `app-modules/user/src/Models/User.php` — User DEVE ficar limpo sem nenhum import de Workspace
+- [x] T122 [US5] Mover os métodos `roleIn()` e `isMemberOf()` do trait para funções standalone ou para o `WorkspacePolicy` directamente em `app-modules/workspace/src/Policies/WorkspacePolicy.php` — avaliar se o trait ainda é necessário após esta mudança. **Resultado**: trait removido completamente, `roleIn()` inlinado no Policy, `isMemberOf()` não era usado externamente
+- [x] T123 [US6] Remover `'Modules\\Workspace\\Traits\\HasWorkspaces'` da lista `ALLOWED_IMPORTS` em `phpstan/ModuleDependencyRule.php` — esta excepção já não é necessária pois o User não importa o trait
+- [x] T124 Executar `vendor/bin/pint --dirty --format agent` nos ficheiros PHP alterados
+- [x] T125 Executar `./vendor/bin/phpstan analyse` e corrigir erros
+- [x] T126 Executar `php artisan test --compact` e confirmar que todos os testes passam (134 passed, 9 Dusk skipped — Chromedriver não disponível na worktree)
+- [x] T127 [US6] Testar desacoplamento: remover `app-modules/workspace/` e entries do root `composer.json` (sem editar User.php) e verificar que a aplicação arranca e testes Core/User/Auth passam. **Resultado**: app arranca, rotas funcionam, 21 feature tests passam (testes que criam Workspaces falham — esperado)
+- [x] T128 [US6] Reverter remoção do Workspace (restore via git + composer update)
+- [x] T129 Executar `php artisan test --compact` final — 134 passed, 296 assertions (9 Dusk skipped — Chromedriver não disponível na worktree)
+
+**Checkpoint**: User model limpo (zero imports Workspace). Relationships dinâmicos. PHPStan sem violações. Workspace é removível sem editar nenhum ficheiro de outro módulo.
+
+---
+
 ## Dependencies & Execution Order
 
 ### Phase Dependencies
@@ -229,11 +253,12 @@
 - **Phase 5 (Workspace/US5)**: Depende de Phase 3 — pode correr em PARALELO com Phase 4
 - **Phase 6 (Desacoplamento/US6)**: Depende de Phase 4 + Phase 5
 - **Phase 7 (Polish)**: Depende de todas as fases anteriores
+- **Phase 8 (Desacoplamento resolveRelationUsing)**: Depende de Phase 7 — refactor sobre código já completo
 
 ### User Story Dependencies
 
 ```
-US1 (Setup) → US2 (Core) → US3 (User) → US4 (Auth) [P] US5 (Workspace) → US6 (Verification) → Polish
+US1 (Setup) → US2 (Core) → US3 (User) → US4 (Auth) [P] US5 (Workspace) → US6 (Verification) → Polish → Phase 8 (resolveRelationUsing refactor)
 ```
 
 ### Parallel Opportunities

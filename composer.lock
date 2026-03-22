@@ -2342,7 +2342,7 @@
         },
         {
             "name": "modules/auth",
-            "version": "dev-003-modular-migration",
+            "version": "dev-develop",
             "dist": {
                 "type": "path",
                 "url": "app-modules/auth",
@@ -2375,7 +2375,7 @@
         },
         {
             "name": "modules/core",
-            "version": "dev-003-modular-migration",
+            "version": "dev-develop",
             "dist": {
                 "type": "path",
                 "url": "app-modules/core",
@@ -2404,7 +2404,7 @@
         },
         {
             "name": "modules/user",
-            "version": "dev-003-modular-migration",
+            "version": "dev-develop",
             "dist": {
                 "type": "path",
                 "url": "app-modules/user",
@@ -2437,7 +2437,7 @@
         },
         {
             "name": "modules/workspace",
-            "version": "dev-003-modular-migration",
+            "version": "dev-develop",
             "dist": {
                 "type": "path",
                 "url": "app-modules/workspace",

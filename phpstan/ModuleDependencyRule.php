@@ -6,6 +6,7 @@ use PhpParser\Node;
 use PhpParser\Node\Stmt\Use_;
 use PHPStan\Analyser\Scope;
 use PHPStan\Rules\Rule;
+use PHPStan\Rules\RuleError;
 use PHPStan\Rules\RuleErrorBuilder;
 
 /**
@@ -34,7 +35,7 @@ class ModuleDependencyRule implements Rule
         return Use_::class;
     }
 
-    /** @return list<\PHPStan\Rules\RuleError> */
+    /** @return list<RuleError> */
     public function processNode(Node $node, Scope $scope): array
     {
         $errors = [];

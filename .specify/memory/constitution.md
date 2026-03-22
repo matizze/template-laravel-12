@@ -1,15 +1,14 @@
 <!--
 SYNC IMPACT REPORT
 ==================
-Version change: 1.1.0 → 1.2.0 (MINOR: Agent Assignments section added)
-Added sections:
-  - Agent Assignments — maps each workflow step to the correct .claude/agents/ specialist
+Version change: 1.2.0 → 1.2.1 (PATCH: Module Boundaries clarification)
 Modified:
-  - Development Workflow — each step now references its assigned agent
+  - Module Boundaries/Workspace — HasWorkspaces trait no longer imported by User; relationships use resolveRelationUsing()
+  - Core Principles/III — extension points updated to prefer resolveRelationUsing over direct trait imports
 Templates reviewed:
-  - .specify/templates/plan-template.md ✅ (Constitution Check updated with agent column)
+  - .specify/templates/plan-template.md ✅ (no changes required)
   - .specify/templates/spec-template.md ✅ (no changes required)
-  - .specify/templates/tasks-template.md ✅ (agent references added per phase)
+  - .specify/templates/tasks-template.md ✅ (no changes required)
 Deferred TODOs: none
 -->
 
@@ -60,7 +59,7 @@ Core ← User ← Auth
 ```
 
 Each module owns its models, controllers, requests, views, and tests. Cross-module access MUST go through
-defined extension points (traits, service classes, events) — never via direct model mutation across modules.
+defined extension points (dynamic relationship registration via `resolveRelationUsing()`, service classes, events) — never via direct model imports or mutation across modules.
 
 **Rationale**: Separation by domain concern enables independent feature delivery, isolated test suites,
 and a codebase that scales without becoming a big ball of mud. The flat dependency tree prevents cycles.
@@ -155,7 +154,8 @@ Depends on Core + User.
 | Type | Files |
 |------|-------|
 | Models | `Workspace`, `Member`, `Invitation` |
-| Traits | `HasWorkspaces` (extends User with `workspaces()`, `roleIn()`, `isMemberOf()`) |
+| Dynamic Relations | `workspaces()`, `ownedWorkspaces()` registered on User via `resolveRelationUsing()` in WorkspaceServiceProvider — User has zero Workspace imports |
+| Traits | `HasWorkspaces` (utility only: `roleIn()`, `isMemberOf()` — used internally by Workspace policies) |
 | Enum | `WorkspaceRole` |
 | Policy | `WorkspacePolicy` |
 | Service | `CurrentWorkspaceManager` |
@@ -225,4 +225,4 @@ Complexity Tracking table of `plan.md`.
 Runtime guidance: `CLAUDE.md` (agent tooling, commands, conventions) and `AGENTS.md` (auth flow,
 testing rules, environment).
 
-**Version**: 1.2.0 | **Ratified**: 2026-03-21 | **Last Amended**: 2026-03-21
+**Version**: 1.2.1 | **Ratified**: 2026-03-21 | **Last Amended**: 2026-03-22

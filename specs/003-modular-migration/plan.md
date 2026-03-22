@@ -107,7 +107,7 @@ app-modules/
     ├── src/
     │   ├── Models/
     │   ├── Enums/
-    │   ├── Traits/HasWorkspaces.php
+    │   ├── Traits/HasWorkspaces.php          # Utility methods (roleIn, isMemberOf) — relationships registered via resolveRelationUsing in ServiceProvider
     │   ├── Policies/
     │   ├── Services/
     │   ├── Http/Controllers/

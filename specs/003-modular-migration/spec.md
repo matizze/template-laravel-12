@@ -94,7 +94,7 @@ Como desenvolvedor, quero extrair toda a lógica de workspaces (models, controll
 **Acceptance Scenarios**:
 
 1. **Given** o módulo Workspace criado, **When** os models (Workspace, Member, Invitation), enum (WorkspaceRole), policy (WorkspacePolicy) são movidos, **Then** as relações e autorização funcionam normalmente.
-2. **Given** o módulo Workspace, **When** a trait HasWorkspaces é criada e adicionada ao User model, **Then** os métodos workspaces(), roleIn() e isMemberOf() funcionam via trait em vez de estarem directamente no User.
+2. **Given** o módulo Workspace, **When** o WorkspaceServiceProvider regista dinamicamente os relationships (workspaces, currentWorkspace) no User model via `resolveRelationUsing()`, **Then** os métodos workspaces(), roleIn() e isMemberOf() funcionam sem que o User model tenha qualquer import do módulo Workspace.
 3. **Given** o módulo Workspace, **When** o middleware SetCurrentWorkspace e o service CurrentWorkspaceManager são movidos, **Then** a detecção de workspace actual funciona normalmente.
 4. **Given** o módulo Workspace, **When** os componentes específicos (workspace-switcher, create-workspace-modal, invite-modal) são movidos com prefixo `<x-workspace::*>`, **Then** renderizam correctamente nas views.
 5. **Given** o módulo Workspace, **When** todas as views de dashboard/ e onboarding são movidas, **Then** as páginas de workspace settings, membros e onboarding funcionam.
@@ -107,11 +107,11 @@ Como desenvolvedor que vai usar este template noutro projecto, quero poder remov
 
 **Why this priority**: Valida a qualidade da modularização. Sem esta verificação, a separação pode ser superficial.
 
-**Independent Test**: Remover directório do módulo Workspace, remover `use HasWorkspaces` do User model, remover entry do root `composer.json`, e verificar que Core, User e Auth continuam a funcionar.
+**Independent Test**: Remover directório do módulo Workspace e remover entry do root `composer.json`, e verificar que Core, User e Auth continuam a funcionar — sem necessidade de editar nenhum ficheiro de outro módulo.
 
 **Acceptance Scenarios**:
 
-1. **Given** todos os módulos migrados, **When** o directório do módulo Workspace é removido, a trait HasWorkspaces é removida do User, e a entry do composer.json é removida, **Then** a aplicação arranca sem erros.
+1. **Given** todos os módulos migrados, **When** o directório do módulo Workspace é removido e a entry do composer.json é removida (sem editar User.php ou qualquer outro ficheiro), **Then** a aplicação arranca sem erros.
 2. **Given** o módulo Workspace removido, **When** acedo a rotas de auth e settings, **Then** login, registo e gestão de perfil funcionam normalmente.
 3. **Given** o módulo Workspace removido, **When** executo os testes dos módulos Core, User e Auth, **Then** todos passam sem falhas.
 
@@ -135,7 +135,7 @@ Como desenvolvedor que vai usar este template noutro projecto, quero poder remov
 - **FR-005**: O módulo User DEVE depender apenas de Core.
 - **FR-006**: O módulo Auth DEVE depender apenas de Core e User.
 - **FR-007**: O módulo Workspace DEVE depender apenas de Core e User.
-- **FR-008**: O User model DEVE residir no módulo User (`Modules\User\Models\User`), sem métodos de workspace — estes são adicionados via trait HasWorkspaces do módulo Workspace.
+- **FR-008**: O User model DEVE residir no módulo User (`Modules\User\Models\User`), sem qualquer referência ao módulo Workspace — os relationships de workspace são registados dinamicamente via `resolveRelationUsing()` no WorkspaceServiceProvider. O User model NÃO DEVE importar traits, classes ou interfaces do módulo Workspace.
 - **FR-009**: O dashboard.blade.php em Core DEVE usar slots/sections para que módulos injectem conteúdo sem criar dependências.
 - **FR-010**: Todos os testes existentes DEVEM continuar a passar após cada migração de módulo.
 - **FR-011**: O módulo Workspace DEVE ser removível sem afectar o funcionamento dos outros módulos (Core, User, Auth).
@@ -151,7 +151,7 @@ Como desenvolvedor que vai usar este template noutro projecto, quero poder remov
 
 - **Module**: Unidade organizacional que agrupa código por domínio. Contém `composer.json`, src/, routes/, resources/, tests/, database/. Tem um ServiceProvider próprio auto-descoberto via Laravel package discovery. Namespace: `Modules\{Name}\`.
 - **User (model)**: Entidade central partilhada. Reside no módulo User (`Modules\User\Models\User`). Extensível via traits de outros módulos.
-- **HasWorkspaces (trait)**: Extensão do User model fornecida pelo módulo Workspace. Adiciona relações e métodos de workspace ao User.
+- **WorkspaceServiceProvider**: Responsável por registar dinamicamente os relationships de workspace no User model via `resolveRelationUsing()`, eliminando qualquer acoplamento directo entre User e Workspace.
 - **Dependency Rule**: Regra de dependência entre módulos — Core ← User ← Auth, Workspace. Nenhum módulo pode depender de um módulo no mesmo nível ou inferior. Enforcement via script CI + PHPStan.
 
 ## Success Criteria *(mandatory)*

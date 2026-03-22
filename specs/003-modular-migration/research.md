@@ -144,3 +144,30 @@ public function boot(): void
 - Regra PHPStan customizada para proibir imports ilegais
 - Core não pode ter `use Modules\User\*`, `use Modules\Auth\*`, `use Modules\Workspace\*`
 - User não pode ter `use Modules\Auth\*`, `use Modules\Workspace\*`
+
+## R9: Desacoplamento User ↔ Workspace — resolveRelationUsing
+
+**Decision**: Remover o import directo de `HasWorkspaces` trait do User model. Registar os relationships `workspaces()` e `ownedWorkspaces()` dinamicamente via `User::resolveRelationUsing()` no `WorkspaceServiceProvider::boot()`.
+
+**Rationale**: Com o trait importado directamente no User (`use HasWorkspaces`), o User model tem um `use Modules\Workspace\...` que cria uma dependência hard do módulo User para o módulo Workspace. Isto viola FR-008 e FR-011 — remover o directório do Workspace sem editar User.php causaria um fatal error. Com `resolveRelationUsing()`, o Workspace "se plugga" no User de fora, sem que o User saiba da existência do Workspace.
+
+**Alternatives considered**:
+- Manter o trait com `use HasWorkspaces` no User: Simples, mas cria acoplamento — remover Workspace exige editar User.php. Viola FR-008/FR-011.
+- Interface no Core (`HasWorkspacesContract`): Over-engineering — nenhum outro módulo precisa tipar contra essa interface hoje. Viola Princípio IV (YAGNI).
+- Events/Listeners para registar relationships: Mais complexo que `resolveRelationUsing()` sem benefício. O método nativo do Eloquent é a solução mais simples e directa.
+
+**Implementation**:
+```php
+// WorkspaceServiceProvider::boot()
+User::resolveRelationUsing('workspaces', function (User $user) {
+    return $user->belongsToMany(Workspace::class, 'members')
+        ->using(Member::class)
+        ->withPivot('id', 'role')
+        ->withCasts(['role' => WorkspaceRole::class])
+        ->withTimestamps();
+});
+
+User::resolveRelationUsing('ownedWorkspaces', function (User $user) {
+    return $user->hasMany(Workspace::class);
+});
+```
