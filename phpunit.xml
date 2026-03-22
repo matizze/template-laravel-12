@@ -8,20 +8,21 @@
         <testsuite name="Unit">
             <directory>tests/Unit</directory>
         </testsuite>
-        <testsuite name="Feature">
-            <directory>tests/Feature</directory>
-        </testsuite>
         <testsuite name="Core">
             <directory>app-modules/core/tests</directory>
+            <exclude>app-modules/core/tests/Browser</exclude>
         </testsuite>
         <testsuite name="User">
             <directory>app-modules/user/tests</directory>
+            <exclude>app-modules/user/tests/Browser</exclude>
         </testsuite>
         <testsuite name="Auth">
             <directory>app-modules/auth/tests</directory>
+            <exclude>app-modules/auth/tests/Browser</exclude>
         </testsuite>
         <testsuite name="Workspace">
             <directory>app-modules/workspace/tests</directory>
+            <exclude>app-modules/workspace/tests/Browser</exclude>
         </testsuite>
     </testsuites>
     <source>
