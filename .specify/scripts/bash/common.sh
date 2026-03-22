@@ -1,10 +1,21 @@
 #!/usr/bin/env bash
 # Common functions and variables for all scripts
 
-# Get repository root, with fallback for non-git repositories
+# Get repository root, with fallback for non-git repositories.
+# Uses --git-common-dir to always resolve to the MAIN repo root,
+# even when called from inside a git worktree.
 get_repo_root() {
-    if git rev-parse --show-toplevel >/dev/null 2>&1; then
-        git rev-parse --show-toplevel
+    if git rev-parse --git-common-dir >/dev/null 2>&1; then
+        local git_common_dir
+        git_common_dir=$(git rev-parse --git-common-dir)
+        # If it's an absolute path (worktree case), dirname gives the main repo
+        # If it's ".git" (main repo case), use --show-toplevel
+        if [[ "$git_common_dir" == ".git" ]]; then
+            git rev-parse --show-toplevel
+        else
+            # git_common_dir is absolute path like /path/to/repo/.git
+            dirname "$git_common_dir"
+        fi
     else
         # Fall back to script location for non-git repos
         local script_dir="$(CDPATH="" cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -22,11 +33,21 @@ get_current_branch() {
 
     # Then check git if available
     if git rev-parse --abbrev-ref HEAD >/dev/null 2>&1; then
-        git rev-parse --abbrev-ref HEAD
-        return
+        local branch
+        branch=$(git rev-parse --abbrev-ref HEAD)
+
+        # If on a feature branch, use it directly
+        if [[ "$branch" =~ ^[0-9]{3}- ]]; then
+            echo "$branch"
+            return
+        fi
+
+        # On a non-feature branch (e.g. develop, main): fall through to specs/ lookup
+        # This supports the worktree workflow where specs live in the main working
+        # directory on develop, and implementation happens in .worktrees/
     fi
 
-    # For non-git repos, try to find the latest feature directory
+    # Find the latest feature directory in specs/
     local repo_root=$(get_repo_root)
     local specs_dir="$repo_root/specs"
 
@@ -72,13 +93,16 @@ check_feature_branch() {
         return 0
     fi
 
-    if [[ ! "$branch" =~ ^[0-9]{3}- ]]; then
-        echo "ERROR: Not on a feature branch. Current branch: $branch" >&2
-        echo "Feature branches should be named like: 001-feature-name" >&2
-        return 1
+    # Branch name already matches feature pattern (resolved from git branch or specs/ lookup)
+    if [[ "$branch" =~ ^[0-9]{3}- ]]; then
+        return 0
     fi
 
-    return 0
+    # No feature branch detected and no specs/ fallback found
+    echo "ERROR: Not on a feature branch. Current branch: $branch" >&2
+    echo "Feature branches should be named like: 001-feature-name" >&2
+    echo "Alternatively, set SPECIFY_FEATURE=003-feature-name or ensure specs/ has a feature directory." >&2
+    return 1
 }
 
 get_feature_dir() { echo "$1/specs/$2"; }
