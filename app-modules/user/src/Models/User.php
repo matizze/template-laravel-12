@@ -6,12 +6,11 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Modules\User\Database\Factories\UserFactory;
-use Modules\Workspace\Traits\HasWorkspaces;
 
 class User extends Authenticatable
 {
     /** @use HasFactory<UserFactory> */
-    use HasFactory, HasWorkspaces, Notifiable;
+    use HasFactory, Notifiable;
 
     protected static function newFactory(): UserFactory
     {

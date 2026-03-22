@@ -6,6 +6,9 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\Facades\View;
 use Illuminate\Support\ServiceProvider;
+use Modules\User\Models\User;
+use Modules\Workspace\Enums\WorkspaceRole;
+use Modules\Workspace\Models\Member;
 use Modules\Workspace\Models\Workspace;
 use Modules\Workspace\Services\CurrentWorkspaceManager;
 
@@ -24,7 +27,9 @@ class WorkspaceServiceProvider extends ServiceProvider
 
         Blade::anonymousComponentPath(__DIR__.'/../../resources/components', 'workspace');
 
-        View::composer('*', function ($view): void {
+        $this->registerUserRelationships();
+
+        View::composer('*', static function ($view): void {
             if (! str_contains($view->name(), 'layout.dashboard')) {
                 return;
             }
@@ -32,9 +37,25 @@ class WorkspaceServiceProvider extends ServiceProvider
             $user = Auth::user();
 
             $view->with([
-                'workspaces' => $user ? $user->workspaces : collect(),
+                /** @phpstan-ignore method.notFound (dynamic relation via resolveRelationUsing) */
+                'workspaces' => $user ? $user->workspaces()->get() : collect(),
                 'currentWorkspace' => Workspace::current(),
             ]);
+        });
+    }
+
+    private function registerUserRelationships(): void
+    {
+        User::resolveRelationUsing('workspaces', function (User $user) {
+            return $user->belongsToMany(Workspace::class, 'members')
+                ->using(Member::class)
+                ->withPivot('id', 'role')
+                ->withCasts(['role' => WorkspaceRole::class])
+                ->withTimestamps();
+        });
+
+        User::resolveRelationUsing('ownedWorkspaces', function (User $user) {
+            return $user->hasMany(Workspace::class);
         });
     }
 }
