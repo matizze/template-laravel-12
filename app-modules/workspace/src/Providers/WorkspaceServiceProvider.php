@@ -29,11 +29,7 @@ class WorkspaceServiceProvider extends ServiceProvider
 
         $this->registerUserRelationships();
 
-        View::composer('*', static function ($view): void {
-            if (! str_contains($view->name(), 'layout.dashboard')) {
-                return;
-            }
-
+        View::composer('*layout.dashboard*', static function ($view): void {
             $user = Auth::user();
 
             $view->with([
@@ -52,10 +48,6 @@ class WorkspaceServiceProvider extends ServiceProvider
                 ->withPivot('id', 'role')
                 ->withCasts(['role' => WorkspaceRole::class])
                 ->withTimestamps();
-        });
-
-        User::resolveRelationUsing('ownedWorkspaces', function (User $user) {
-            return $user->hasMany(Workspace::class);
         });
     }
 }

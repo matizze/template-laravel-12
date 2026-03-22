@@ -4,10 +4,14 @@ namespace Modules\Workspace\Policies;
 
 use Modules\User\Models\User;
 use Modules\Workspace\Enums\WorkspaceRole;
+use Modules\Workspace\Models\Member;
 use Modules\Workspace\Models\Workspace;
 
 class WorkspacePolicy
 {
+    /** @var array<string, WorkspaceRole|null> */
+    private array $roleCache = [];
+
     public function view(User $user, Workspace $workspace): bool
     {
         return $this->roleIn($user, $workspace) !== null;
@@ -37,11 +41,17 @@ class WorkspacePolicy
 
     private function roleIn(User $user, Workspace $workspace): ?WorkspaceRole
     {
-        /** @var \Modules\Workspace\Models\Member|null $member */
-        $member = $workspace->memberships()
-            ->where('user_id', $user->id)
-            ->first();
+        $key = "{$user->id}:{$workspace->id}";
 
-        return $member?->role;
+        if (! array_key_exists($key, $this->roleCache)) {
+            /** @var Member|null $member */
+            $member = $workspace->memberships()
+                ->where('user_id', $user->id)
+                ->first();
+
+            $this->roleCache[$key] = $member?->role;
+        }
+
+        return $this->roleCache[$key];
     }
 }

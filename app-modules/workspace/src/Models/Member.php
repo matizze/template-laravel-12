@@ -9,6 +9,12 @@ use Modules\User\Models\User;
 use Modules\Workspace\Database\Factories\MemberFactory;
 use Modules\Workspace\Enums\WorkspaceRole;
 
+/**
+ * @property int $id
+ * @property int $user_id
+ * @property int $workspace_id
+ * @property WorkspaceRole $role
+ */
 class Member extends Pivot
 {
     /** @use HasFactory<MemberFactory> */
