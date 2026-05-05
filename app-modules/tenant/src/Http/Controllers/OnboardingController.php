@@ -19,7 +19,10 @@ class OnboardingController extends Controller
             return redirect()->route('dashboard');
         }
 
+        $canCreate = ! Tenant::query()->exists();
+
         return view('tenant::onboarding', [
+            'canCreate' => $canCreate,
             'defaultName' => $request->user()->name."'s Tenant",
         ]);
     }

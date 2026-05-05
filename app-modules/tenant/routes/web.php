@@ -5,6 +5,7 @@ use Modules\Tenant\Http\Controllers\OnboardingController;
 use Modules\Tenant\Http\Controllers\TenantController;
 use Modules\Tenant\Http\Controllers\TenantSettingsController;
 use Modules\Tenant\Http\Controllers\TenantUserController;
+use Modules\Tenant\Http\Controllers\UserCreationController;
 
 Route::middleware('web')->group(function () {
     Route::middleware('auth')->group(function () {
@@ -24,6 +25,11 @@ Route::middleware('web')->group(function () {
             Route::delete('/tenant/{tenant}', [TenantSettingsController::class, 'destroy'])->name('tenant.destroy');
 
             Route::post('/tenant/{tenant}/transfer', [TenantController::class, 'transferOwnership'])->name('tenant.transferOwnership');
+
+            Route::get('/users/create', [UserCreationController::class, 'create'])->name('tenant.users.create');
+            Route::post('/users/create', [UserCreationController::class, 'store'])
+                ->middleware('throttle:5,1')
+                ->name('tenant.users.create.store');
         });
 
         Route::post('/tenant', [TenantController::class, 'store'])->name('tenant.store');
