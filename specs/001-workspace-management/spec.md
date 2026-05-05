@@ -2,7 +2,7 @@
 
 **Feature Branch**: `001-workspace-management`
 **Created**: 2026-03-21
-**Status**: Draft
+**Status**: Refactored — see [004-multi-tenant-hierarchy](../004-multi-tenant-hierarchy/spec.md). Functional baseline preserved (workspace renamed to tenant, hierarchy added, invitations removed per FR-020). This spec retained as historical reference.
 **Input**: User description: "Adicionar funcionalidade de multi-workspace ao template-laravel-12, inspirado no motionfly.io, incluindo: criação e gerenciamento de workspaces, sistema de membros com roles (Owner, Admin, Member, Viewer), convites por email, alternância entre workspaces, scoping de dados por workspace, e políticas de autorização."
 
 ## User Scenarios & Testing *(mandatory)*

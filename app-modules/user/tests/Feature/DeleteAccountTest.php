@@ -2,32 +2,31 @@
 
 namespace Tests\Feature;
 
-use Modules\Workspace\Enums\WorkspaceRole;
-use Modules\Workspace\Models\Member;
-use Modules\User\Models\User;
-use Modules\Workspace\Models\Workspace;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Modules\Tenant\Enums\TenantRole;
+use Modules\Tenant\Models\Tenant;
+use Modules\Tenant\Models\TenantUser;
+use Modules\User\Models\User;
 use Tests\TestCase;
 
 class DeleteAccountTest extends TestCase
 {
     use RefreshDatabase;
 
-    // T098: test_non_owner_can_delete_account
     public function test_non_owner_can_delete_account(): void
     {
         $owner = User::factory()->create();
-        $workspace = Workspace::factory()->create(['user_id' => $owner->id]);
-        Member::factory()->owner()->create([
+        $tenant = Tenant::factory()->create(['user_id' => $owner->id]);
+        TenantUser::factory()->owner()->create([
             'user_id' => $owner->id,
-            'workspace_id' => $workspace->id,
+            'tenant_id' => $tenant->id,
         ]);
 
         $member = User::factory()->create();
-        Member::factory()->create([
+        TenantUser::factory()->create([
             'user_id' => $member->id,
-            'workspace_id' => $workspace->id,
-            'role' => WorkspaceRole::Member,
+            'tenant_id' => $tenant->id,
+            'role' => TenantRole::Member,
         ]);
 
         $response = $this->actingAs($member)
@@ -42,14 +41,13 @@ class DeleteAccountTest extends TestCase
         ]);
     }
 
-    // T099: test_owner_cannot_delete_account
     public function test_owner_cannot_delete_account(): void
     {
         $owner = User::factory()->create();
-        $workspace = Workspace::factory()->create(['user_id' => $owner->id]);
-        Member::factory()->owner()->create([
+        $tenant = Tenant::factory()->create(['user_id' => $owner->id]);
+        TenantUser::factory()->owner()->create([
             'user_id' => $owner->id,
-            'workspace_id' => $workspace->id,
+            'tenant_id' => $tenant->id,
         ]);
 
         $response = $this->actingAs($owner)
@@ -64,32 +62,31 @@ class DeleteAccountTest extends TestCase
         ]);
     }
 
-    // T100: test_deleting_account_removes_memberships
     public function test_deleting_account_removes_memberships(): void
     {
         $owner = User::factory()->create();
-        $workspace1 = Workspace::factory()->create(['user_id' => $owner->id]);
-        Member::factory()->owner()->create([
+        $tenant1 = Tenant::factory()->create(['user_id' => $owner->id]);
+        TenantUser::factory()->owner()->create([
             'user_id' => $owner->id,
-            'workspace_id' => $workspace1->id,
+            'tenant_id' => $tenant1->id,
         ]);
 
-        $workspace2 = Workspace::factory()->create(['user_id' => $owner->id]);
-        Member::factory()->owner()->create([
+        $tenant2 = Tenant::factory()->create(['user_id' => $owner->id]);
+        TenantUser::factory()->owner()->create([
             'user_id' => $owner->id,
-            'workspace_id' => $workspace2->id,
+            'tenant_id' => $tenant2->id,
         ]);
 
         $member = User::factory()->create();
-        Member::factory()->create([
+        TenantUser::factory()->create([
             'user_id' => $member->id,
-            'workspace_id' => $workspace1->id,
-            'role' => WorkspaceRole::Member,
+            'tenant_id' => $tenant1->id,
+            'role' => TenantRole::Member,
         ]);
-        Member::factory()->create([
+        TenantUser::factory()->create([
             'user_id' => $member->id,
-            'workspace_id' => $workspace2->id,
-            'role' => WorkspaceRole::Admin,
+            'tenant_id' => $tenant2->id,
+            'role' => TenantRole::Admin,
         ]);
 
         $this->actingAs($member)
@@ -97,38 +94,37 @@ class DeleteAccountTest extends TestCase
                 'password' => 'password',
             ]);
 
-        $this->assertDatabaseMissing('members', [
+        $this->assertDatabaseMissing('tenant_user', [
             'user_id' => $member->id,
         ]);
     }
 
-    // T101: test_user_with_multiple_workspaces_can_delete_if_not_owner
-    public function test_user_with_multiple_workspaces_can_delete_if_not_owner(): void
+    public function test_user_with_multiple_tenants_can_delete_if_not_owner(): void
     {
         $owner1 = User::factory()->create();
-        $workspace1 = Workspace::factory()->create(['user_id' => $owner1->id]);
-        Member::factory()->owner()->create([
+        $tenant1 = Tenant::factory()->create(['user_id' => $owner1->id]);
+        TenantUser::factory()->owner()->create([
             'user_id' => $owner1->id,
-            'workspace_id' => $workspace1->id,
+            'tenant_id' => $tenant1->id,
         ]);
 
         $owner2 = User::factory()->create();
-        $workspace2 = Workspace::factory()->create(['user_id' => $owner2->id]);
-        Member::factory()->owner()->create([
+        $tenant2 = Tenant::factory()->create(['user_id' => $owner2->id]);
+        TenantUser::factory()->owner()->create([
             'user_id' => $owner2->id,
-            'workspace_id' => $workspace2->id,
+            'tenant_id' => $tenant2->id,
         ]);
 
         $member = User::factory()->create();
-        Member::factory()->create([
+        TenantUser::factory()->create([
             'user_id' => $member->id,
-            'workspace_id' => $workspace1->id,
-            'role' => WorkspaceRole::Member,
+            'tenant_id' => $tenant1->id,
+            'role' => TenantRole::Member,
         ]);
-        Member::factory()->create([
+        TenantUser::factory()->create([
             'user_id' => $member->id,
-            'workspace_id' => $workspace2->id,
-            'role' => WorkspaceRole::Admin,
+            'tenant_id' => $tenant2->id,
+            'role' => TenantRole::Admin,
         ]);
 
         $response = $this->actingAs($member)
@@ -142,19 +138,18 @@ class DeleteAccountTest extends TestCase
             'id' => $member->id,
         ]);
 
-        $this->assertDatabaseMissing('members', [
+        $this->assertDatabaseMissing('tenant_user', [
             'user_id' => $member->id,
         ]);
     }
 
-    // T102: test_deleting_account_requires_ownership_transfer
     public function test_deleting_account_requires_ownership_transfer(): void
     {
         $owner = User::factory()->create();
-        $workspace = Workspace::factory()->create(['user_id' => $owner->id]);
-        Member::factory()->owner()->create([
+        $tenant = Tenant::factory()->create(['user_id' => $owner->id]);
+        TenantUser::factory()->owner()->create([
             'user_id' => $owner->id,
-            'workspace_id' => $workspace->id,
+            'tenant_id' => $tenant->id,
         ]);
 
         $response = $this->actingAs($owner)
@@ -164,14 +159,12 @@ class DeleteAccountTest extends TestCase
 
         $response->assertRedirect();
 
-        // User should still exist
         $this->assertDatabaseHas('users', [
             'id' => $owner->id,
         ]);
 
-        // Workspace should still exist
-        $this->assertDatabaseHas('workspaces', [
-            'id' => $workspace->id,
+        $this->assertDatabaseHas('tenants', [
+            'id' => $tenant->id,
         ]);
     }
 }

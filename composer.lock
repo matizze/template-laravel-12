@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "20606a514c9410d8715a030e904e319c",
+    "content-hash": "b1d04d0548855c924ab235773399b63a",
     "packages": [
         {
             "name": "blade-ui-kit/blade-icons",
@@ -2342,7 +2342,7 @@
         },
         {
             "name": "modules/auth",
-            "version": "dev-develop",
+            "version": "dev-004-multi-tenant-hierarchy",
             "dist": {
                 "type": "path",
                 "url": "app-modules/auth",
@@ -2375,7 +2375,7 @@
         },
         {
             "name": "modules/core",
-            "version": "dev-develop",
+            "version": "dev-004-multi-tenant-hierarchy",
             "dist": {
                 "type": "path",
                 "url": "app-modules/core",
@@ -2403,8 +2403,42 @@
             }
         },
         {
+            "name": "modules/tenant",
+            "version": "dev-004-multi-tenant-hierarchy",
+            "dist": {
+                "type": "path",
+                "url": "app-modules/tenant",
+                "reference": "49b6ec60210e582db073b3ee99d4f2cbdf1846ec"
+            },
+            "require": {
+                "modules/core": "*@dev",
+                "modules/user": "*@dev"
+            },
+            "type": "library",
+            "extra": {
+                "laravel": {
+                    "providers": [
+                        "Modules\\Tenant\\Providers\\TenantServiceProvider"
+                    ]
+                }
+            },
+            "autoload": {
+                "psr-4": {
+                    "Modules\\Tenant\\": "src/",
+                    "Modules\\Tenant\\Database\\Factories\\": "database/factories/"
+                }
+            },
+            "license": [
+                "MIT"
+            ],
+            "description": "Tenant module — tenant management, users and onboarding",
+            "transport-options": {
+                "relative": true
+            }
+        },
+        {
             "name": "modules/user",
-            "version": "dev-develop",
+            "version": "dev-004-multi-tenant-hierarchy",
             "dist": {
                 "type": "path",
                 "url": "app-modules/user",
@@ -2431,40 +2465,6 @@
                 "MIT"
             ],
             "description": "User module — shared kernel for user management",
-            "transport-options": {
-                "relative": true
-            }
-        },
-        {
-            "name": "modules/workspace",
-            "version": "dev-develop",
-            "dist": {
-                "type": "path",
-                "url": "app-modules/workspace",
-                "reference": "b442e7690494604ed3f220584f662268f26178e3"
-            },
-            "require": {
-                "modules/core": "*@dev",
-                "modules/user": "*@dev"
-            },
-            "type": "library",
-            "extra": {
-                "laravel": {
-                    "providers": [
-                        "Modules\\Workspace\\Providers\\WorkspaceServiceProvider"
-                    ]
-                }
-            },
-            "autoload": {
-                "psr-4": {
-                    "Modules\\Workspace\\": "src/",
-                    "Modules\\Workspace\\Database\\Factories\\": "database/factories/"
-                }
-            },
-            "license": [
-                "MIT"
-            ],
-            "description": "Workspace module — workspace management, members and onboarding",
             "transport-options": {
                 "relative": true
             }
@@ -9884,8 +9884,8 @@
     "stability-flags": {
         "modules/auth": 20,
         "modules/core": 20,
-        "modules/user": 20,
-        "modules/workspace": 20
+        "modules/tenant": 20,
+        "modules/user": 20
     },
     "prefer-stable": true,
     "prefer-lowest": false,

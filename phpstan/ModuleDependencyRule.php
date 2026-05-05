@@ -19,15 +19,15 @@ class ModuleDependencyRule implements Rule
         'Core' => [],
         'User' => ['Core'],
         'Auth' => ['Core', 'User'],
-        'Workspace' => ['Core', 'User'],
+        'Tenant' => ['Core', 'User'],
     ];
 
     /** @var list<string> Allowed cross-module imports (documented extension points) */
     private const ALLOWED_IMPORTS = [
-        'Modules\\Workspace\\Traits\\HasWorkspaces',
-        'Modules\\Workspace\\Enums\\WorkspaceRole',
-        'Modules\\Workspace\\Models\\Member',
-        'Modules\\Workspace\\Models\\Workspace',
+        'Modules\\Tenant\\Traits\\HasTenants',
+        'Modules\\Tenant\\Enums\\TenantRole',
+        'Modules\\Tenant\\Models\\TenantUser',
+        'Modules\\Tenant\\Models\\Tenant',
     ];
 
     public function getNodeType(): string
