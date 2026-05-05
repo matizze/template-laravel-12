@@ -2,12 +2,11 @@
 
 namespace Tests\Browser;
 
-use Modules\Workspace\Enums\WorkspaceRole;
-use Modules\Workspace\Models\Member;
-use Modules\User\Models\User;
-use Modules\Workspace\Models\Workspace;
 use Illuminate\Foundation\Testing\DatabaseMigrations;
 use Laravel\Dusk\Browser;
+use Modules\Tenant\Models\Tenant;
+use Modules\Tenant\Models\TenantUser;
+use Modules\User\Models\User;
 use Tests\DuskTestCase;
 
 class LoginFlowTest extends DuskTestCase
@@ -21,8 +20,8 @@ class LoginFlowTest extends DuskTestCase
             'email' => 'joao@example.com',
             'password' => 'password123',
         ]);
-        $workspace = Workspace::factory()->for($user, 'owner')->create();
-        Member::factory()->owner()->create(['user_id' => $user->id, 'workspace_id' => $workspace->id]);
+        $tenant = Tenant::factory()->for($user, 'owner')->create();
+        TenantUser::factory()->owner()->create(['user_id' => $user->id, 'tenant_id' => $tenant->id]);
 
         $this->browse(function (Browser $browser) {
             $browser->visit('/auth/login')
@@ -41,8 +40,8 @@ class LoginFlowTest extends DuskTestCase
             'email' => 'test@example.com',
             'password' => 'password123',
         ]);
-        $workspace = Workspace::factory()->for($user, 'owner')->create();
-        Member::factory()->owner()->create(['user_id' => $user->id, 'workspace_id' => $workspace->id]);
+        $tenant = Tenant::factory()->for($user, 'owner')->create();
+        TenantUser::factory()->owner()->create(['user_id' => $user->id, 'tenant_id' => $tenant->id]);
 
         $this->browse(function (Browser $browser) {
             $browser->visit('/auth/login')

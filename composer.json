@@ -12,7 +12,7 @@
         {"type": "path", "url": "app-modules/core"},
         {"type": "path", "url": "app-modules/user"},
         {"type": "path", "url": "app-modules/auth"},
-        {"type": "path", "url": "app-modules/workspace"}
+        {"type": "path", "url": "app-modules/tenant"}
     ],
     "require": {
         "php": "^8.2",
@@ -23,7 +23,7 @@
         "modules/core": "*@dev",
         "modules/user": "*@dev",
         "modules/auth": "*@dev",
-        "modules/workspace": "*@dev",
+        "modules/tenant": "*@dev",
         "php-flasher/flasher-noty-laravel": "^2.5"
     },
     "require-dev": {

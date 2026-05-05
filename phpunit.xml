@@ -20,8 +20,8 @@
         <testsuite name="Auth">
             <directory>app-modules/auth/tests</directory>
         </testsuite>
-        <testsuite name="Workspace">
-            <directory>app-modules/workspace/tests</directory>
+        <testsuite name="Tenant">
+            <directory>app-modules/tenant/tests</directory>
         </testsuite>
     </testsuites>
     <source>

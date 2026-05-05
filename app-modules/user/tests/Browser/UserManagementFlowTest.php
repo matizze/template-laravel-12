@@ -2,11 +2,11 @@
 
 namespace Tests\Browser;
 
-use Modules\Workspace\Models\Member;
-use Modules\User\Models\User;
-use Modules\Workspace\Models\Workspace;
 use Illuminate\Foundation\Testing\DatabaseMigrations;
 use Laravel\Dusk\Browser;
+use Modules\Tenant\Models\Tenant;
+use Modules\Tenant\Models\TenantUser;
+use Modules\User\Models\User;
 use Tests\DuskTestCase;
 
 class UserManagementFlowTest extends DuskTestCase
@@ -16,8 +16,8 @@ class UserManagementFlowTest extends DuskTestCase
     public function test_admin_can_create_user_via_modal(): void
     {
         $admin = User::factory()->admin()->create();
-        $workspace = Workspace::factory()->for($admin, 'owner')->create();
-        Member::factory()->owner()->create(['user_id' => $admin->id, 'workspace_id' => $workspace->id]);
+        $tenant = Tenant::factory()->for($admin, 'owner')->create();
+        TenantUser::factory()->owner()->create(['user_id' => $admin->id, 'tenant_id' => $tenant->id]);
 
         $this->browse(function (Browser $browser) use ($admin) {
             $browser->loginAs($admin)

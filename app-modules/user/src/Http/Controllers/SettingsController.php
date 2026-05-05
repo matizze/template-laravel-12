@@ -9,13 +9,13 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\View\View;
+use Modules\Tenant\Enums\TenantRole;
+use Modules\Tenant\Models\Tenant;
+use Modules\Tenant\Models\TenantUser;
 use Modules\User\Http\Requests\DeleteAccountRequest;
 use Modules\User\Http\Requests\UpdatePasswordRequest;
 use Modules\User\Http\Requests\UpdateProfileRequest;
 use Modules\User\Models\User;
-use Modules\Workspace\Enums\WorkspaceRole;
-use Modules\Workspace\Models\Member;
-use Modules\Workspace\Models\Workspace;
 
 class SettingsController extends Controller
 {
@@ -58,19 +58,19 @@ class SettingsController extends Controller
     {
         $user = Auth::user();
 
-        $ownsWorkspaces = Member::where('user_id', $user->id)
-            ->where('role', WorkspaceRole::Owner)
+        $ownsTenants = TenantUser::where('user_id', $user->id)
+            ->where('role', TenantRole::Owner)
             ->exists();
 
-        if ($ownsWorkspaces) {
+        if ($ownsTenants) {
             return redirect()
                 ->route('settings.index', ['tab' => 'profile'])
-                ->with('error', 'Você precisa transferir a propriedade dos seus workspaces antes de excluir sua conta.');
+                ->with('error', 'Você precisa transferir a propriedade dos seus tenants antes de excluir sua conta.');
         }
 
-        Member::where('user_id', $user->id)->delete();
+        TenantUser::where('user_id', $user->id)->delete();
 
-        Workspace::forgetCurrent();
+        Tenant::forgetCurrent();
 
         Auth::logout();
 

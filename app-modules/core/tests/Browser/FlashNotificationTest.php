@@ -2,11 +2,11 @@
 
 namespace Tests\Browser;
 
-use Modules\Workspace\Models\Member;
-use Modules\User\Models\User;
-use Modules\Workspace\Models\Workspace;
 use Illuminate\Foundation\Testing\DatabaseMigrations;
 use Laravel\Dusk\Browser;
+use Modules\Tenant\Models\Tenant;
+use Modules\Tenant\Models\TenantUser;
+use Modules\User\Models\User;
 use Tests\DuskTestCase;
 
 class FlashNotificationTest extends DuskTestCase
@@ -33,8 +33,8 @@ class FlashNotificationTest extends DuskTestCase
     public function test_flash_notification_appears_after_profile_update(): void
     {
         $user = User::factory()->create();
-        $workspace = Workspace::factory()->for($user, 'owner')->create();
-        Member::factory()->owner()->create(['user_id' => $user->id, 'workspace_id' => $workspace->id]);
+        $tenant = Tenant::factory()->for($user, 'owner')->create();
+        TenantUser::factory()->owner()->create(['user_id' => $user->id, 'tenant_id' => $tenant->id]);
 
         $this->browse(function (Browser $browser) use ($user) {
             $browser->loginAs($user)
@@ -53,8 +53,8 @@ class FlashNotificationTest extends DuskTestCase
         $user = User::factory()->create([
             'password' => 'password123',
         ]);
-        $workspace = Workspace::factory()->for($user, 'owner')->create();
-        Member::factory()->owner()->create(['user_id' => $user->id, 'workspace_id' => $workspace->id]);
+        $tenant = Tenant::factory()->for($user, 'owner')->create();
+        TenantUser::factory()->owner()->create(['user_id' => $user->id, 'tenant_id' => $tenant->id]);
 
         $this->browse(function (Browser $browser) use ($user) {
             $browser->loginAs($user)
