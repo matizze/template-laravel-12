@@ -499,4 +499,64 @@ class TenantTest extends TestCase
 
         $response->assertStatus(405);
     }
+
+    public function test_parent_id_is_not_mass_assignable_via_settings_update(): void
+    {
+        $owner = User::factory()->create();
+        $tenant = Tenant::factory()->root()->create(['user_id' => $owner->id]);
+        TenantUser::factory()->owner()->create(['user_id' => $owner->id, 'tenant_id' => $tenant->id]);
+
+        $otherTenant = Tenant::factory()->root()->create();
+
+        $response = $this->actingAs($owner)
+            ->withSession(['current_tenant_id' => $tenant->id])
+            ->patch(route('tenant.settings.update', $tenant), [
+                'name' => 'Updated',
+                'slug' => $tenant->slug,
+                'parent_id' => $otherTenant->id, // smuggled
+            ]);
+
+        $response->assertRedirect();
+        $tenant->refresh();
+        $this->assertNull($tenant->parent_id, 'parent_id must remain unchanged when sneaked into PATCH payload');
+        $this->assertSame('Updated', $tenant->name);
+    }
+
+    public function test_user_id_is_not_mass_assignable_via_settings_update(): void
+    {
+        $owner = User::factory()->create();
+        $stranger = User::factory()->create();
+        $tenant = Tenant::factory()->root()->create(['user_id' => $owner->id]);
+        TenantUser::factory()->owner()->create(['user_id' => $owner->id, 'tenant_id' => $tenant->id]);
+
+        $this->actingAs($owner)
+            ->withSession(['current_tenant_id' => $tenant->id])
+            ->patch(route('tenant.settings.update', $tenant), [
+                'name' => 'Updated',
+                'slug' => $tenant->slug,
+                'user_id' => $stranger->id, // smuggled
+            ]);
+
+        $tenant->refresh();
+        $this->assertSame($owner->id, $tenant->user_id, 'user_id must remain unchanged when sneaked into PATCH payload');
+    }
+
+    public function test_cannot_switch_to_grouper_tenant(): void
+    {
+        $owner = User::factory()->create();
+        $matriz = Tenant::factory()->root()->create(['user_id' => $owner->id]);
+        TenantUser::factory()->owner()->create(['user_id' => $owner->id, 'tenant_id' => $matriz->id]);
+
+        $base = Tenant::factory()->withParent($matriz)->create(['user_id' => $owner->id]);
+        TenantUser::factory()->owner()->create(['user_id' => $owner->id, 'tenant_id' => $base->id]);
+
+        // matriz is now a grouper
+        $response = $this->actingAs($owner)
+            ->withSession(['current_tenant_id' => $base->id])
+            ->post(route('tenant.switch', $matriz));
+
+        $response->assertRedirect();
+        // session must NOT have switched to the grouper
+        $this->assertNotSame($matriz->id, session('current_tenant_id'));
+    }
 }

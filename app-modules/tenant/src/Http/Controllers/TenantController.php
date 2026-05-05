@@ -16,13 +16,15 @@ class TenantController extends Controller
     public function store(CreateTenantRequest $request): RedirectResponse
     {
         $tenant = DB::transaction(function () use ($request): Tenant {
-            $tenant = Tenant::create([
+            $tenant = new Tenant;
+            $tenant->fill([
                 'name' => $request->validated('name'),
                 'slug' => $request->validated('slug'),
                 'description' => $request->validated('description'),
-                'parent_id' => $request->validated('parent_id'),
-                'user_id' => $request->user()->id,
             ]);
+            $tenant->user_id = $request->user()->id;
+            $tenant->parent_id = $request->validated('parent_id');
+            $tenant->save();
 
             TenantUser::create([
                 'user_id' => $request->user()->id,
@@ -52,7 +54,8 @@ class TenantController extends Controller
                 'role' => TenantRole::Owner,
             ]);
 
-            $tenant->update(['user_id' => $newOwnerId]);
+            $tenant->user_id = $newOwnerId;
+            $tenant->save();
         });
 
         return redirect()
@@ -63,6 +66,11 @@ class TenantController extends Controller
     public function switch(Tenant $tenant): RedirectResponse
     {
         $this->authorize('view', $tenant);
+
+        if (! $tenant->isOperable()) {
+            return redirect()->back()
+                ->with('error', 'Apenas tenants operáveis (folhas) podem ser ativados.');
+        }
 
         Tenant::setCurrentModel($tenant);
 

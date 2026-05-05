@@ -28,10 +28,10 @@ class TenantUser extends Pivot
     protected static function booted(): void
     {
         static::creating(function (TenantUser $tenantUser): void {
-            $tenant = Tenant::find($tenantUser->tenant_id);
+            $tenant = Tenant::withTrashed()->find($tenantUser->tenant_id);
 
-            if (! $tenant || ! $tenant->isOperable()) {
-                throw new \RuntimeException('Vínculo só é aceito em tenants operáveis.');
+            if (! $tenant || $tenant->trashed() || ! $tenant->isOperable()) {
+                throw new \RuntimeException('Vínculo só é aceito em tenants operáveis (folhas) ativos.');
             }
         });
     }

@@ -121,4 +121,19 @@ class TenantSoftDeleteTest extends TestCase
         $response->assertRedirect(route('dashboard'));
         $this->assertDatabaseHas('tenants', ['id' => $tenant->id, 'deleted_at' => null]);
     }
+
+    public function test_stranger_cannot_restore_someone_elses_tenant(): void
+    {
+        $owner = $this->createUserWithActiveTenant();
+        $stranger = $this->createUserWithActiveTenant();
+
+        $tenant = Tenant::factory()->root()->create(['user_id' => $owner->id]);
+        $tenant->delete();
+
+        $response = $this->actingAs($stranger)
+            ->post(route('tenant.restore', $tenant->id));
+
+        $response->assertForbidden();
+        $this->assertSoftDeleted('tenants', ['id' => $tenant->id]);
+    }
 }

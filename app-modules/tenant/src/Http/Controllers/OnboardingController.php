@@ -35,11 +35,13 @@ class OnboardingController extends Controller
         ]);
 
         $tenant = DB::transaction(function () use ($request, $validated): Tenant {
-            $tenant = Tenant::create([
+            $tenant = new Tenant;
+            $tenant->fill([
                 'name' => $validated['name'],
                 'description' => $validated['description'] ?? null,
-                'user_id' => $request->user()->id,
             ]);
+            $tenant->user_id = $request->user()->id;
+            $tenant->save();
 
             TenantUser::create([
                 'user_id' => $request->user()->id,

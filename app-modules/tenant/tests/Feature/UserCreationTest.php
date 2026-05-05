@@ -27,7 +27,7 @@ class UserCreationTest extends TestCase
         Notification::fake();
 
         $tenant = Tenant::factory()->create();
-        $admin = User::factory()->create();
+        $admin = User::factory()->create(['role' => 'admin']);
         TenantUser::create([
             'user_id' => $admin->id,
             'tenant_id' => $tenant->id,
@@ -53,7 +53,7 @@ class UserCreationTest extends TestCase
     public function test_duplicate_email_is_rejected(): void
     {
         $tenant = Tenant::factory()->create();
-        $admin = User::factory()->create();
+        $admin = User::factory()->create(['role' => 'admin']);
         TenantUser::create([
             'user_id' => $admin->id,
             'tenant_id' => $tenant->id,
@@ -94,10 +94,31 @@ class UserCreationTest extends TestCase
         $response->assertSee('Vamos criar o seu primeiro tenant');
     }
 
+    public function test_non_admin_cannot_create_user(): void
+    {
+        $tenant = Tenant::factory()->create();
+        $member = User::factory()->create(['role' => 'member']);
+        TenantUser::create([
+            'user_id' => $member->id,
+            'tenant_id' => $tenant->id,
+            'role' => TenantRole::Member,
+        ]);
+
+        $response = $this->actingAs($member)
+            ->withSession(['current_tenant_id' => $tenant->id])
+            ->post(route('tenant.users.create.store'), [
+                'name' => 'Forbidden',
+                'email' => 'forbidden@example.com',
+            ]);
+
+        $response->assertForbidden();
+        $this->assertSame(0, User::where('email', 'forbidden@example.com')->count());
+    }
+
     public function test_user_creation_is_rate_limited(): void
     {
         $tenant = Tenant::factory()->create();
-        $admin = User::factory()->create();
+        $admin = User::factory()->create(['role' => 'admin']);
         TenantUser::create([
             'user_id' => $admin->id,
             'tenant_id' => $tenant->id,

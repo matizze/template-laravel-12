@@ -23,6 +23,7 @@ class SetCurrentTenant
             /** @var Tenant|null $tenant */
             $tenant = $user->tenants()
                 ->whereDoesntHave('children')
+                ->orderBy('tenants.id')
                 ->first();
 
             if ($tenant) {

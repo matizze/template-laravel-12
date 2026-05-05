@@ -44,6 +44,7 @@ class TenantServiceProvider extends ServiceProvider
             $tenants = $user->tenants()
                 ->whereDoesntHave('children')
                 ->whereNull('tenants.deleted_at')
+                ->orderBy('tenants.name')
                 ->get();
 
             $needsPath = $tenants->groupBy('name')->contains(fn ($group) => $group->count() > 1);

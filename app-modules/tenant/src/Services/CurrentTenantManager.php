@@ -21,8 +21,8 @@ class CurrentTenantManager
 
     public function set(Tenant $tenant): void
     {
-        if (! $tenant->isOperable()) {
-            throw new RuntimeException('Tenant não operável não pode ser ativo na sessão.');
+        if ($tenant->trashed() || ! $tenant->isOperable()) {
+            throw new RuntimeException('Apenas tenants operáveis (folhas) ativos podem ser ativados na sessão.');
         }
 
         $this->tenant = $tenant;
@@ -33,9 +33,11 @@ class CurrentTenantManager
     {
         $tenant = Tenant::find($tenantId);
 
-        if ($tenant) {
-            $this->set($tenant);
+        if (! $tenant) {
+            throw new RuntimeException("Tenant ID {$tenantId} não encontrado ou excluído.");
         }
+
+        $this->set($tenant);
     }
 
     public function forget(): void

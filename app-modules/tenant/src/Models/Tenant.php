@@ -22,7 +22,12 @@ class Tenant extends Model
     /** @use HasFactory<TenantFactory> */
     use HasFactory, SoftDeletes;
 
-    protected $fillable = ['name', 'slug', 'description', 'logo_path', 'user_id', 'parent_id'];
+    /**
+     * Mass-assignable attributes. `user_id` and `parent_id` are intentionally
+     * EXCLUDED — they are structural fields set explicitly by controllers
+     * (creation, ownership transfer) and never accepted from request payload.
+     */
+    protected $fillable = ['name', 'slug', 'description', 'logo_path'];
 
     protected static function newFactory(): TenantFactory
     {

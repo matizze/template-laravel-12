@@ -213,14 +213,19 @@ class TenantHierarchyTest extends TestCase
 
     public function test_create_tenant_request_accepts_parent_without_active_links(): void
     {
+        // FR-017: parent must have zero `tenant_user` links to become grouper.
+        // The creator (`tenant.user_id`) is authorized via the user_id fallback
+        // even after their own link was detached.
         $user = User::factory()->create();
 
         $parent = Tenant::factory()->root()->create(['user_id' => $user->id]);
+        // Note: NO TenantUser link on the parent (FR-017 precondition).
 
         $activeTenant = Tenant::factory()->root()->create(['user_id' => $user->id]);
         TenantUser::factory()->owner()->create(['user_id' => $user->id, 'tenant_id' => $activeTenant->id]);
 
         $response = $this->actingAs($user)
+            ->withSession(['current_tenant_id' => $activeTenant->id])
             ->post(route('tenant.store'), [
                 'name' => 'Child',
                 'parent_id' => $parent->id,
@@ -228,5 +233,25 @@ class TenantHierarchyTest extends TestCase
 
         $response->assertRedirect(route('dashboard'));
         $this->assertDatabaseHas('tenants', ['name' => 'Child', 'parent_id' => $parent->id]);
+    }
+
+    public function test_create_child_requires_owner_or_admin_on_parent(): void
+    {
+        $owner = User::factory()->create();
+        $stranger = User::factory()->create();
+        $parent = Tenant::factory()->root()->create(['user_id' => $owner->id]);
+
+        $strangerTenant = Tenant::factory()->root()->create(['user_id' => $stranger->id]);
+        TenantUser::factory()->owner()->create(['user_id' => $stranger->id, 'tenant_id' => $strangerTenant->id]);
+
+        $response = $this->actingAs($stranger)
+            ->withSession(['current_tenant_id' => $strangerTenant->id])
+            ->post(route('tenant.store'), [
+                'name' => 'Hijack',
+                'parent_id' => $parent->id,
+            ]);
+
+        $response->assertForbidden();
+        $this->assertDatabaseMissing('tenants', ['name' => 'Hijack']);
     }
 }

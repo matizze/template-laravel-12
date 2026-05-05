@@ -38,4 +38,14 @@ class TenantPolicy
     {
         return $user->roleIn($tenant) === TenantRole::Owner;
     }
+
+    /**
+     * Restore a soft-deleted tenant. Only the original creator (`tenant.user_id`)
+     * may restore — `roleIn` cannot be used because trashed tenants don't
+     * appear in pivot relationships.
+     */
+    public function restore(User $user, Tenant $tenant): bool
+    {
+        return $tenant->getAttribute('user_id') === $user->getAttribute('id');
+    }
 }

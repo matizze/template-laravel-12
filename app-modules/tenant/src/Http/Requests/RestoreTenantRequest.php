@@ -10,7 +10,19 @@ class RestoreTenantRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        return true;
+        $user = $this->user();
+        if (! $user) {
+            return false;
+        }
+
+        $tenantId = (int) $this->route('tenantId');
+        $tenant = Tenant::onlyTrashed()->find($tenantId);
+
+        if (! $tenant) {
+            return false;
+        }
+
+        return $user->can('restore', $tenant);
     }
 
     /**

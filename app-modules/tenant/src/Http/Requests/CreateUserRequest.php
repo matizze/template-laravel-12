@@ -9,7 +9,7 @@ class CreateUserRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        return true;
+        return $this->user()?->can('manage-users') ?? false;
     }
 
     /**

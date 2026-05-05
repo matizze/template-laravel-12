@@ -52,6 +52,10 @@ class TenantSettingsController extends Controller
     {
         $tenant = Tenant::onlyTrashed()->findOrFail($tenantId);
 
+        // Defense in depth — RestoreTenantRequest::authorize already gates this,
+        // but the controller re-asserts the policy in case the request is bypassed.
+        $this->authorize('restore', $tenant);
+
         $tenant->restore();
 
         return redirect()->route('dashboard')
