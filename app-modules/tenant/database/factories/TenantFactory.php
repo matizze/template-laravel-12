@@ -25,4 +25,14 @@ class TenantFactory extends Factory
             'user_id' => User::factory(),
         ];
     }
+
+    public function withParent(Tenant $parent): self
+    {
+        return $this->state(fn () => ['parent_id' => $parent->id]);
+    }
+
+    public function root(): self
+    {
+        return $this->state(fn () => ['parent_id' => null]);
+    }
 }

@@ -209,8 +209,10 @@ class TenantTest extends TestCase
     public function test_owner_can_delete_tenant(): void
     {
         $user = User::factory()->create();
+        $activeTenant = Tenant::factory()->create(['user_id' => $user->id]);
+        TenantUser::factory()->owner()->create(['user_id' => $user->id, 'tenant_id' => $activeTenant->id]);
+
         $tenant = Tenant::factory()->create(['user_id' => $user->id]);
-        TenantUser::factory()->owner()->create(['user_id' => $user->id, 'tenant_id' => $tenant->id]);
 
         $response = $this->actingAs($user)
             ->delete(route('tenant.destroy', $tenant));

@@ -1,3 +1,9 @@
+@php
+    $parentOptions = auth()->check()
+        ? auth()->user()->tenants()->whereDoesntHave('users')->get()
+        : collect();
+@endphp
+
 <div
     x-data="{ open: false }"
     x-cloak
@@ -47,6 +53,15 @@
                         placeholder="Descrição do tenant"
                         class="resize-none"
                     />
+
+                    @if($parentOptions->isNotEmpty())
+                        <x-form.select label="Tenant pai (opcional)" name="parent_id">
+                            <option value="">Nenhum (raiz)</option>
+                            @foreach($parentOptions as $option)
+                                <option value="{{ $option->id }}">{{ $option->path() }}</option>
+                            @endforeach
+                        </x-form.select>
+                    @endif
 
                     <div class="flex justify-end gap-3 pt-4">
                         <x-button type="button" variant="ghost" @click="open = false">

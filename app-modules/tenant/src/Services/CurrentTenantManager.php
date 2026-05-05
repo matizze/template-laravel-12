@@ -3,6 +3,7 @@
 namespace Modules\Tenant\Services;
 
 use Modules\Tenant\Models\Tenant;
+use RuntimeException;
 
 /**
  * Manages the current tenant for the request lifecycle.
@@ -20,6 +21,10 @@ class CurrentTenantManager
 
     public function set(Tenant $tenant): void
     {
+        if (! $tenant->isOperable()) {
+            throw new RuntimeException('Tenant não operável não pode ser ativo na sessão.');
+        }
+
         $this->tenant = $tenant;
         session(['current_tenant_id' => $tenant->id]);
     }

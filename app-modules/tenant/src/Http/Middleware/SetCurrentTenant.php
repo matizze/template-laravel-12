@@ -11,22 +11,43 @@ class SetCurrentTenant
 {
     public function handle(Request $request, Closure $next): Response
     {
-        if ($request->user()) {
-            $tenantId = session('current_tenant_id');
+        $user = $request->user();
 
+        if (! $user) {
+            return $next($request);
+        }
+
+        $tenantId = session('current_tenant_id');
+
+        if (! $tenantId) {
             /** @var Tenant|null $tenant */
-            $tenant = $tenantId
-                ? $request->user()->tenants()->where('tenants.id', $tenantId)->first()
-                : $request->user()->tenants()->first();
+            $tenant = $user->tenants()
+                ->whereDoesntHave('children')
+                ->first();
 
             if ($tenant) {
                 Tenant::setCurrentModel($tenant);
-            } else {
-                session()->forget('current_tenant_id');
 
-                return redirect()->route('onboarding');
+                return $next($request);
             }
+
+            return redirect()->route('onboarding');
         }
+
+        /** @var Tenant|null $tenant */
+        $tenant = $user->tenants()
+            ->whereDoesntHave('children')
+            ->where('tenants.id', $tenantId)
+            ->first();
+
+        if (! $tenant) {
+            session()->forget('current_tenant_id');
+
+            return redirect()->route('onboarding')
+                ->with('warning', 'Tenant indisponível. Selecione outro.');
+        }
+
+        Tenant::setCurrentModel($tenant);
 
         return $next($request);
     }

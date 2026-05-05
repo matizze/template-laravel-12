@@ -20,7 +20,11 @@ class TenantPolicy
 
     public function delete(User $user, Tenant $tenant): bool
     {
-        return $user->roleIn($tenant) === TenantRole::Owner;
+        if ($user->roleIn($tenant) === TenantRole::Owner) {
+            return true;
+        }
+
+        return $tenant->getAttribute('user_id') === $user->getAttribute('id');
     }
 
     public function manageTenantUsers(User $user, Tenant $tenant): bool

@@ -20,6 +20,7 @@ class TenantController extends Controller
                 'name' => $request->validated('name'),
                 'slug' => $request->validated('slug'),
                 'description' => $request->validated('description'),
+                'parent_id' => $request->validated('parent_id'),
                 'user_id' => $request->user()->id,
             ]);
 

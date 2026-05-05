@@ -6,6 +6,8 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
+use Modules\Tenant\Http\Requests\DeleteTenantRequest;
+use Modules\Tenant\Http\Requests\RestoreTenantRequest;
 use Modules\Tenant\Http\Requests\UpdateTenantSettingsRequest;
 use Modules\Tenant\Models\Tenant;
 
@@ -34,7 +36,7 @@ class TenantSettingsController extends Controller
             ->with('success', 'Tenant atualizado com sucesso!');
     }
 
-    public function destroy(Tenant $tenant): RedirectResponse
+    public function destroy(DeleteTenantRequest $request, Tenant $tenant): RedirectResponse
     {
         $this->authorize('delete', $tenant);
 
@@ -44,5 +46,15 @@ class TenantSettingsController extends Controller
 
         return redirect()->route('dashboard')
             ->with('success', 'Tenant excluído com sucesso!');
+    }
+
+    public function restore(RestoreTenantRequest $request, int $tenantId): RedirectResponse
+    {
+        $tenant = Tenant::onlyTrashed()->findOrFail($tenantId);
+
+        $tenant->restore();
+
+        return redirect()->route('dashboard')
+            ->with('success', 'Tenant restaurado com sucesso!');
     }
 }

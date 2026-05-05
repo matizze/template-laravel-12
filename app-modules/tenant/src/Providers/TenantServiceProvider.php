@@ -31,9 +31,27 @@ class TenantServiceProvider extends ServiceProvider
 
             $user = Auth::user();
 
+            if (! $user) {
+                $view->with([
+                    'tenants' => collect(),
+                    'currentTenant' => null,
+                    'needsPath' => false,
+                ]);
+
+                return;
+            }
+
+            $tenants = $user->tenants()
+                ->whereDoesntHave('children')
+                ->whereNull('tenants.deleted_at')
+                ->get();
+
+            $needsPath = $tenants->groupBy('name')->contains(fn ($group) => $group->count() > 1);
+
             $view->with([
-                'tenants' => $user ? $user->tenants : collect(),
+                'tenants' => $tenants,
                 'currentTenant' => Tenant::current(),
+                'needsPath' => $needsPath,
             ]);
         });
     }

@@ -28,5 +28,8 @@ Route::middleware('web')->group(function () {
 
         Route::post('/tenant', [TenantController::class, 'store'])->name('tenant.store');
         Route::post('/tenant/switch/{tenant}', [TenantController::class, 'switch'])->name('tenant.switch');
+        Route::post('/tenant/{tenantId}/restore', [TenantSettingsController::class, 'restore'])
+            ->name('tenant.restore')
+            ->whereNumber('tenantId');
     });
 });

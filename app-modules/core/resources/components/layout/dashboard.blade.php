@@ -16,7 +16,7 @@
             </header>
 
             <div class="px-4 py-2">
-                <x-tenant::tenant-switcher :tenants="$tenants" :currentTenant="$currentTenant" />
+                <x-tenant::tenant-switcher :tenants="$tenants" :currentTenant="$currentTenant" :needsPath="$needsPath ?? false" />
             </div>
 
             <nav class="flex px-4 py-5 flex-col space-y-1">

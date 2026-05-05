@@ -1,4 +1,4 @@
-@props(['tenants' => collect(), 'currentTenant' => null])
+@props(['tenants' => collect(), 'currentTenant' => null, 'needsPath' => false])
 
 <div
     x-data="{ open: false }"
@@ -53,7 +53,7 @@
                                 : 'text-gray-300 hover:bg-gray-600/40' }}"
                     >
                         <x-icon name="lucide-folder" class="size-3.5" />
-                        <span class="truncate">{{ $tenant->name }}</span>
+                        <span class="truncate">{{ $needsPath ? $tenant->path() : $tenant->name }}</span>
                         @if($currentTenant?->id === $tenant->id)
                             <x-icon name="lucide-check" class="size-3 ml-auto" />
                         @endif
