@@ -1,19 +1,20 @@
 <!--
 SYNC IMPACT REPORT
 ==================
-Version change: 1.2.1 → 1.3.0 (MINOR: Workspace module replaced by hierarchical Tenant module)
+Version change: 1.3.0 → 1.4.0 (MINOR: Modular Architecture principle abstracted; module enumeration removed from constitution)
 Modified:
-  - Core Principles/III — module list (Core/User/Auth/Tenant) and dependency diagram updated
-  - Module Boundaries/Workspace section renamed to /Tenant — full inventory rewritten to reflect hierarchical multi-tenancy (parent_id, isOperable, soft-deletes, tenant_user pivot, dual-state onboarding, removal of Invitation per FR-020)
-  - Module Boundaries/User — `HasTenants` trait import documented as the canonical extension point
-Templates reviewed:
-  - .specify/templates/plan-template.md ✅ (no changes required)
-  - .specify/templates/spec-template.md ✅ (no changes required)
-  - .specify/templates/tasks-template.md ✅ (no changes required)
-Specs superseded:
+  - Core Principles/III "Modular Architecture" — rewritten to describe modular architecture as a principle (boundaries, dependency rules, cross-module extension patterns) without naming concrete modules. Adding/renaming/removing a module is now an ordinary development operation that does NOT require a constitutional amendment.
+  - Section "Module Boundaries" — REMOVED. The current list of modules (currently includes Core, User, Auth, Tenant) and their responsibilities now lives in `AGENTS.md` / `README.md` as living documentation, updated as part of normal development work.
+Carried over from 1.3.0 (Tenant module nominal version superseded by this bump):
   - 001-workspace-management — replaced by 004-multi-tenant-hierarchy (functional baseline preserved minus invitations)
   - 002-invite-redirect-flow — Invitation flow removed (FR-020)
-Deferred TODOs: none
+Templates reviewed:
+  - .specify/templates/spec-template.md ✅ (no changes required)
+  - .specify/templates/plan-template.md ⚠ (Constitution Check row III references nominal modules — should be generalized in a follow-up edit)
+  - .specify/templates/tasks-template.md ⚠ (Path Conventions section enumerates nominal module paths — should be generalized in a follow-up edit)
+Deferred TODOs:
+  - Align plan-template.md and tasks-template.md with the abstracted Principle III (remove nominal module references; replace with pointer to AGENTS.md/README.md).
+  - Migrate the Tenant module description previously held in constitution Module Boundaries to AGENTS.md/README.md as living documentation.
 -->
 
 # Laravel 12 Template Constitution
@@ -54,19 +55,53 @@ classes. Frameworks and ORM capabilities MUST be used before any custom infrastr
 
 ### III. Modular Architecture
 
-The codebase MUST be organized into four modules — **Core**, **User**, **Auth**, **Tenant** — each with
-clear boundaries. No module MUST depend on a module lower in the dependency chain.
+The codebase MUST be organized into modules — self-contained units of code grouped by domain
+responsibility. Each module owns its models, controllers, requests, views, routes, and tests, and
+exposes a narrow public surface to the rest of the application.
 
-```
-Core ← User ← Auth
-            ← Tenant
-```
+**Dependency rules:**
 
-Each module owns its models, controllers, requests, views, and tests. Cross-module access MUST go through
-defined extension points (dynamic relationship registration via `resolveRelationUsing()`, service classes, events) — never via direct model imports or mutation across modules.
+- The dependency graph between modules MUST be acyclic. A module MUST NOT depend, directly or
+  transitively, on a module that depends on it.
+- Exactly one module SHOULD act as the **shared kernel** — the lowest layer in the chain, containing
+  base infrastructure (UI components, layouts, root service providers) with no business logic. Every
+  other module MAY depend on it.
+- One module MAY act as the **identity / account base** that other domain modules build on (for
+  example, the module that owns the base user model). Domain modules MAY depend on it.
+- Domain modules MUST NOT depend on each other directly. When two domain modules need to interact,
+  the interaction MUST go through a defined extension point — never through a direct model import,
+  trait import, or static call across module boundaries.
 
-**Rationale**: Separation by domain concern enables independent feature delivery, isolated test suites,
-and a codebase that scales without becoming a big ball of mud. The flat dependency tree prevents cycles.
+**Cross-module extension points (REQUIRED patterns):**
+
+- **Eloquent relations** — When module B needs to expose a relationship on a model owned by module A,
+  module B MUST register the relation dynamically via `resolveRelationUsing()` from its own service
+  provider. Module A MUST NOT import models, traits, or enums from module B.
+- **Services and contracts** — When one module needs behaviour from another, the consumer MUST depend
+  on an interface (contract) resolved from the container. The provider module MUST bind a concrete
+  implementation in its service provider. No direct concrete-class imports across modules.
+- **Events** — Asynchronous, fan-out, or fire-and-forget interactions MUST use Laravel events and
+  listeners. The dispatcher MUST NOT know which modules listen.
+- **Routes and views** — A module MAY register its own routes and views from its service provider.
+  Modules MUST NOT directly include views from another module by absolute path; they MUST go through
+  named view namespaces or Blade components exposed by the shared kernel.
+
+**Module lifecycle:**
+
+Adding, splitting, renaming, or removing a module is an ordinary development operation. It MUST NOT
+require a constitutional amendment, provided the change respects the dependency rules and extension
+points defined above. The current inventory of modules and their responsibilities is living
+documentation maintained in `AGENTS.md` and the project README — not in this constitution.
+
+**Rationale**: Separation by domain concern enables independent feature delivery, isolated test
+suites, and a codebase that scales without becoming a big ball of mud. Encoding the *rules* of
+modularity rather than the *list* of modules keeps the constitution stable as the application grows.
+
+## Module Inventory
+
+The current list of modules, their responsibilities, and the files they own is documented in
+`AGENTS.md` (and mirrored in the project README). That documentation is updated as part of normal
+development work whenever a module is added, renamed, or restructured.
 
 ### IV. Simplicity (YAGNI)
 
@@ -113,65 +148,6 @@ creating a PR.
 **Rationale**: Serena prevents unnecessary full-file reads and enables precise edits at scale. Laravel
 Boost grounds every decision in version-accurate documentation. Herd ensures the correct runtime is
 always targeted. The simplify gate enforces code quality as a non-optional step, not an afterthought.
-
-## Module Boundaries
-
-### Core — Pure Infrastructure
-
-No business logic. No dependency on other modules.
-
-| Type | Files |
-|------|-------|
-| Providers | `AppServiceProvider` |
-| Views/Components | `components/avatar`, `button`, `card`, `modal`, `pagination`, `nav-item`, `user-menu`, `form/*`, `icon/*`, `layout/*` |
-| Views | `dashboard.blade.php` (slot for content injected by other modules) |
-
-### User — Shared Kernel
-
-Base user model + account management + admin user CRUD. Depended on by Auth and Tenant.
-
-| Type | Files |
-|------|-------|
-| Models | `User` (clean — no tenant methods; `HasTenants` trait imported as documented exception) |
-| Controllers | `UserController`, `SettingsController` |
-| Requests | `StoreUserRequest`, `UpdateUserRoleRequest`, `UpdateProfileRequest`, `UpdatePasswordRequest`, `DeleteAccountRequest` |
-| Commands | `CreateUserCommand` |
-| Views | `settings/` |
-| Tests | `UserManagementTest`, `SettingsTest`, `CreateUserCommandTest` |
-
-### Auth — Authentication & Password Recovery
-
-Depends on Core + User.
-
-| Type | Files |
-|------|-------|
-| Controllers | `LoginController`, `RegisterController`, `ForgotPasswordController`, `ResetPasswordController` |
-| Requests | `MakeLoginRequest`, `MakeRegisterRequest`, `ForgotPasswordRequest`, `ResetPasswordRequest` |
-| Views | `auth/` |
-| Routes | `routes/auth.php` |
-| Tests | `AuthTest`, `PasswordResetTest` |
-
-### Tenant — Hierarchical Tenant Management, Links & Onboarding
-
-Depends on Core + User. Replaces the former Workspace module (specs 001/002 superseded by 004).
-
-Hierarchical: `tenants` carry an optional `parent_id` self-reference. Operability is derived (a tenant is operable iff it has no children); only operable tenants accept `tenant_user` links and only operable tenants can be active in a session. User is a global entity; access to a tenant is granted exclusively via `tenant_user` records, never via a column on `users`.
-
-| Type | Files |
-|------|-------|
-| Models | `Tenant` (with `parent`/`children`/`descendants`/`ancestors`/`isOperable`/`path` + `SoftDeletes`), `TenantUser` (pivot, role-bearing) |
-| Dynamic Relations | `tenants()`, `ownedTenants()` registered on User via `resolveRelationUsing()` in TenantServiceProvider; `HasTenants` trait imported on User as documented exception |
-| Traits | `HasTenants` (utility: `roleIn(Tenant)`, `isMemberOf(Tenant)`) |
-| Enum | `TenantRole` (Owner, Admin, Member, Viewer) |
-| Policy | `TenantPolicy` |
-| Service | `CurrentTenantManager` (registered as `scoped` for Octane safety; validates `isOperable` on `set`) |
-| Middleware | `SetCurrentTenant` (just-in-time invalidation: leaf check + active link check on every request) |
-| Rules | `ParentHasNoActiveLinks` (FR-017) |
-| Controllers | `TenantController`, `TenantSettingsController`, `TenantUserController`, `OnboardingController` (dual-state), `UserCreationController` |
-| Requests | `CreateTenantRequest`, `UpdateTenantSettingsRequest`, `DeleteTenantRequest`, `RestoreTenantRequest`, `AttachTenantUserRequest`, `DetachTenantUserRequest`, `UpdateTenantUserRoleRequest`, `TransferOwnershipRequest`, `CreateUserRequest` |
-| Views/Components | `dashboard/`, `onboarding.blade.php` (dual state: bootstrap vs no-access), `users/create.blade.php`, `tenant-switcher`, `create-tenant-modal` |
-| Tests | `TenantTest`, `TenantHierarchyTest`, `TenantHierarchyPerformanceTest`, `TenantSoftDeleteTest`, `TenantUserAttachTest`, `UserCreationTest`, browser `TenantFlowTest` |
-| Removed (FR-020) | Invitation model/migration/factory/notification/modal/request and `InviteTest` — replaced by separate user-creation (US3) and link-attach (US4) flows |
 
 ## Agent Assignments
 
@@ -232,4 +208,4 @@ Complexity Tracking table of `plan.md`.
 Runtime guidance: `CLAUDE.md` (agent tooling, commands, conventions) and `AGENTS.md` (auth flow,
 testing rules, environment).
 
-**Version**: 1.3.0 | **Ratified**: 2026-03-21 | **Last Amended**: 2026-05-05
+**Version**: 1.4.0 | **Ratified**: 2026-03-21 | **Last Amended**: 2026-05-05

@@ -388,3 +388,10 @@ $this->app->singleton(Service::class, fn () => new Service(fn () => request()));
 ## Active Technologies
 - PHP 8.4 / Laravel 12 + InterNACHI/modular, PHPStan (larastan), Laravel Pin (003-modular-migration)
 - SQLite (dev), PostgreSQL (prod) — sem alterações de schema (003-modular-migration)
+- PHP 8.4 + Laravel 12, InterNACHI/modular (modular monolith). Sem deps externas adicionais (zero external deps mantida). (005-rbac-permissions)
+- SQLite em dev/test; PostgreSQL em prod. Schema RBAC criado por migrations do novo módulo. (005-rbac-permissions)
+- PHP 8.4 / Laravel 12 + laravel/framework v12, laravel/octane v2 (Swoole), InterNACHI/modular (modular monolith), spatie/laravel-data (não usado neste módulo), blade-lucide-icons, Alpine.js 3, Tailwind v4 (004-multi-tenant-hierarchy)
+- SQLite em dev/test (in-memory para PHPUnit), PostgreSQL em prod — schema único, sem partitioning. Sem alterações estruturais de stack. (004-multi-tenant-hierarchy)
+
+## Recent Changes
+- 005-rbac-permissions: Added PHP 8.4 + Laravel 12, InterNACHI/modular (modular monolith). Sem deps externas adicionais (zero external deps mantida).
