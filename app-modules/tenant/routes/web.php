@@ -16,6 +16,7 @@ Route::middleware('web')->group(function () {
             Route::view('/dashboard', 'core::dashboard')->name('dashboard');
 
             Route::get('/tenant/{tenant}/users', [TenantUserController::class, 'index'])->name('tenant.users.index');
+            Route::post('/tenant/{tenant}/users', [TenantUserController::class, 'store'])->name('tenant.users.store');
             Route::post('/tenant/{tenant}/leave', [TenantUserController::class, 'leave'])->name('tenant.users.leave');
             Route::patch('/tenant/{tenant}/users/{user}', [TenantUserController::class, 'updateRole'])->name('tenant.users.updateRole');
             Route::delete('/tenant/{tenant}/users/{user}', [TenantUserController::class, 'remove'])->name('tenant.users.remove');

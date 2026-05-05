@@ -25,6 +25,17 @@ class TenantUser extends Pivot
         return TenantUserFactory::new();
     }
 
+    protected static function booted(): void
+    {
+        static::creating(function (TenantUser $tenantUser): void {
+            $tenant = Tenant::find($tenantUser->tenant_id);
+
+            if (! $tenant || ! $tenant->isOperable()) {
+                throw new \RuntimeException('Vínculo só é aceito em tenants operáveis.');
+            }
+        });
+    }
+
     protected function casts(): array
     {
         return [

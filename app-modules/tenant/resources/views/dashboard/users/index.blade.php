@@ -7,6 +7,36 @@
             </div>
         </div>
 
+        @can('manageTenantUsers', $tenant)
+            @if ($availableUsers->isNotEmpty())
+                <x-card class="mb-6">
+                    <h2 class="text-lg font-semibold text-gray-900 mb-4">Vincular usuário</h2>
+                    <form method="POST" action="{{ route('tenant.users.store', $tenant) }}" class="grid gap-4 md:grid-cols-3 md:items-end">
+                        @csrf
+
+                        <x-form.select name="user_id" label="Usuário" required>
+                            <option value="">Selecione…</option>
+                            @foreach ($availableUsers as $availableUser)
+                                <option value="{{ $availableUser->id }}" @selected(old('user_id') == $availableUser->id)>
+                                    {{ $availableUser->name }} ({{ $availableUser->email }})
+                                </option>
+                            @endforeach
+                        </x-form.select>
+
+                        <x-form.select name="role" label="Papel" required>
+                            @foreach ([\Modules\Tenant\Enums\TenantRole::Admin, \Modules\Tenant\Enums\TenantRole::Member, \Modules\Tenant\Enums\TenantRole::Viewer] as $role)
+                                <option value="{{ $role->value }}" @selected(old('role') === $role->value)>{{ ucfirst($role->value) }}</option>
+                            @endforeach
+                        </x-form.select>
+
+                        <div>
+                            <x-button type="submit">Vincular</x-button>
+                        </div>
+                    </form>
+                </x-card>
+            @endif
+        @endcan
+
         {{-- Tenant users list --}}
         <x-card>
             <div class="divide-y divide-gray-100">

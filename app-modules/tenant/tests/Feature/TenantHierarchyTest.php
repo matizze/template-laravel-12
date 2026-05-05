@@ -123,9 +123,9 @@ class TenantHierarchyTest extends TestCase
         $user = User::factory()->create();
 
         $grouper = Tenant::factory()->root()->create(['user_id' => $user->id, 'name' => 'GrouperOnly']);
-        $leaf = Tenant::factory()->withParent($grouper)->create(['name' => 'LeafOnly']);
-
         TenantUser::factory()->owner()->create(['user_id' => $user->id, 'tenant_id' => $grouper->id]);
+
+        $leaf = Tenant::factory()->withParent($grouper)->create(['name' => 'LeafOnly']);
         TenantUser::factory()->owner()->create(['user_id' => $user->id, 'tenant_id' => $leaf->id]);
 
         $response = $this->actingAs($user)
