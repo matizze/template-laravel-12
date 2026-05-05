@@ -1,14 +1,18 @@
 <!--
 SYNC IMPACT REPORT
 ==================
-Version change: 1.2.0 → 1.2.1 (PATCH: Module Boundaries clarification)
+Version change: 1.2.1 → 1.3.0 (MINOR: Workspace module replaced by hierarchical Tenant module)
 Modified:
-  - Module Boundaries/Workspace — HasWorkspaces trait no longer imported by User; relationships use resolveRelationUsing()
-  - Core Principles/III — extension points updated to prefer resolveRelationUsing over direct trait imports
+  - Core Principles/III — module list (Core/User/Auth/Tenant) and dependency diagram updated
+  - Module Boundaries/Workspace section renamed to /Tenant — full inventory rewritten to reflect hierarchical multi-tenancy (parent_id, isOperable, soft-deletes, tenant_user pivot, dual-state onboarding, removal of Invitation per FR-020)
+  - Module Boundaries/User — `HasTenants` trait import documented as the canonical extension point
 Templates reviewed:
   - .specify/templates/plan-template.md ✅ (no changes required)
   - .specify/templates/spec-template.md ✅ (no changes required)
   - .specify/templates/tasks-template.md ✅ (no changes required)
+Specs superseded:
+  - 001-workspace-management — replaced by 004-multi-tenant-hierarchy (functional baseline preserved minus invitations)
+  - 002-invite-redirect-flow — Invitation flow removed (FR-020)
 Deferred TODOs: none
 -->
 
@@ -50,12 +54,12 @@ classes. Frameworks and ORM capabilities MUST be used before any custom infrastr
 
 ### III. Modular Architecture
 
-The codebase MUST be organized into four modules — **Core**, **User**, **Auth**, **Workspace** — each with
+The codebase MUST be organized into four modules — **Core**, **User**, **Auth**, **Tenant** — each with
 clear boundaries. No module MUST depend on a module lower in the dependency chain.
 
 ```
 Core ← User ← Auth
-            ← Workspace
+            ← Tenant
 ```
 
 Each module owns its models, controllers, requests, views, and tests. Cross-module access MUST go through
@@ -124,11 +128,11 @@ No business logic. No dependency on other modules.
 
 ### User — Shared Kernel
 
-Base user model + account management + admin user CRUD. Depended on by Auth and Workspace.
+Base user model + account management + admin user CRUD. Depended on by Auth and Tenant.
 
 | Type | Files |
 |------|-------|
-| Models | `User` (clean — no workspace methods) |
+| Models | `User` (clean — no tenant methods; `HasTenants` trait imported as documented exception) |
 | Controllers | `UserController`, `SettingsController` |
 | Requests | `StoreUserRequest`, `UpdateUserRoleRequest`, `UpdateProfileRequest`, `UpdatePasswordRequest`, `DeleteAccountRequest` |
 | Commands | `CreateUserCommand` |
@@ -147,24 +151,27 @@ Depends on Core + User.
 | Routes | `routes/auth.php` |
 | Tests | `AuthTest`, `PasswordResetTest` |
 
-### Workspace — Workspace Management, Members & Onboarding
+### Tenant — Hierarchical Tenant Management, Links & Onboarding
 
-Depends on Core + User.
+Depends on Core + User. Replaces the former Workspace module (specs 001/002 superseded by 004).
+
+Hierarchical: `tenants` carry an optional `parent_id` self-reference. Operability is derived (a tenant is operable iff it has no children); only operable tenants accept `tenant_user` links and only operable tenants can be active in a session. User is a global entity; access to a tenant is granted exclusively via `tenant_user` records, never via a column on `users`.
 
 | Type | Files |
 |------|-------|
-| Models | `Workspace`, `Member`, `Invitation` |
-| Dynamic Relations | `workspaces()`, `ownedWorkspaces()` registered on User via `resolveRelationUsing()` in WorkspaceServiceProvider — User has zero Workspace imports |
-| Traits | `HasWorkspaces` (utility only: `roleIn()`, `isMemberOf()` — used internally by Workspace policies) |
-| Enum | `WorkspaceRole` |
-| Policy | `WorkspacePolicy` |
-| Service | `CurrentWorkspaceManager` |
-| Middleware | `SetCurrentWorkspace` |
-| Notification | `WorkspaceInviteNotification` |
-| Controllers | `WorkspaceController`, `WorkspaceSettingsController`, `MemberController`, `OnboardingController` |
-| Requests | `CreateWorkspaceRequest`, `InviteMemberRequest`, `UpdateMemberRoleRequest`, `TransferOwnershipRequest`, `UpdateWorkspaceSettingsRequest` |
-| Views/Components | `dashboard/`, `onboarding.blade.php`, `workspace-switcher`, `create-workspace-modal`, `invite-modal` |
-| Tests | `WorkspaceTest`, `InviteTest` |
+| Models | `Tenant` (with `parent`/`children`/`descendants`/`ancestors`/`isOperable`/`path` + `SoftDeletes`), `TenantUser` (pivot, role-bearing) |
+| Dynamic Relations | `tenants()`, `ownedTenants()` registered on User via `resolveRelationUsing()` in TenantServiceProvider; `HasTenants` trait imported on User as documented exception |
+| Traits | `HasTenants` (utility: `roleIn(Tenant)`, `isMemberOf(Tenant)`) |
+| Enum | `TenantRole` (Owner, Admin, Member, Viewer) |
+| Policy | `TenantPolicy` |
+| Service | `CurrentTenantManager` (registered as `scoped` for Octane safety; validates `isOperable` on `set`) |
+| Middleware | `SetCurrentTenant` (just-in-time invalidation: leaf check + active link check on every request) |
+| Rules | `ParentHasNoActiveLinks` (FR-017) |
+| Controllers | `TenantController`, `TenantSettingsController`, `TenantUserController`, `OnboardingController` (dual-state), `UserCreationController` |
+| Requests | `CreateTenantRequest`, `UpdateTenantSettingsRequest`, `DeleteTenantRequest`, `RestoreTenantRequest`, `AttachTenantUserRequest`, `DetachTenantUserRequest`, `UpdateTenantUserRoleRequest`, `TransferOwnershipRequest`, `CreateUserRequest` |
+| Views/Components | `dashboard/`, `onboarding.blade.php` (dual state: bootstrap vs no-access), `users/create.blade.php`, `tenant-switcher`, `create-tenant-modal` |
+| Tests | `TenantTest`, `TenantHierarchyTest`, `TenantHierarchyPerformanceTest`, `TenantSoftDeleteTest`, `TenantUserAttachTest`, `UserCreationTest`, browser `TenantFlowTest` |
+| Removed (FR-020) | Invitation model/migration/factory/notification/modal/request and `InviteTest` — replaced by separate user-creation (US3) and link-attach (US4) flows |
 
 ## Agent Assignments
 
@@ -225,4 +232,4 @@ Complexity Tracking table of `plan.md`.
 Runtime guidance: `CLAUDE.md` (agent tooling, commands, conventions) and `AGENTS.md` (auth flow,
 testing rules, environment).
 
-**Version**: 1.2.1 | **Ratified**: 2026-03-21 | **Last Amended**: 2026-03-22
+**Version**: 1.3.0 | **Ratified**: 2026-03-21 | **Last Amended**: 2026-05-05

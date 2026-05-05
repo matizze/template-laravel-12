@@ -2,7 +2,7 @@
 
 **Feature Branch**: `002-invite-redirect-flow`
 **Created**: 2026-03-21
-**Status**: Draft
+**Status**: Superseded by [004-multi-tenant-hierarchy](../004-multi-tenant-hierarchy/spec.md) (FR-020 — Invitation concept removed entirely; replaced by separate user creation (US3) and link assignment (US4) flows)
 **Input**: User description: "Melhorar o fluxo de convite de membros do workspace para suportar convidar e-mails não cadastrados"
 
 ## User Scenarios & Testing *(mandatory)*
