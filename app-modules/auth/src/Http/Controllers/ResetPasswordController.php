@@ -3,22 +3,16 @@
 namespace Modules\Auth\Http\Controllers;
 
 use App\Http\Controllers\Controller;
-use Modules\Auth\Http\Requests\ResetPasswordRequest;
-use Modules\User\Models\User;
-use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Password;
 use Illuminate\Support\Str;
-use Illuminate\View\View;
+use Modules\Auth\Http\Requests\ResetPasswordRequest;
+use Modules\User\Models\User;
 
 class ResetPasswordController extends Controller
 {
-    public function index(string $token): View
-    {
-        return view('auth::auth.reset-password', ['token' => $token]);
-    }
-
-    public function store(ResetPasswordRequest $request): RedirectResponse
+    public function store(ResetPasswordRequest $request): JsonResponse
     {
         $status = Password::reset(
             $request->only('email', 'password', 'password_confirmation', 'token'),
@@ -32,9 +26,13 @@ class ResetPasswordController extends Controller
         );
 
         if ($status === Password::PASSWORD_RESET) {
-            return redirect()->route('login')->with('success', 'Senha redefinida com sucesso!');
+            return response()->json([
+                'message' => 'Password has been reset successfully.',
+            ]);
         }
 
-        return back()->with('error', 'Não foi possível redefinir a senha. Solicite um novo link.');
+        return response()->json([
+            'message' => 'Unable to reset password. Please request a new link.',
+        ], 422);
     }
 }

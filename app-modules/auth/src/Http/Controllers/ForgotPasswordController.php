@@ -3,22 +3,18 @@
 namespace Modules\Auth\Http\Controllers;
 
 use App\Http\Controllers\Controller;
-use Modules\Auth\Http\Requests\ForgotPasswordRequest;
-use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Password;
-use Illuminate\View\View;
+use Modules\Auth\Http\Requests\ForgotPasswordRequest;
 
 class ForgotPasswordController extends Controller
 {
-    public function index(): View
-    {
-        return view('auth::auth.forgot-password');
-    }
-
-    public function store(ForgotPasswordRequest $request): RedirectResponse
+    public function store(ForgotPasswordRequest $request): JsonResponse
     {
         Password::sendResetLink($request->only('email'));
 
-        return back()->with('success', 'Se o e-mail informado estiver cadastrado, você receberá um link para redefinir sua senha.');
+        return response()->json([
+            'message' => 'If the email is registered, you will receive a password reset link.',
+        ]);
     }
 }

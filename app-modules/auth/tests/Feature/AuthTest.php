@@ -2,27 +2,13 @@
 
 namespace Tests\Feature;
 
-use Modules\User\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Modules\User\Models\User;
 use Tests\TestCase;
 
 class AuthTest extends TestCase
 {
     use RefreshDatabase;
-
-    public function test_login_page_is_accessible(): void
-    {
-        $response = $this->get('/auth/login');
-
-        $response->assertStatus(200);
-    }
-
-    public function test_register_page_is_accessible(): void
-    {
-        $response = $this->get('/auth/register');
-
-        $response->assertStatus(200);
-    }
 
     public function test_user_can_login_with_valid_credentials(): void
     {
@@ -30,13 +16,14 @@ class AuthTest extends TestCase
             'password' => 'password123',
         ]);
 
-        $response = $this->post('/auth/login', [
+        $response = $this->postJson('/api/auth/login', [
             'email' => $user->email,
             'password' => 'password123',
         ]);
 
-        $response->assertRedirect('/dashboard');
-        $this->assertAuthenticatedAs($user);
+        $response->assertStatus(200)
+            ->assertJsonStructure(['user', 'token'])
+            ->assertJson(['user' => ['email' => $user->email]]);
     }
 
     public function test_user_cannot_login_with_invalid_credentials(): void
@@ -45,108 +32,99 @@ class AuthTest extends TestCase
             'password' => 'password123',
         ]);
 
-        $response = $this->post('/auth/login', [
+        $response = $this->postJson('/api/auth/login', [
             'email' => $user->email,
             'password' => 'wrong-password',
         ]);
 
-        $response->assertRedirect();
-        $this->assertGuest();
+        $response->assertStatus(401)
+            ->assertJson(['message' => 'Invalid credentials.']);
     }
 
     public function test_login_requires_email_and_password(): void
     {
-        $response = $this->post('/auth/login', []);
+        $response = $this->postJson('/api/auth/login', []);
 
-        $response->assertSessionHasErrors(['email', 'password']);
-        $this->assertGuest();
+        $response->assertStatus(422)
+            ->assertJsonValidationErrors(['email', 'password']);
     }
 
     public function test_login_requires_valid_email(): void
     {
-        $response = $this->post('/auth/login', [
+        $response = $this->postJson('/api/auth/login', [
             'email' => 'not-an-email',
             'password' => 'password123',
         ]);
 
-        $response->assertSessionHasErrors('email');
+        $response->assertStatus(422)
+            ->assertJsonValidationErrors('email');
     }
 
     public function test_user_can_register(): void
     {
-        $response = $this->post('/auth/register', [
+        $response = $this->postJson('/api/auth/register', [
             'name' => 'Test User',
             'email' => 'test@example.com',
             'password' => 'password123',
         ]);
 
-        $response->assertRedirect(route('onboarding'));
-        $this->assertAuthenticated();
+        $response->assertStatus(201)
+            ->assertJsonStructure(['user', 'token'])
+            ->assertJson(['user' => [
+                'name' => 'Test User',
+                'email' => 'test@example.com',
+            ]]);
+
         $this->assertDatabaseHas('users', [
             'email' => 'test@example.com',
             'name' => 'Test User',
-            'role' => 'member',
         ]);
     }
 
     public function test_register_requires_name_email_and_password(): void
     {
-        $response = $this->post('/auth/register', []);
+        $response = $this->postJson('/api/auth/register', []);
 
-        $response->assertSessionHasErrors(['name', 'email', 'password']);
+        $response->assertStatus(422)
+            ->assertJsonValidationErrors(['name', 'email', 'password']);
     }
 
     public function test_register_requires_unique_email(): void
     {
         User::factory()->create(['email' => 'taken@example.com']);
 
-        $response = $this->post('/auth/register', [
+        $response = $this->postJson('/api/auth/register', [
             'name' => 'Test User',
             'email' => 'taken@example.com',
             'password' => 'password123',
         ]);
 
-        $response->assertSessionHasErrors('email');
+        $response->assertStatus(422)
+            ->assertJsonValidationErrors('email');
     }
 
     public function test_authenticated_user_can_logout(): void
     {
         $user = User::factory()->create();
+        $token = $user->createToken('auth-token')->plainTextToken;
 
-        $response = $this->actingAs($user)->post('/auth/logout');
+        $response = $this->withHeader('Authorization', 'Bearer '.$token)
+            ->postJson('/api/auth/logout');
 
-        $response->assertRedirect(route('login'));
-        $this->assertGuest();
+        $response->assertStatus(200)
+            ->assertJson(['message' => 'Logged out successfully.']);
     }
 
-    public function test_guest_is_redirected_to_login(): void
+    public function test_guest_cannot_access_protected_routes(): void
     {
-        $response = $this->get('/dashboard');
+        $response = $this->getJson('/api/user/profile');
 
-        $response->assertRedirect('/auth/login');
+        $response->assertStatus(401);
     }
 
-    public function test_authenticated_user_cannot_access_login_page(): void
+    public function test_new_user_has_no_global_role_by_default(): void
     {
-        $user = User::factory()->create();
-
-        $response = $this->actingAs($user)->get('/auth/login');
-
-        $response->assertRedirect('/dashboard');
-    }
-
-    public function test_authenticated_user_cannot_access_register_page(): void
-    {
-        $user = User::factory()->create();
-
-        $response = $this->actingAs($user)->get('/auth/register');
-
-        $response->assertRedirect('/dashboard');
-    }
-
-    public function test_new_user_has_member_role_by_default(): void
-    {
-        $this->post('/auth/register', [
+        $this->postJson('/api/auth/register', [
             'name' => 'New User',
             'email' => 'newuser@example.com',
             'password' => 'password123',
@@ -155,6 +133,6 @@ class AuthTest extends TestCase
         $user = User::where('email', 'newuser@example.com')->first();
 
         $this->assertNotNull($user);
-        $this->assertEquals('member', $user->role);
+        $this->assertFalse($user->load('roles')->roles->contains('name', 'admin'));
     }
 }
