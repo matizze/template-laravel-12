@@ -1,5 +1,4 @@
 ---
-
 description: "Tasks de implementação — Multi-Tenancy Hierárquico (refactor workspace → tenant)"
 ---
 
@@ -210,7 +209,7 @@ description: "Tasks de implementação — Multi-Tenancy Hierárquico (refactor 
 
 ## Phase 6: User Story 4 — Atribuição de vínculos `tenant_user` (Priority: P2)
 
-**Goal**: fluxos de attach/detach/update-role de `TenantUser`; revogação invalida sessão just-in-time (R2).
+**Goal**: fluxos de attach/detach/update de `TenantUser`; revogação invalida sessão just-in-time (R2).
 
 **Independent Test**: admin atribui user existente ao tenant operável A com role Member; user vê A no switcher; admin atribui user a B; user vê A e B independentes; admin revoga A → user (com sessão em A) é redirecionado na próxima request; user mantém B.
 

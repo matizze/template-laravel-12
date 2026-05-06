@@ -1,43 +1,46 @@
 # Project Context
 
-Laravel 12 starter template with role-based access (admin/member), settings management, user CRUD, and production-ready deployment (Docker + Octane).
+Laravel 12 API-only starter template with role-based access (admin/member), settings management, user CRUD, multi-tenant support, and production-ready deployment (Docker + Octane). 100% API — no Blade views, no frontend assets.
 
-## Auth Flow
-- Custom controllers: `LoginController`, `RegisterController`, `ForgotPasswordController`, `ResetPasswordController`
-- All validation via Form Request classes (array-based rules, PHPDoc `@property-read` annotations)
-- Auto-login after registration (redirects to `/dashboard`)
-- "Remember me" support on login
-- Full forgot/reset password flow using Laravel's built-in `Password` broker
+## Architecture
+
+- **API-only**: All routes under `/api/` prefix, JSON request/response, Sanctum token authentication
+- **Modular**: `app-modules/core`, `app-modules/auth`, `app-modules/user`, `app-modules/tenant`, `app-modules/permission`
+- Routes centralized in `routes/api.php`
+
+## Auth Flow (Sanctum)
+- `POST /api/auth/login` → returns `{user, token}` (Bearer token)
+- `POST /api/auth/register` → creates user + returns `{user, token}` (201)
+- `POST /api/auth/logout` → revokes current token (requires auth)
+- `POST /api/auth/forgot-password` → sends reset link (always returns 200)
+- `POST /api/auth/reset-password` → resets password (200 or 422)
 - Rate limiting: `throttle:5,1` on login/register, `throttle:3,1` on password reset
+- All validation via Form Request classes
+
+## API Endpoints
+- **User**: profile (GET/PATCH), password (PATCH), account delete (DELETE)
+- **Users CRUD**: store (`can:users.create`), update role (`can:users.update`), delete (`can:users.delete`)
+- **Tenants**: list, create (`can:tenants.create`), settings (show/update/delete), restore
+- **Tenant Users**: list, attach, remove, leave (membership-based authorization)
+- All protected routes use `auth:sanctum` middleware
+- Current tenant is resolved from the `X-Tenant-ID` header by the `tenant` middleware
 
 ## Authorization
-- `AuthorizationServiceProvider` with Gate `manage-users` (admin only)
-- User CRUD routes protected via `can:manage-users` middleware
+- Permissions are JSON trees on `roles.permissions` (e.g. `{"users":["create","update","delete"]}`) flattened to dotted abilities by `PermissionService`.
+- `Gate::before` short-circuits to `true` when the user holds the role permission.
+- Tenant-scoped abilities (`tenants.*`) are defined in `TenantServiceProvider` and require the user to be a member of the target tenant.
+- `TenantPolicy` (`update`, `delete`, `restore`, `view`) and `UserPolicy` (blocks acting on self) are registered in their module providers.
 
 ## Testing
-- PHPUnit (NOT Pest) — feature tests: `AuthTest`, `SettingsTest`, `UserManagementTest`, `PasswordResetTest`, `CreateUserCommandTest`
-- Browser tests (Dusk): `tests/Browser/` — use for end-to-end UI flows requiring real browser interaction (JavaScript, Alpine.js, modals)
-- PHPFlasher consumes flash session data — do NOT use `assertSessionHas` for flash keys (`success`, `error`, `warning`, `info`)
+- PHPUnit (NOT Pest) — all tests use `postJson()`, `getJson()`, `patchJson()`, `deleteJson()`
+- Validation errors: `assertJsonValidationErrors()` (NOT `assertSessionHasErrors`)
+- No Dusk/browser tests — API only
 - Use `UserFactory::admin()` state for admin user tests
-
-## Dusk (Browser Tests)
-- Run with `php artisan dusk` — requires a running server via one of:
-  - `composer dev` (local dev server on `http://localhost:8000`)
-  - **Herd site active** (`https://template-laravel-12.test`) — preferred for production-like testing
-- When using Herd, check the site URL via Herd MCP and set `APP_URL` in `.env.dusk.local` to match
-- When using `composer dev`, set `APP_URL=http://localhost:8000` in `.env.dusk.local`
-- Create tests with `php artisan make:dusk-test TestName`
-- Dusk tests extend `Laravel\Dusk\TestCase` and live in `tests/Browser/`
-- Use Dusk for flows requiring JavaScript execution (Alpine.js, modals, dynamic UI)
-- Use PHPUnit feature tests for everything else — Dusk is slower and requires a real browser
-- Dusk uses its own `.env.dusk.local` environment file (never commit secrets)
+- `actingAs($user)` works for Sanctum in tests
 
 ## Development Environment (Herd)
-- This project uses **Laravel Herd** as the local development environment
-- Herd site URL varies — use the **Herd MCP** (`mcp__herd__get_all_sites` or `mcp__herd__get_site_information`) to discover the current site URL before running Dusk or generating links
-- **Herd MCP** (`herd` in `.claude/settings.json`) — use it to query site info, PHP versions, services, and debug sessions
-- **Laravel Boost MCP** (`laravel-boost` plugin) — use `search-docs` for Laravel ecosystem docs, `database-query` for DB inspection, `last-error` for recent errors, and `browser-logs` for frontend debugging
-- Always use the `get-absolute-url` tool from Boost to generate correct URLs for this project
+- **Herd MCP** — use to query site info, PHP versions
+- **Laravel Boost MCP** — use `search-docs` for Laravel docs, `database-query` for DB inspection
 
 <laravel-boost-guidelines>
 === foundation rules ===
@@ -56,20 +59,12 @@ This application is a Laravel application and its main Laravel ecosystems packag
 - laravel/prompts (PROMPTS) - v0
 - larastan/larastan (LARASTAN) - v3
 - laravel/boost (BOOST) - v2
-- laravel/dusk (DUSK) - v8
 - laravel/mcp (MCP) - v0
 - laravel/pail (PAIL) - v1
 - laravel/pint (PINT) - v1
 - laravel/sail (SAIL) - v1
+- laravel/sanctum (SANCTUM) - v4
 - phpunit/phpunit (PHPUNIT) - v11
-- alpinejs (ALPINEJS) - v3
-- tailwindcss (TAILWINDCSS) - v4
-
-## Skills Activation
-
-This project has domain-specific skills available. You MUST activate the relevant skill whenever you work in that domain—don't wait until you're stuck.
-
-- `tailwindcss-development` — Always invoke when the user's message includes 'tailwind' in any form. Also invoke for: building responsive grid layouts (multi-column card grids, product grids), flex/grid page structures (dashboards with sidebars, fixed topbars, mobile-toggle navs), styling UI components (cards, tables, navbars, pricing sections, forms, inputs, badges), adding dark mode variants, fixing spacing or typography, and Tailwind v3/v4 work. The core use case: writing or fixing Tailwind utility classes in HTML templates (Blade, JSX, Vue). Skip for backend PHP logic, database queries, API routes, JavaScript with no HTML/CSS component, CSS file audits, build tool configuration, and vanilla CSS.
 
 ## Conventions
 
@@ -85,10 +80,6 @@ This project has domain-specific skills available. You MUST activate the relevan
 
 - Stick to existing directory structure; don't create new base folders without approval.
 - Do not change the application's dependencies without approval.
-
-## Frontend Bundling
-
-- If the user doesn't see a frontend change reflected in the UI, it could mean they need to run `npm run build`, `npm run dev`, or `composer run dev`. Ask them.
 
 ## Documentation Files
 
@@ -122,11 +113,6 @@ This project has domain-specific skills available. You MUST activate the relevan
 - To inspect routes, run `php artisan route:list` directly.
 - To check environment variables, read the `.env` file directly.
 
-## Reading Browser Logs With the `browser-logs` Tool
-
-- You can read browser logs, errors, and exceptions using the `browser-logs` tool from Boost.
-- Only recent browser logs will be useful - ignore old logs.
-
 ## Searching Documentation (Critically Important)
 
 - Boost comes with a powerful `search-docs` tool you should use before trying other approaches when working with Laravel or Laravel ecosystem packages. This tool automatically passes a list of installed packages and their versions to the remote Boost API, so it returns only version-specific documentation for the user's circumstance. You should pass an array of packages to filter on if you know you need docs for particular packages.
@@ -158,14 +144,6 @@ This project has domain-specific skills available. You MUST activate the relevan
 
 - Always use explicit return type declarations for methods and functions.
 - Use appropriate PHP type hints for method parameters.
-
-<!-- Explicit Return Types and Method Params -->
-```php
-protected function isAccessible(User $user, ?string $path = null): bool
-{
-    ...
-}
-```
 
 ## Enums
 
@@ -219,10 +197,6 @@ protected function isAccessible(User $user, ?string $path = null): bool
 
 - Use Laravel's built-in authentication and authorization features (gates, policies, Sanctum, etc.).
 
-## URL Generation
-
-- When generating links to other pages, prefer named routes and the `route()` function.
-
 ## Queues
 
 - Use queued jobs for time-consuming operations with the `ShouldQueue` interface.
@@ -236,10 +210,6 @@ protected function isAccessible(User $user, ?string $path = null): bool
 - When creating models for tests, use the factories for the models. Check if the factory has custom states that can be used before manually setting up the model.
 - Faker: Use methods such as `$this->faker->word()` or `fake()->randomDigit()`. Follow existing conventions whether to use `$this->faker` or `fake()`.
 - When creating tests, make use of `php artisan make:test [options] {name}` to create a feature test, and pass `--unit` to create a unit test. Most tests should be feature tests.
-
-## Vite Error
-
-- If you receive an "Illuminate\Foundation\ViteException: Unable to locate file in Vite manifest" error, you can run `npm run build` or ask the user to run `npm run dev` or `composer run dev`.
 
 === laravel/v12 rules ===
 

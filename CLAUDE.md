@@ -4,33 +4,33 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-Laravel 12 starter template with role-based access (admin/member), settings management, user CRUD, and production-ready deployment (Docker + Octane).
+Laravel 12 **API-only** starter template using Sanctum bearer-token authentication, modular monolith (InterNACHI/modular), RBAC permissions, multi-tenant hierarchy, and production-ready deployment (Docker + Octane). No Blade views, no frontend assets, no Dusk.
 
 ## Common Commands
 
 ```bash
-# Full project setup (install deps, generate key, migrate, build assets)
+# Full project setup
 composer setup
 
-# Start dev environment (server + queue + scheduler + logs + Vite)
+# Start dev environment (server + queue + scheduler + logs)
 composer dev
 
 # Run tests
 composer test
-php artisan test --filter=TestName   # single test
+php artisan test --compact --filter=TestName
 
-# Static analysis (PHPStan level 3)
+# Static analysis
 ./vendor/bin/phpstan analyse
 
 # Code formatting
-./vendor/bin/pint
+./vendor/bin/pint --dirty --format agent
 
 # Generate IDE helper files
 composer ide-helper
 
 # Database
 php artisan migrate
-php artisan migrate:fresh --seed     # reset with seeders
+php artisan migrate:fresh --seed
 
 # Create user via CLI
 php artisan create:user              # interactive
@@ -39,77 +39,59 @@ php artisan create:user --admin      # create admin user
 
 ## Architecture
 
-### Backend
-- **Laravel 12** on PHP 8.2+, SQLite database (dev), PostgreSQL (prod)
-- **Models:** `User` (roles: admin/member)
-- **Auth:** Custom controllers (`LoginController`, `RegisterController`, `ForgotPasswordController`, `ResetPasswordController`) with Form Request validation, session-based. Auto-login after registration. "Remember me" support on login.
-- **Password Reset:** Full forgot/reset password flow using Laravel's built-in `Password` broker. Routes: `password.request`, `password.email`, `password.reset`, `password.update`
-- **Rate Limiting:** `throttle:5,1` on login/register, `throttle:3,1` on password reset routes
-- **Authorization:** `AuthorizationServiceProvider` with Gates (`manage-users`), routes protected via `can:` middleware
-- **Controllers:** `SettingsController`, `UserController`
-- **Routes:** `routes/web.php` (auth middleware groups), `routes/auth.php` (guest/auth routes)
+### Stack
+- **Laravel 12** on PHP 8.2+, SQLite (dev/test), PostgreSQL (prod)
+- **Sanctum API** with bearer tokens — `auth:sanctum` middleware on all protected routes
+- **Modular monolith** in `app-modules/`: `core`, `user`, `auth`, `tenant`, `permission`
+- All routes live in `routes/api.php` (no `routes/web.php`)
 
-### Frontend
-- **Blade components** in `resources/views/components/` — layouts (`layout.app`, `layout.dashboard`), form inputs, buttons, cards, modal, avatar, pagination, nav-item, user-menu
-- **Tailwind CSS v4** with custom theme colors defined in `resources/css/app.css`
-- **Vite 7** for asset bundling
-- **Icons:** Lucide icons via `blade-lucide-icons` (`x-icon:name="lucide-{icon}"`)
-- **Font:** Lato (Google Fonts)
-- **Alpine.js** with custom directives and utilities (http, polling)
+### Auth (Sanctum bearer tokens)
+- `POST /api/auth/login` → `{user, token}` — manual `Hash::check`, no `Auth::attempt`, no session, no remember-me
+- `POST /api/auth/register` → `{user, token}` (201)
+- `POST /api/auth/logout` → revokes the current token
+- `POST /api/auth/forgot-password` / `POST /api/auth/reset-password` — Laravel's `Password` broker
+- Rate limits: `throttle:5,1` on login/register, `throttle:3,1` on password reset
+- All validation in Form Request classes
 
-### Flash Messages / Notifications
-- **PHPFlasher** with Noty adapter — auto-intercepts Laravel session flash messages
-- Controllers MUST use `->with('success', '...')` or `->with('error', '...')` for flash messages
-- DO NOT use `->with('status', '...')` or `->with('message', '...')` — these keys are NOT intercepted by PHPFlasher
-- Supported flash keys: `success`, `error`, `warning`, `info` (mapped in `config/flasher.php` flash_bag)
-- Assets are auto-injected into HTML responses (no `@flasher_render` needed)
+### Authorization
+- **RBAC** lives in `app-modules/permission`. `roles.permissions` is a JSON tree (e.g. `{"users":["create","update","delete"]}`) flattened into dotted abilities by `PermissionService` (e.g. `users.create`).
+- `Gate::before` (in `PermissionServiceProvider`) short-circuits to `true` when the user holds the role permission, otherwise returns `null` so other gates/policies run.
+- **Tenant-scoped abilities** (`tenants.create`, `tenants.users.view|attach|detach`, `tenants.settings.view|update|delete`) are defined in `TenantServiceProvider::boot()` via `Gate::define` and require the user to be a member of the target tenant.
+- **Policies:** `TenantPolicy` (view/update/delete/restore) and `UserPolicy` (blocks acting on self) registered in their module providers.
+
+### Multi-tenant
+- Tenants form a hierarchy via `parent_id` with soft delete; users link via the `tenant_user` pivot.
+- The current tenant is resolved from the `X-Tenant-ID` request header by the `tenant` middleware (`SetCurrentTenant`), which is registered as a route alias inside `TenantServiceProvider::boot()`.
+- `Tenant::current()` is backed by the `CurrentTenantManager` (registered as `scoped` for Octane safety) — request-only, no session.
 
 ### Database Schema
-- `users`: name, email, password, role (enum: admin/member)
-- `password_reset_tokens`: email, token, created_at (used by Password broker)
-- Sessions, cache, and jobs tables use database driver
+- `users`: name, email, password, email_verified_at, remember_token (Laravel scaffolding; unused for token API), timestamps. **No `role` column** — roles live in the RBAC tables.
+- `roles`: name, tenant_id (nullable for global roles), permissions JSON.
+- `user_roles`: pivot.
+- `tenants`, `tenant_user`: hierarchy + membership.
+- `password_reset_tokens`: used by Password broker.
 
 ### Deployment
-- **Docker:** Multi-stage Dockerfile with Octane/Swoole (`deployment/`)
+- **Docker:** multi-stage Dockerfile with Octane/Swoole (`deployment/`)
 - **Stack:** PostgreSQL, Redis, MinIO, Adminer (`deployment/stack.yaml`)
 - **CI/CD:** GitHub Actions → GHCR with optional deploy webhook (`.github/workflows/docker.yaml`)
 - **Production env:** `deployment/.env.example`
 
 ### Testing
-- PHPUnit with in-memory SQLite, array session/cache drivers
-- Test suites: `tests/Unit/`, `tests/Feature/`, `tests/Browser/` (Dusk)
-- Feature tests: `AuthTest`, `SettingsTest`, `UserManagementTest`, `PasswordResetTest`, `CreateUserCommandTest`
-- Browser tests (Dusk): `tests/Browser/` — use for end-to-end UI flows requiring real browser interaction (JavaScript, Alpine.js, modals, etc.)
-- PHPFlasher consumes flash session data — do NOT use `assertSessionHas` for flash keys (`success`, `error`, etc.)
-
-### Dusk (Browser Tests)
-- Run with `php artisan dusk` — requires a running server via one of:
-  - `composer dev` (local dev server on `http://localhost:8000`)
-  - **Herd site active** (`https://template-laravel-12.test`) — preferred for production-like testing
-- When using Herd, check the site URL via Herd MCP and set `APP_URL` in `.env.dusk.local` to match
-- When using `composer dev`, set `APP_URL=http://localhost:8000` in `.env.dusk.local`
-- Create tests with `php artisan make:dusk-test TestName`
-- Dusk tests extend `Laravel\Dusk\TestCase` and live in `tests/Browser/`
-- Use Dusk for flows that require JavaScript execution (Alpine.js interactions, modals, dynamic UI)
-- Use PHPUnit feature tests for everything else — Dusk is slower and requires a running browser
-- Dusk uses its own `.env.dusk.local` environment file (never commit secrets in this file)
-
-### Development Environment (Herd)
-- This project uses **Laravel Herd** as the local development environment
-- Herd site URL varies — use the **Herd MCP** (`mcp__herd__get_all_sites` or `mcp__herd__get_site_information`) to discover the current site URL before running Dusk or generating links
-- **Herd MCP** (`herd` in `.claude/settings.json`) — use it to query site info, PHP versions, services, and debug sessions
-- **Laravel Boost MCP** (`laravel-boost` plugin) — use `search-docs` for Laravel ecosystem documentation, `database-query` for DB inspection, `last-error` for recent errors, and `browser-logs` for frontend debugging
-- Always use the `get-absolute-url` tool from Boost to generate correct URLs for this project
+- PHPUnit with in-memory SQLite, array cache driver
+- Test suites: `tests/Unit/`, `tests/Feature/`, plus `app-modules/*/tests/`
+- All HTTP tests use `postJson`/`getJson`/`patchJson`/`deleteJson` and assert via `assertJsonValidationErrors` (NOT `assertSessionHas*` — there is no session)
+- Use `actingAs($user, 'sanctum')` to authenticate in HTTP tests
+- Use `UserFactory::admin()` to attach the global admin role
 
 ## Conventions
 
-- Resource controllers follow Laravel conventions
-- Views organized by route: `settings/`, `auth/`, etc.
-- Blade components use kebab-case naming (`nav-item`, `user-menu`)
-- PHP 8.2+ features: match expressions, typed properties, union types
+- API-only: every controller returns `JsonResponse`
+- Resource controllers follow Laravel conventions; routes named with dot-case (`tenant.settings.show`)
+- PHP 8.2+ features: constructor property promotion, typed properties, return types
 - Code style: Laravel Pint (PSR-12)
-- `AppServiceProvider` auto-generates IDE helper files on migration
-- Flash messages: always use `success`, `error`, `warning`, or `info` as session keys
+- `CoreServiceProvider` regenerates IDE helper files after migrations in local environment
+- Flash messages do NOT exist — return JSON with appropriate status codes
 
 ===
 
@@ -127,23 +109,15 @@ This application is a Laravel application and its main Laravel ecosystems packag
 - php - 8.4
 - laravel/framework (LARAVEL) - v12
 - laravel/octane (OCTANE) - v2
+- laravel/sanctum (SANCTUM) - v4
 - laravel/prompts (PROMPTS) - v0
 - larastan/larastan (LARASTAN) - v3
 - laravel/boost (BOOST) - v2
-- laravel/dusk (DUSK) - v8
 - laravel/mcp (MCP) - v0
 - laravel/pail (PAIL) - v1
 - laravel/pint (PINT) - v1
 - laravel/sail (SAIL) - v1
 - phpunit/phpunit (PHPUNIT) - v11
-- alpinejs (ALPINEJS) - v3
-- tailwindcss (TAILWINDCSS) - v4
-
-## Skills Activation
-
-This project has domain-specific skills available. You MUST activate the relevant skill whenever you work in that domain—don't wait until you're stuck.
-
-- `tailwindcss-development` — Always invoke when the user's message includes 'tailwind' in any form. Also invoke for: building responsive grid layouts (multi-column card grids, product grids), flex/grid page structures (dashboards with sidebars, fixed topbars, mobile-toggle navs), styling UI components (cards, tables, navbars, pricing sections, forms, inputs, badges), adding dark mode variants, fixing spacing or typography, and Tailwind v3/v4 work. The core use case: writing or fixing Tailwind utility classes in HTML templates (Blade, JSX, Vue). Skip for backend PHP logic, database queries, API routes, JavaScript with no HTML/CSS component, CSS file audits, build tool configuration, and vanilla CSS.
 
 ## Conventions
 
