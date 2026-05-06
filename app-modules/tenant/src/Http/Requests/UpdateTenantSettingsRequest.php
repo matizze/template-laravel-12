@@ -5,12 +5,19 @@ namespace Modules\Tenant\Http\Requests;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
+use Modules\Tenant\Models\Tenant;
 
 class UpdateTenantSettingsRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        return $this->user()->can('update', $this->route('tenant'));
+        $tenant = $this->route('tenant');
+
+        if (! $tenant instanceof Tenant) {
+            return false;
+        }
+
+        return $this->user()?->can('update', $tenant) ?? false;
     }
 
     /**

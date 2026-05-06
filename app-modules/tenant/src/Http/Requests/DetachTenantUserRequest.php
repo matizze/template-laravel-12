@@ -5,7 +5,6 @@ namespace Modules\Tenant\Http\Requests;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Foundation\Http\FormRequest;
-use Modules\Tenant\Enums\TenantRole;
 use Modules\Tenant\Models\Tenant;
 use Modules\User\Models\User;
 
@@ -13,7 +12,13 @@ class DetachTenantUserRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        return $this->user()->can('manageTenantUsers', $this->route('tenant'));
+        $tenant = $this->route('tenant');
+
+        if (! $tenant instanceof Tenant) {
+            return false;
+        }
+
+        return $this->user()?->can('tenants.users.detach', $tenant) ?? false;
     }
 
     /**
@@ -40,16 +45,6 @@ class DetachTenantUserRequest extends FormRequest
 
             if (! $link) {
                 $v->errors()->add('user', 'Usuário não vinculado.');
-
-                return;
-            }
-
-            if ($link->role === TenantRole::Owner) {
-                $owners = $tenant->tenantUsers()->where('role', TenantRole::Owner)->count();
-
-                if ($owners <= 1) {
-                    $v->errors()->add('user', 'Não é possível remover o último proprietário.');
-                }
             }
         });
     }

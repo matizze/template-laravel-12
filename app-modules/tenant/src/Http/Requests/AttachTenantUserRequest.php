@@ -5,15 +5,19 @@ namespace Modules\Tenant\Http\Requests;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Foundation\Http\FormRequest;
-use Illuminate\Validation\Rules\Enum;
-use Modules\Tenant\Enums\TenantRole;
 use Modules\Tenant\Models\Tenant;
 
 class AttachTenantUserRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        return $this->user()->can('manageTenantUsers', $this->route('tenant'));
+        $tenant = $this->route('tenant');
+
+        if (! $tenant instanceof Tenant) {
+            return false;
+        }
+
+        return $this->user()?->can('tenants.users.attach', $tenant) ?? false;
     }
 
     /**
@@ -23,7 +27,6 @@ class AttachTenantUserRequest extends FormRequest
     {
         return [
             'user_id' => ['required', 'integer', 'exists:users,id'],
-            'role' => ['required', new Enum(TenantRole::class)],
         ];
     }
 
@@ -59,8 +62,6 @@ class AttachTenantUserRequest extends FormRequest
         return [
             'user_id.required' => 'Selecione um usuário.',
             'user_id.exists' => 'Usuário não encontrado.',
-            'role.required' => 'Selecione um papel.',
-            'role.enum' => 'Papel inválido.',
         ];
     }
 }

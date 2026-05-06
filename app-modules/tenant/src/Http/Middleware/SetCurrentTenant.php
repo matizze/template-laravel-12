@@ -17,35 +17,21 @@ class SetCurrentTenant
             return $next($request);
         }
 
-        $tenantId = session('current_tenant_id');
+        $tenantId = $request->header('X-Tenant-ID');
 
         if (! $tenantId) {
-            /** @var Tenant|null $tenant */
-            $tenant = $user->tenants()
-                ->whereDoesntHave('children')
-                ->orderBy('tenants.id')
-                ->first();
-
-            if ($tenant) {
-                Tenant::setCurrentModel($tenant);
-
-                return $next($request);
-            }
-
-            return redirect()->route('onboarding');
+            return $next($request);
         }
 
         /** @var Tenant|null $tenant */
         $tenant = $user->tenants()
-            ->whereDoesntHave('children')
             ->where('tenants.id', $tenantId)
             ->first();
 
         if (! $tenant) {
-            session()->forget('current_tenant_id');
-
-            return redirect()->route('onboarding')
-                ->with('warning', 'Tenant indisponível. Selecione outro.');
+            return response()->json([
+                'message' => 'Tenant não encontrado ou acesso negado.',
+            ], 403);
         }
 
         Tenant::setCurrentModel($tenant);

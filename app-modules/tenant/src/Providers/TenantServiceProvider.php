@@ -2,12 +2,14 @@
 
 namespace Modules\Tenant\Providers;
 
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Blade;
-use Illuminate\Support\Facades\View;
+use Illuminate\Routing\Router;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\ServiceProvider;
+use Modules\Tenant\Http\Middleware\SetCurrentTenant;
 use Modules\Tenant\Models\Tenant;
+use Modules\Tenant\Policies\TenantPolicy;
 use Modules\Tenant\Services\CurrentTenantManager;
+use Modules\User\Models\User;
 
 class TenantServiceProvider extends ServiceProvider
 {
@@ -16,44 +18,26 @@ class TenantServiceProvider extends ServiceProvider
         $this->app->scoped(CurrentTenantManager::class);
     }
 
-    public function boot(): void
+    public function boot(Router $router): void
     {
-        $this->loadViewsFrom(__DIR__.'/../../resources/views', 'tenant');
-        $this->loadRoutesFrom(__DIR__.'/../../routes/web.php');
         $this->loadMigrationsFrom(__DIR__.'/../../database/migrations');
 
-        Blade::anonymousComponentPath(__DIR__.'/../../resources/components', 'tenant');
+        $router->aliasMiddleware('tenant', SetCurrentTenant::class);
 
-        View::composer('*', function ($view): void {
-            if (! str_contains($view->name(), 'layout.dashboard')) {
-                return;
-            }
+        Gate::policy(Tenant::class, TenantPolicy::class);
 
-            $user = Auth::user();
+        Gate::define('tenants.create', fn (User $user): bool => true);
 
-            if (! $user) {
-                $view->with([
-                    'tenants' => collect(),
-                    'currentTenant' => null,
-                    'needsPath' => false,
-                ]);
+        Gate::define('tenants.users.view', fn (User $user, Tenant $tenant): bool => $user->isMemberOf($tenant));
 
-                return;
-            }
+        Gate::define('tenants.users.attach', fn (User $user, Tenant $tenant): bool => $user->isMemberOf($tenant) && ! $tenant->trashed());
 
-            $tenants = $user->tenants()
-                ->whereDoesntHave('children')
-                ->whereNull('tenants.deleted_at')
-                ->orderBy('tenants.name')
-                ->get();
+        Gate::define('tenants.users.detach', fn (User $user, Tenant $tenant): bool => $user->isMemberOf($tenant));
 
-            $needsPath = $tenants->groupBy('name')->contains(fn ($group) => $group->count() > 1);
+        Gate::define('tenants.settings.view', fn (User $user, Tenant $tenant): bool => $user->isMemberOf($tenant));
 
-            $view->with([
-                'tenants' => $tenants,
-                'currentTenant' => Tenant::current(),
-                'needsPath' => $needsPath,
-            ]);
-        });
+        Gate::define('tenants.settings.update', fn (User $user, Tenant $tenant): bool => $user->isMemberOf($tenant));
+
+        Gate::define('tenants.settings.delete', fn (User $user, Tenant $tenant): bool => $user->isMemberOf($tenant));
     }
 }

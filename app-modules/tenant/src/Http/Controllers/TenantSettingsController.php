@@ -3,9 +3,7 @@
 namespace Modules\Tenant\Http\Controllers;
 
 use App\Http\Controllers\Controller;
-use Illuminate\Http\RedirectResponse;
-use Illuminate\Http\Request;
-use Illuminate\View\View;
+use Illuminate\Http\JsonResponse;
 use Modules\Tenant\Http\Requests\DeleteTenantRequest;
 use Modules\Tenant\Http\Requests\RestoreTenantRequest;
 use Modules\Tenant\Http\Requests\UpdateTenantSettingsRequest;
@@ -13,52 +11,46 @@ use Modules\Tenant\Models\Tenant;
 
 class TenantSettingsController extends Controller
 {
-    public function show(Request $request, Tenant $tenant): View
+    public function show(Tenant $tenant): JsonResponse
     {
-        $this->authorize('update', $tenant);
-
-        $tab = $request->query('tab', 'geral');
+        $this->authorize('tenants.settings.view', $tenant);
 
         $tenantUsers = $tenant->tenantUsers()->with('user')->get();
 
-        return view('tenant::dashboard.tenant-settings.index', [
+        return response()->json([
             'tenant' => $tenant,
-            'active' => $tab,
-            'tenantUsers' => $tenantUsers,
+            'tenant_users' => $tenantUsers,
         ]);
     }
 
-    public function update(UpdateTenantSettingsRequest $request, Tenant $tenant): RedirectResponse
+    public function update(UpdateTenantSettingsRequest $request, Tenant $tenant): JsonResponse
     {
         $tenant->update($request->validated());
 
-        return redirect()->route('tenant.settings.show', $tenant)
-            ->with('success', 'Tenant atualizado com sucesso!');
+        return response()->json($tenant);
     }
 
-    public function destroy(DeleteTenantRequest $request, Tenant $tenant): RedirectResponse
+    public function destroy(DeleteTenantRequest $request, Tenant $tenant): JsonResponse
     {
-        $this->authorize('delete', $tenant);
-
         Tenant::forgetCurrent();
 
         $tenant->delete();
 
-        return redirect()->route('dashboard')
-            ->with('success', 'Tenant excluído com sucesso!');
+        return response()->json([
+            'message' => 'Tenant excluído com sucesso.',
+        ]);
     }
 
-    public function restore(RestoreTenantRequest $request, int $tenantId): RedirectResponse
+    public function restore(RestoreTenantRequest $request, int $tenantId): JsonResponse
     {
         $tenant = Tenant::onlyTrashed()->findOrFail($tenantId);
 
-        // Defense in depth — RestoreTenantRequest::authorize already gates this,
-        // but the controller re-asserts the policy in case the request is bypassed.
         $this->authorize('restore', $tenant);
 
         $tenant->restore();
 
-        return redirect()->route('dashboard')
-            ->with('success', 'Tenant restaurado com sucesso!');
+        return response()->json([
+            'message' => 'Tenant restaurado com sucesso.',
+        ]);
     }
 }

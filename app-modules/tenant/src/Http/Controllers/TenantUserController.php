@@ -3,22 +3,18 @@
 namespace Modules\Tenant\Http\Controllers;
 
 use App\Http\Controllers\Controller;
-use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\View\View;
-use Modules\Tenant\Enums\TenantRole;
 use Modules\Tenant\Http\Requests\AttachTenantUserRequest;
 use Modules\Tenant\Http\Requests\DetachTenantUserRequest;
-use Modules\Tenant\Http\Requests\UpdateTenantUserRoleRequest;
 use Modules\Tenant\Models\Tenant;
-use Modules\Tenant\Models\TenantUser;
 use Modules\User\Models\User;
 
 class TenantUserController extends Controller
 {
-    public function index(Tenant $tenant): View
+    public function index(Request $request, Tenant $tenant): JsonResponse
     {
-        $this->authorize('manageTenantUsers', $tenant);
+        $this->authorize('tenants.users.view', $tenant);
 
         $tenantUsers = $tenant->tenantUsers()
             ->with('user')
@@ -26,79 +22,54 @@ class TenantUserController extends Controller
 
         $linkedIds = $tenantUsers->pluck('user_id');
 
+        $visibleTenantIds = $request->user()
+            ->tenants()
+            ->pluck('tenants.id');
+
         $availableUsers = User::query()
             ->whereNotIn('id', $linkedIds)
+            ->whereHas('tenants', fn ($q) => $q->whereIn('tenants.id', $visibleTenantIds))
             ->orderBy('name')
             ->get();
 
-        return view('tenant::dashboard.users.index', [
-            'tenant' => $tenant,
-            'tenantUsers' => $tenantUsers,
-            'availableUsers' => $availableUsers,
+        return response()->json([
+            'tenant_users' => $tenantUsers,
+            'available_users' => $availableUsers,
         ]);
     }
 
-    public function store(AttachTenantUserRequest $request, Tenant $tenant): RedirectResponse
+    public function store(AttachTenantUserRequest $request, Tenant $tenant): JsonResponse
     {
         $tenant->tenantUsers()->create([
             'user_id' => $request->validated('user_id'),
-            'role' => TenantRole::from($request->validated('role')),
         ]);
 
-        return redirect()
-            ->route('tenant.users.index', $tenant)
-            ->with('success', 'Usuário vinculado com sucesso.');
+        return response()->json([
+            'message' => 'Usuário vinculado com sucesso.',
+        ], 201);
     }
 
-    public function updateRole(UpdateTenantUserRoleRequest $request, Tenant $tenant, User $user): RedirectResponse
-    {
-        $tenant->tenantUsers()->where('user_id', $user->id)->firstOrFail();
-
-        $newRole = TenantRole::from($request->validated('role'));
-
-        if ($newRole === TenantRole::Owner) {
-            return redirect()
-                ->route('tenant.users.index', $tenant)
-                ->with('error', 'Não é possível promover um usuário a proprietário. Use a transferência de propriedade.');
-        }
-
-        $tenant->users()->updateExistingPivot($user->id, [
-            'role' => $newRole,
-        ]);
-
-        return redirect()
-            ->route('tenant.users.index', $tenant)
-            ->with('success', 'Função do usuário atualizada com sucesso!');
-    }
-
-    public function remove(DetachTenantUserRequest $request, Tenant $tenant, User $user): RedirectResponse
+    public function remove(DetachTenantUserRequest $request, Tenant $tenant, User $user): JsonResponse
     {
         $tenant->users()->detach($user->id);
 
-        return redirect()
-            ->route('tenant.users.index', $tenant)
-            ->with('success', 'Vínculo removido.');
+        return response()->json([
+            'message' => 'Vínculo removido.',
+        ]);
     }
 
-    public function leave(Request $request, Tenant $tenant): RedirectResponse
+    public function leave(Request $request, Tenant $tenant): JsonResponse
     {
         $user = $request->user();
 
-        /** @var TenantUser $tenantUser */
-        $tenantUser = $tenant->tenantUsers()->where('user_id', $user->id)->firstOrFail();
-
-        if ($tenantUser->role === TenantRole::Owner) {
-            return redirect()
-                ->back()
-                ->with('error', 'O proprietário não pode sair do tenant. Transfira a propriedade antes de sair.');
-        }
+        $tenant->tenantUsers()->where('user_id', $user->id)->firstOrFail();
 
         $tenant->users()->detach($user->id);
 
         Tenant::forgetCurrent();
 
-        return redirect()
-            ->route('dashboard')
-            ->with('success', 'Você saiu do tenant com sucesso.');
+        return response()->json([
+            'message' => 'Você saiu do tenant com sucesso.',
+        ]);
     }
 }

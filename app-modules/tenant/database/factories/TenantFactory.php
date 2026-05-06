@@ -5,7 +5,6 @@ namespace Modules\Tenant\Database\Factories;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Str;
 use Modules\Tenant\Models\Tenant;
-use Modules\User\Models\User;
 
 /**
  * @extends Factory<Tenant>
@@ -22,7 +21,6 @@ class TenantFactory extends Factory
             'name' => $name,
             'slug' => Str::slug($name).'-'.fake()->unique()->randomNumber(4),
             'description' => fake()->optional()->sentence(),
-            'user_id' => User::factory(),
         ];
     }
 

@@ -6,7 +6,6 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\Pivot;
 use Modules\Tenant\Database\Factories\TenantUserFactory;
-use Modules\Tenant\Enums\TenantRole;
 use Modules\User\Models\User;
 
 class TenantUser extends Pivot
@@ -18,7 +17,7 @@ class TenantUser extends Pivot
 
     public $incrementing = true;
 
-    protected $fillable = ['user_id', 'tenant_id', 'role'];
+    protected $fillable = ['user_id', 'tenant_id'];
 
     protected static function newFactory(): TenantUserFactory
     {
@@ -34,13 +33,6 @@ class TenantUser extends Pivot
                 throw new \RuntimeException('Vínculo só é aceito em tenants operáveis (folhas) ativos.');
             }
         });
-    }
-
-    protected function casts(): array
-    {
-        return [
-            'role' => TenantRole::class,
-        ];
     }
 
     public function user(): BelongsTo

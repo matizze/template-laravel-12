@@ -3,21 +3,15 @@
 namespace Modules\Tenant\Http\Controllers;
 
 use App\Http\Controllers\Controller;
-use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Password;
 use Illuminate\Support\Str;
-use Illuminate\View\View;
 use Modules\Tenant\Http\Requests\CreateUserRequest;
 use Modules\User\Models\User;
 
 class UserCreationController extends Controller
 {
-    public function create(): View
-    {
-        return view('tenant::users.create');
-    }
-
-    public function store(CreateUserRequest $request): RedirectResponse
+    public function store(CreateUserRequest $request): JsonResponse
     {
         $user = User::create([
             'name' => $request->validated('name'),
@@ -27,9 +21,6 @@ class UserCreationController extends Controller
 
         Password::broker()->sendResetLink(['email' => $user->email]);
 
-        return redirect()->back()->with(
-            'success',
-            "Usuário {$user->email} criado. E-mail de definição de senha enviado."
-        );
+        return response()->json($user, 201);
     }
 }

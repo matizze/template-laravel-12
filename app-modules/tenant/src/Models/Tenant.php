@@ -13,7 +13,6 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Modules\Tenant\Database\Factories\TenantFactory;
-use Modules\Tenant\Enums\TenantRole;
 use Modules\Tenant\Services\CurrentTenantManager;
 use Modules\User\Models\User;
 
@@ -22,11 +21,6 @@ class Tenant extends Model
     /** @use HasFactory<TenantFactory> */
     use HasFactory, SoftDeletes;
 
-    /**
-     * Mass-assignable attributes. `user_id` and `parent_id` are intentionally
-     * EXCLUDED — they are structural fields set explicitly by controllers
-     * (creation, ownership transfer) and never accepted from request payload.
-     */
     protected $fillable = ['name', 'slug', 'description', 'logo_path'];
 
     protected static function newFactory(): TenantFactory
@@ -69,11 +63,6 @@ class Tenant extends Model
         });
     }
 
-    public function owner(): BelongsTo
-    {
-        return $this->belongsTo(User::class, 'user_id');
-    }
-
     public function parent(): BelongsTo
     {
         return $this->belongsTo(self::class, 'parent_id');
@@ -88,8 +77,7 @@ class Tenant extends Model
     {
         return $this->belongsToMany(User::class, 'tenant_user')
             ->using(TenantUser::class)
-            ->withPivot('id', 'role')
-            ->withCasts(['role' => TenantRole::class])
+            ->withPivot('id')
             ->withTimestamps();
     }
 
