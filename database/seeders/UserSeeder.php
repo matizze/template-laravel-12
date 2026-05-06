@@ -2,23 +2,21 @@
 
 namespace Database\Seeders;
 
-use Modules\User\Models\User;
 use Illuminate\Database\Seeder;
+use Modules\User\Models\User;
 
 class UserSeeder extends Seeder
 {
-    /**
-     * Run the database seeds.
-     */
     public function run(): void
     {
         User::factory(10)->create();
 
-        User::factory()->create([
-            'name' => 'Admin',
-            'email' => 'admin@example.com',
-            'role' => 'admin',
-        ]);
+        User::factory()
+            ->admin()
+            ->create([
+                'name' => 'Admin',
+                'email' => 'admin@example.com',
+            ]);
 
         User::factory()->create([
             'name' => 'Test User',

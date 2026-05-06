@@ -1,0 +1,25 @@
+{
+    "name": "modules/permission",
+    "description": "Permission module — role-based permissions with JSON tree structure",
+    "type": "library",
+    "license": "MIT",
+    "require": {
+        "modules/core": "*@dev",
+        "modules/user": "*@dev",
+        "modules/tenant": "*@dev"
+    },
+    "autoload": {
+        "psr-4": {
+            "Modules\\Permission\\": "src/",
+            "Modules\\Permission\\Database\\Factories\\": "database/factories/"
+        }
+    },
+    "extra": {
+        "laravel": {
+            "providers": [
+                "Modules\\Permission\\Providers\\PermissionServiceProvider"
+            ]
+        }
+    },
+    "minimum-stability": "dev"
+}
