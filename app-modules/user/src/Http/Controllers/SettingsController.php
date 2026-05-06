@@ -3,82 +3,48 @@
 namespace Modules\User\Http\Controllers;
 
 use App\Http\Controllers\Controller;
-use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\View\View;
-use Modules\Tenant\Enums\TenantRole;
 use Modules\Tenant\Models\Tenant;
 use Modules\Tenant\Models\TenantUser;
 use Modules\User\Http\Requests\DeleteAccountRequest;
 use Modules\User\Http\Requests\UpdatePasswordRequest;
 use Modules\User\Http\Requests\UpdateProfileRequest;
-use Modules\User\Models\User;
 
 class SettingsController extends Controller
 {
-    public function index(Request $request): View
+    public function showProfile(Request $request): JsonResponse
     {
-        $tab = $request->query('tab', 'profile');
-
-        $data = [
-            'user' => Auth::user(),
-            'active' => $tab,
-        ];
-
-        if ($tab === 'users') {
-            Gate::authorize('manage-users');
-            $data['users'] = User::all();
-        }
-
-        return view('user::settings.index', $data);
+        return response()->json($request->user());
     }
 
-    public function updateProfile(UpdateProfileRequest $request): RedirectResponse
+    public function updateProfile(UpdateProfileRequest $request): JsonResponse
     {
-        Auth::user()->update($request->validated());
+        $user = $request->user();
+        $user->update($request->validated());
 
-        return redirect()->route('settings.index', ['tab' => 'profile'])
-            ->with('success', 'Perfil atualizado com sucesso!');
+        return response()->json($user);
     }
 
-    public function updatePassword(UpdatePasswordRequest $request): RedirectResponse
+    public function updatePassword(UpdatePasswordRequest $request): JsonResponse
     {
-        Auth::user()->update([
+        $request->user()->update([
             'password' => Hash::make($request->validated('password')),
         ]);
 
-        return redirect()->route('settings.index', ['tab' => 'password'])
-            ->with('success', 'Senha atualizada com sucesso!');
+        return response()->json(['message' => 'Senha atualizada com sucesso!']);
     }
 
-    public function destroy(DeleteAccountRequest $request): RedirectResponse
+    public function destroy(DeleteAccountRequest $request): JsonResponse
     {
-        $user = Auth::user();
-
-        $ownsTenants = TenantUser::where('user_id', $user->id)
-            ->where('role', TenantRole::Owner)
-            ->exists();
-
-        if ($ownsTenants) {
-            return redirect()
-                ->route('settings.index', ['tab' => 'profile'])
-                ->with('error', 'Você precisa transferir a propriedade dos seus tenants antes de excluir sua conta.');
-        }
+        $user = $request->user();
 
         TenantUser::where('user_id', $user->id)->delete();
-
         Tenant::forgetCurrent();
-
-        Auth::logout();
-
+        $user->tokens()->delete();
         $user->delete();
 
-        $request->session()->invalidate();
-        $request->session()->regenerateToken();
-
-        return redirect()->route('login');
+        return response()->json(['message' => 'Conta excluída com sucesso!']);
     }
 }

@@ -3,48 +3,65 @@
 namespace Modules\User\Http\Controllers;
 
 use App\Http\Controllers\Controller;
-use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Hash;
+use Modules\Permission\Models\Role;
 use Modules\User\Http\Requests\StoreUserRequest;
 use Modules\User\Http\Requests\UpdateUserRoleRequest;
 use Modules\User\Models\User;
 
 class UserController extends Controller
 {
-    public function store(StoreUserRequest $request): RedirectResponse
+    public function store(StoreUserRequest $request): JsonResponse
     {
         $validated = $request->validated();
 
-        User::create([
+        $user = User::create([
             'name' => $validated['name'],
             'email' => $validated['email'],
             'password' => Hash::make($validated['password']),
-            'role' => $validated['role'],
         ]);
 
-        return to_route('settings.index', ['tab' => 'users'])
-            ->with('success', 'Usuário criado com sucesso!');
-    }
-
-    public function update(UpdateUserRoleRequest $request, User $user): RedirectResponse
-    {
-        if ($user->id === auth()->id()) {
-            return back()->with('error', 'Você não pode alterar sua própria função.');
+        if (isset($validated['role_name'])) {
+            $role = Role::firstOrCreate(
+                ['name' => $validated['role_name'], 'tenant_id' => null],
+                ['permissions' => $validated['role_name'] === 'admin'
+                    ? ['users' => ['create', 'update', 'delete']]
+                    : []]
+            );
+            $role->assign($user);
         }
 
-        $user->update($request->validated());
-
-        return back()->with('success', 'Função atualizada com sucesso!');
+        return response()->json($user->load('roles'), 201);
     }
 
-    public function destroy(User $user): RedirectResponse
+    public function update(UpdateUserRoleRequest $request, User $user): JsonResponse
     {
-        if ($user->id === auth()->id()) {
-            return back()->with('error', 'Você não pode deletar sua própria conta por aqui.');
+        $this->authorize('update', $user);
+
+        $validated = $request->validated();
+
+        $user->roles()->whereNull('tenant_id')->detach();
+
+        if (isset($validated['role_name'])) {
+            $role = Role::firstOrCreate(
+                ['name' => $validated['role_name'], 'tenant_id' => null],
+                ['permissions' => $validated['role_name'] === 'admin'
+                    ? ['users' => ['create', 'update', 'delete']]
+                    : []]
+            );
+            $role->assign($user);
         }
+
+        return response()->json($user->load('roles'));
+    }
+
+    public function destroy(User $user): JsonResponse
+    {
+        $this->authorize('delete', $user);
 
         $user->delete();
 
-        return back()->with('success', 'Usuário deletado com sucesso!');
+        return response()->json(['message' => 'Usuário deletado com sucesso!']);
     }
 }

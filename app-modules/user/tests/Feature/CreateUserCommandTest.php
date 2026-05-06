@@ -2,8 +2,9 @@
 
 namespace Tests\Feature;
 
-use Modules\User\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Hash;
+use Modules\User\Models\User;
 use Tests\TestCase;
 
 class CreateUserCommandTest extends TestCase
@@ -22,8 +23,11 @@ class CreateUserCommandTest extends TestCase
         $this->assertDatabaseHas('users', [
             'name' => 'John Doe',
             'email' => 'john@example.com',
-            'role' => 'member',
         ]);
+
+        $user = User::where('email', 'john@example.com')->first();
+        $user->load('roles');
+        $this->assertTrue($user->roles->contains('name', 'member'));
     }
 
     public function test_can_create_admin_user_with_flag(): void
@@ -35,10 +39,9 @@ class CreateUserCommandTest extends TestCase
             '--admin' => true,
         ])->assertSuccessful();
 
-        $this->assertDatabaseHas('users', [
-            'email' => 'admin@example.com',
-            'role' => 'admin',
-        ]);
+        $user = User::where('email', 'admin@example.com')->first();
+        $user->load('roles');
+        $this->assertTrue($user->roles->contains('name', 'admin'));
     }
 
     public function test_can_create_admin_user_with_role_option(): void
@@ -50,10 +53,9 @@ class CreateUserCommandTest extends TestCase
             '--role' => 'admin',
         ])->assertSuccessful();
 
-        $this->assertDatabaseHas('users', [
-            'email' => 'admin@example.com',
-            'role' => 'admin',
-        ]);
+        $user = User::where('email', 'admin@example.com')->first();
+        $user->load('roles');
+        $this->assertTrue($user->roles->contains('name', 'admin'));
     }
 
     public function test_cannot_create_user_with_duplicate_email(): void
@@ -80,10 +82,9 @@ class CreateUserCommandTest extends TestCase
             '--role' => 'member',
         ])->assertSuccessful();
 
-        $this->assertDatabaseHas('users', [
-            'email' => 'user@example.com',
-            'role' => 'admin',
-        ]);
+        $user = User::where('email', 'user@example.com')->first();
+        $user->load('roles');
+        $this->assertTrue($user->roles->contains('name', 'admin'));
     }
 
     public function test_outputs_user_info_on_success(): void
@@ -127,6 +128,6 @@ class CreateUserCommandTest extends TestCase
         $user = User::where('email', 'user@example.com')->first();
 
         $this->assertNotEquals('plain-password', $user->password);
-        $this->assertTrue(\Illuminate\Support\Facades\Hash::check('plain-password', $user->password));
+        $this->assertTrue(Hash::check('plain-password', $user->password));
     }
 }

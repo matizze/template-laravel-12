@@ -2,8 +2,9 @@
 
 namespace Modules\User\Console\Commands;
 
-use Modules\User\Models\User;
 use Illuminate\Console\Command;
+use Modules\Permission\Models\Role;
+use Modules\User\Models\User;
 
 use function Laravel\Prompts\password;
 use function Laravel\Prompts\select;
@@ -30,21 +31,28 @@ class CreateUserCommand extends Command
         $password = $this->argument('password') ?: password(label: 'Senha do usuário', required: true);
 
         if ($this->option('admin')) {
-            $role = 'admin';
+            $roleName = 'admin';
         } else {
-            $role = $this->option('role') ?: select(
+            $roleName = $this->option('role') ?: select(
                 label: 'Role do usuário',
                 options: ['member', 'admin'],
                 default: 'member'
             );
         }
 
-        User::create([
+        $user = User::create([
             'name' => $name,
             'email' => $email,
             'password' => $password,
-            'role' => $role,
         ]);
+
+        $role = Role::firstOrCreate(
+            ['name' => $roleName, 'tenant_id' => null],
+            ['permissions' => $roleName === 'admin'
+                ? ['users' => ['create', 'update', 'delete']]
+                : []]
+        );
+        $role->assign($user);
 
         $this->newLine();
         $this->line('==============================');
@@ -52,7 +60,7 @@ class CreateUserCommand extends Command
         $this->line('==============================');
         $this->line("Name     : {$name}");
         $this->line("Email    : {$email}");
-        $this->line("Role     : {$role}");
+        $this->line("Role     : {$roleName}");
         $this->line('==============================');
         $this->newLine();
 
