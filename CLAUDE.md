@@ -84,6 +84,21 @@ php artisan create:user --admin      # create admin user
 - Use `actingAs($user, 'sanctum')` to authenticate in HTTP tests
 - Use `UserFactory::admin()` to attach the global admin role
 
+### Module public API
+
+Each module exposes a **minimal, explicit set of classes** that other modules may import. The whitelist lives in `phpstan/ModuleDependencyRule.php` (`PUBLIC_API` constant) and is enforced by PHPStan on every analysis run.
+
+Current public surface:
+
+- `auth` → (none — edge consumer)
+- `user` → `Modules\User\Models\User`, `Modules\User\Events\UserDeleting`
+- `permission` → `Modules\Permission\Services\RoleAssigner`, `Modules\Permission\Traits\HasRoles`
+- `tenant` → `Modules\Tenant\Models\Tenant`, `Modules\Tenant\Traits\HasTenants`
+
+Anything else under `Modules\<X>\` (Controllers, Form Requests, Policies, Middleware, Providers, internal Services, Rules, Listeners, Notifications, etc.) is **internal** — importing it from another module fails PHPStan with `Cannot import internal class ... Only the public API is exportable.`
+
+To expose a new class, add it to `PUBLIC_API` in the rule and document the rationale (one-line comment is fine). Keep the surface minimal: prefer Models, Traits, Enums and Events over services.
+
 ## Tooling Policy — Use Serena MCP for ALL code operations
 
 This project blocks the built-in `Read`, `Write`, `Edit`, `Grep`, `Glob` tools via `permissions.deny` in `.claude/settings.json`. **Every file operation must go through Serena MCP**:
