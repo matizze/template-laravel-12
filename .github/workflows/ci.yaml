@@ -43,6 +43,9 @@ jobs:
       - name: PHPStan (static analysis)
         run: ./vendor/bin/phpstan analyse --memory-limit=512M
 
+      - name: Rector (dry-run)
+        run: ./vendor/bin/rector --dry-run --no-progress-bar
+
   tests:
     runs-on: ubuntu-latest
     needs: quality
