@@ -2,8 +2,8 @@
 
 namespace Tests\Feature;
 
-use Database\Seeders\RoleSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Modules\Permission\Database\Seeders\RoleSeeder;
 use Modules\Permission\Models\Role;
 use Modules\User\Models\User;
 use Tests\TestCase;

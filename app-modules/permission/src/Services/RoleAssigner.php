@@ -6,6 +6,7 @@ namespace Modules\Permission\Services;
 
 use App\Enums\RoleName;
 use Modules\Permission\Models\Role;
+use Modules\Permission\Support\RolePresets;
 use Modules\User\Models\User;
 
 /**
@@ -33,17 +34,15 @@ final class RoleAssigner
     }
 
     /**
-     * Ensure the global role exists with the given permission tree, creating
-     * it if necessary. Used by factories and CLI commands that may run before
-     * the seeder.
-     *
-     * @param  array<string, array<int, string>>  $permissions
+     * Ensure the global role exists with its canonical permission tree,
+     * creating it if necessary. Used by factories and CLI commands that
+     * may run before the seeder.
      */
-    public function ensure(RoleName $name, array $permissions = []): void
+    public function ensure(RoleName $name): void
     {
         Role::firstOrCreate(
             ['name' => $name->value, 'tenant_id' => null],
-            ['permissions' => $permissions],
+            ['permissions' => RolePresets::permissionsFor($name)],
         );
     }
 

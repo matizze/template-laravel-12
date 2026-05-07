@@ -10,7 +10,8 @@
     "autoload": {
         "psr-4": {
             "Modules\\Permission\\": "src/",
-            "Modules\\Permission\\Database\\Factories\\": "database/factories/"
+            "Modules\\Permission\\Database\\Factories\\": "database/factories/",
+            "Modules\\Permission\\Database\\Seeders\\": "database/seeders/"
         }
     },
     "extra": {

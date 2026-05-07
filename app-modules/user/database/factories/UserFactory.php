@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Modules\User\Database\Factories;
 
 use App\Enums\RoleName;
-use Database\Seeders\RoleSeeder;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
@@ -32,12 +31,12 @@ class UserFactory extends Factory
 
     public function admin(): static
     {
-        return $this->afterCreating(fn (User $user) => $this->attachGlobalRole($user, RoleName::Admin, RoleSeeder::adminPermissions()));
+        return $this->afterCreating(fn (User $user) => $this->attachGlobalRole($user, RoleName::Admin));
     }
 
     public function superadmin(): static
     {
-        return $this->afterCreating(fn (User $user) => $this->attachGlobalRole($user, RoleName::Superadmin, RoleSeeder::superadminPermissions()));
+        return $this->afterCreating(fn (User $user) => $this->attachGlobalRole($user, RoleName::Superadmin));
     }
 
     public function unverified(): static
@@ -47,13 +46,10 @@ class UserFactory extends Factory
         ]);
     }
 
-    /**
-     * @param  array<string, array<int, string>>  $permissions
-     */
-    private function attachGlobalRole(User $user, RoleName $name, array $permissions): void
+    private function attachGlobalRole(User $user, RoleName $name): void
     {
         $assigner = app(RoleAssigner::class);
-        $assigner->ensure($name, $permissions);
+        $assigner->ensure($name);
         $assigner->assign($user, $name);
     }
 }

@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Modules\User\Console\Commands;
 
 use App\Enums\RoleName;
-use Database\Seeders\RoleSeeder;
 use Illuminate\Console\Command;
 use Modules\Permission\Services\RoleAssigner;
 use Modules\User\Models\User;
@@ -50,7 +49,7 @@ class CreateUserCommand extends Command
             'password' => $password,
         ]);
 
-        $roles->ensure($roleName, $this->permissionsFor($roleName));
+        $roles->ensure($roleName);
         $roles->assign($user, $roleName);
 
         $this->newLine();
@@ -64,17 +63,5 @@ class CreateUserCommand extends Command
         $this->newLine();
 
         return self::SUCCESS;
-    }
-
-    /**
-     * @return array<string, array<int, string>>
-     */
-    private function permissionsFor(RoleName $name): array
-    {
-        return match ($name) {
-            RoleName::Admin => RoleSeeder::adminPermissions(),
-            RoleName::Superadmin => RoleSeeder::superadminPermissions(),
-            RoleName::Member => [],
-        };
     }
 }

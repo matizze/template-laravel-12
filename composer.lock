@@ -2381,7 +2381,7 @@
             "dist": {
                 "type": "path",
                 "url": "app-modules/permission",
-                "reference": "383aa79f43ebf6f92d1672f29281416ca02be3ce"
+                "reference": "75ef0fed43932cf8657ca984de26153223173c9c"
             },
             "require": {
                 "modules/tenant": "*@dev",
@@ -2398,7 +2398,8 @@
             "autoload": {
                 "psr-4": {
                     "Modules\\Permission\\": "src/",
-                    "Modules\\Permission\\Database\\Factories\\": "database/factories/"
+                    "Modules\\Permission\\Database\\Factories\\": "database/factories/",
+                    "Modules\\Permission\\Database\\Seeders\\": "database/seeders/"
                 }
             },
             "license": [
@@ -2448,7 +2449,7 @@
             "dist": {
                 "type": "path",
                 "url": "app-modules/user",
-                "reference": "e399d1df154a3ec01dd9ff495885296dd2ade0b0"
+                "reference": "df87e58696b06779bf0085d81a27164f45b40782"
             },
             "type": "library",
             "extra": {
@@ -2461,13 +2462,14 @@
             "autoload": {
                 "psr-4": {
                     "Modules\\User\\": "src/",
-                    "Modules\\User\\Database\\Factories\\": "database/factories/"
+                    "Modules\\User\\Database\\Factories\\": "database/factories/",
+                    "Modules\\User\\Database\\Seeders\\": "database/seeders/"
                 }
             },
             "license": [
                 "MIT"
             ],
-            "description": "User module — shared kernel for user management",
+            "description": "User module — user identity, profile and management",
             "transport-options": {
                 "relative": true
             }
