@@ -89,7 +89,7 @@
         ],
         "ide-helper": [
             "php artisan ide-helper:generate",
-            "php artisan ide-helper:models --nowrite"
+            "php artisan ide-helper:models -M --write-mixin --reset --dir=app-modules/user/src/Models --dir=app-modules/permission/src/Models --dir=app-modules/tenant/src/Models"
         ]
     },
     "extra": {

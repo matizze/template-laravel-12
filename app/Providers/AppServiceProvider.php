@@ -46,7 +46,15 @@ class AppServiceProvider extends ServiceProvider
                 MigrationsEnded::class,
                 function (): void {
                     Artisan::call('ide-helper:generate');
-                    Artisan::call('ide-helper:models', ['--nowrite' => true, '--reset' => true]);
+                    Artisan::call('ide-helper:models', [
+                        '--write-mixin' => true,
+                        '--reset' => true,
+                        '--dir' => [
+                            'app-modules/user/src/Models',
+                            'app-modules/permission/src/Models',
+                            'app-modules/tenant/src/Models',
+                        ],
+                    ]);
                 }
             );
         }
