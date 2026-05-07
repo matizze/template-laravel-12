@@ -2,8 +2,10 @@
 
 namespace Modules\User\Http\Requests;
 
+use App\Enums\RoleName;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 /**
  * @property-read string $role_name
@@ -23,7 +25,7 @@ class UpdateUserRoleRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'role_name' => ['required', 'string', 'in:member,admin'],
+            'role_name' => ['required', 'string', Rule::enum(RoleName::class)->only([RoleName::Member, RoleName::Admin])],
         ];
     }
 }

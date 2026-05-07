@@ -2,6 +2,7 @@
 
 namespace Modules\Tenant\Http\Requests;
 
+use App\Support\Ability;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Foundation\Http\FormRequest;
@@ -17,7 +18,7 @@ class AttachTenantUserRequest extends FormRequest
             return false;
         }
 
-        return $this->user()?->can('tenants.users.attach', $tenant) ?? false;
+        return $this->user()?->can(Ability::TENANTS_USERS_ATTACH, $tenant) ?? false;
     }
 
     /**

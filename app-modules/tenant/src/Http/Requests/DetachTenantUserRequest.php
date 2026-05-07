@@ -2,6 +2,7 @@
 
 namespace Modules\Tenant\Http\Requests;
 
+use App\Support\Ability;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Foundation\Http\FormRequest;
@@ -18,7 +19,7 @@ class DetachTenantUserRequest extends FormRequest
             return false;
         }
 
-        return $this->user()?->can('tenants.users.detach', $tenant) ?? false;
+        return $this->user()?->can(Ability::TENANTS_USERS_DETACH, $tenant) ?? false;
     }
 
     /**

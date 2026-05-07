@@ -2,6 +2,7 @@
 
 namespace Modules\Tenant\Http\Requests;
 
+use App\Support\Ability;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Str;
@@ -27,7 +28,7 @@ class CreateTenantRequest extends FormRequest
             return false;
         }
 
-        if ($user->can('tenants.create')) {
+        if ($user->can(Ability::TENANTS_CREATE)) {
             return true;
         }
 

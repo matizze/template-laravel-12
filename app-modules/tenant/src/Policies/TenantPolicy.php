@@ -2,6 +2,7 @@
 
 namespace Modules\Tenant\Policies;
 
+use App\Support\Ability;
 use Modules\Tenant\Models\Tenant;
 use Modules\User\Models\User;
 
@@ -18,7 +19,7 @@ class TenantPolicy
             return false;
         }
 
-        return $user->can('tenants.settings.update', $tenant);
+        return $user->can(Ability::TENANTS_SETTINGS_UPDATE, $tenant);
     }
 
     public function delete(User $user, Tenant $tenant): bool
@@ -27,7 +28,7 @@ class TenantPolicy
             return false;
         }
 
-        return $user->can('tenants.settings.delete', $tenant);
+        return $user->can(Ability::TENANTS_SETTINGS_DELETE, $tenant);
     }
 
     public function restore(User $user, Tenant $tenant): bool
@@ -36,6 +37,6 @@ class TenantPolicy
             return false;
         }
 
-        return $user->can('tenants.settings.update', $tenant);
+        return $user->can(Ability::TENANTS_SETTINGS_UPDATE, $tenant);
     }
 }
