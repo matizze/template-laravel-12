@@ -3,6 +3,10 @@
     "description": "User module — user identity, profile and management",
     "type": "library",
     "license": "MIT",
+    "require": {
+        "modules/permission": "*@dev",
+        "modules/tenant": "*@dev"
+    },
     "autoload": {
         "psr-4": {
             "Modules\\User\\": "src/",
