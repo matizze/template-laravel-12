@@ -4,6 +4,7 @@ namespace Modules\Tenant\Http\Controllers;
 
 use App\Http\Controllers\Controller;
 use App\Http\Resources\TenantResource;
+use App\Http\Resources\TenantUserResource;
 use Illuminate\Http\JsonResponse;
 use Modules\Tenant\Http\Requests\DeleteTenantRequest;
 use Modules\Tenant\Http\Requests\RestoreTenantRequest;
@@ -20,7 +21,7 @@ class TenantSettingsController extends Controller
 
         return response()->json([
             'tenant' => TenantResource::make($tenant),
-            'tenant_users' => $tenantUsers,
+            'tenant_users' => TenantUserResource::collection($tenantUsers),
         ]);
     }
 

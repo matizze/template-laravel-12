@@ -3,6 +3,8 @@
 namespace Modules\Tenant\Http\Controllers;
 
 use App\Http\Controllers\Controller;
+use App\Http\Resources\TenantUserResource;
+use App\Http\Resources\UserResource;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Modules\Tenant\Http\Requests\AttachTenantUserRequest;
@@ -30,8 +32,8 @@ class TenantUserController extends Controller
         }
 
         return response()->json([
-            'tenant_users' => $tenantUsers,
-            'available_users' => $availableQuery->orderBy('name')->get(),
+            'tenant_users' => TenantUserResource::collection($tenantUsers),
+            'available_users' => UserResource::collection($availableQuery->orderBy('name')->get()),
         ]);
     }
 
