@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use Illuminate\Support\Facades\Route;
+use Modules\Auth\Http\Controllers\EmailVerificationController;
 use Modules\Auth\Http\Controllers\ForgotPasswordController;
 use Modules\Auth\Http\Controllers\LoginController;
 use Modules\Auth\Http\Controllers\RegisterController;
@@ -25,8 +26,17 @@ Route::prefix('v1')->group(function () {
         Route::post('/auth/reset-password', [ResetPasswordController::class, 'store'])->name('password.update');
     });
 
+    Route::get('/auth/email/verify/{id}/{hash}', [EmailVerificationController::class, 'verify'])
+        ->middleware(['signed', 'throttle:6,1'])
+        ->whereNumber('id')
+        ->name('verification.verify');
+
     Route::middleware(['auth:sanctum', 'throttle:60,1'])->group(function () {
         Route::post('/auth/logout', [LoginController::class, 'destroy'])->name('logout');
+
+        Route::post('/auth/email/verification-notification', [EmailVerificationController::class, 'resend'])
+            ->middleware('throttle:6,1')
+            ->name('verification.send');
 
         Route::get('/user/profile', [SettingsController::class, 'showProfile'])->name('user.profile.show');
         Route::patch('/user/profile', [SettingsController::class, 'updateProfile'])->name('user.profile.update');

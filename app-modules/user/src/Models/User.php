@@ -2,6 +2,8 @@
 
 namespace Modules\User\Models;
 
+use Illuminate\Auth\MustVerifyEmail as MustVerifyEmailTrait;
+use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
@@ -15,10 +17,10 @@ use OwenIt\Auditing\Contracts\Auditable as AuditableContract;
 /**
  * @mixin IdeHelperUser
  */
-class User extends Authenticatable implements AuditableContract
+class User extends Authenticatable implements AuditableContract, MustVerifyEmail
 {
     /** @use HasFactory<UserFactory> */
-    use Auditable, HasApiTokens, HasFactory, HasRoles, HasTenants, Notifiable;
+    use Auditable, HasApiTokens, HasFactory, HasRoles, HasTenants, MustVerifyEmailTrait, Notifiable;
 
     /**
      * The attributes that are mass assignable.
