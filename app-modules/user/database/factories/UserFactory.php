@@ -2,6 +2,7 @@
 
 namespace Modules\User\Database\Factories;
 
+use Database\Seeders\RoleSeeder;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
@@ -33,7 +34,18 @@ class UserFactory extends Factory
         return $this->afterCreating(function (User $user) {
             $role = Role::firstOrCreate(
                 ['name' => 'admin', 'tenant_id' => null],
-                ['permissions' => ['users' => ['create', 'update', 'delete']]]
+                ['permissions' => RoleSeeder::adminPermissions()],
+            );
+            $role->assign($user);
+        });
+    }
+
+    public function superadmin(): static
+    {
+        return $this->afterCreating(function (User $user) {
+            $role = Role::firstOrCreate(
+                ['name' => 'superadmin', 'tenant_id' => null],
+                ['permissions' => RoleSeeder::superadminPermissions()],
             );
             $role->assign($user);
         });
