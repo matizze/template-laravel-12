@@ -1,12 +1,13 @@
 <?php
 
-namespace Modules\Tenant\Http\Controllers;
+namespace Modules\User\Http\Controllers;
 
 use App\Http\Controllers\Controller;
+use App\Http\Resources\UserResource;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Password;
 use Illuminate\Support\Str;
-use Modules\Tenant\Http\Requests\CreateUserRequest;
+use Modules\User\Http\Requests\CreateUserRequest;
 use Modules\User\Models\User;
 
 class UserCreationController extends Controller
@@ -21,6 +22,6 @@ class UserCreationController extends Controller
 
         Password::broker()->sendResetLink(['email' => $user->email]);
 
-        return response()->json($user, 201);
+        return UserResource::make($user)->response()->setStatusCode(201);
     }
 }

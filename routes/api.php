@@ -10,9 +10,9 @@ use Modules\Auth\Http\Controllers\ResetPasswordController;
 use Modules\Tenant\Http\Controllers\TenantController;
 use Modules\Tenant\Http\Controllers\TenantSettingsController;
 use Modules\Tenant\Http\Controllers\TenantUserController;
-use Modules\Tenant\Http\Controllers\UserCreationController;
 use Modules\User\Http\Controllers\SettingsController;
 use Modules\User\Http\Controllers\UserController;
+use Modules\User\Http\Controllers\UserCreationController;
 
 Route::middleware('throttle:5,1')->group(function () {
     Route::post('/auth/login', [LoginController::class, 'store'])->name('login');
@@ -46,7 +46,7 @@ Route::middleware('auth:sanctum')->group(function () {
 
     Route::post('/users/create', [UserCreationController::class, 'store'])
         ->middleware('can:users.create')
-        ->name('tenant.users.create.store');
+        ->name('users.create.store');
 
     Route::get('/tenants', [TenantController::class, 'index'])->name('tenants.index');
     Route::post('/tenants', [TenantController::class, 'store'])->name('tenant.store');

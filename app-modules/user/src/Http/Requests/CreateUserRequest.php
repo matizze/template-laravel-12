@@ -1,6 +1,6 @@
 <?php
 
-namespace Modules\Tenant\Http\Requests;
+namespace Modules\User\Http\Requests;
 
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
