@@ -16,11 +16,10 @@ class ModuleDependencyRule implements Rule
 {
     /** @var array<string, list<string>> */
     private const ALLOWED_DEPENDENCIES = [
-        'Core' => [],
-        'User' => ['Core'],
-        'Permission' => ['Core'],
-        'Auth' => ['Core', 'User'],
-        'Tenant' => ['Core', 'User'],
+        'User' => [],
+        'Permission' => [],
+        'Auth' => ['User'],
+        'Tenant' => ['User'],
     ];
 
     /** @var list<string> Allowed cross-module imports (documented extension points) */
@@ -29,8 +28,7 @@ class ModuleDependencyRule implements Rule
         'Modules\\Tenant\\Enums\\TenantRole',
         'Modules\\Tenant\\Models\\TenantUser',
         'Modules\\Tenant\\Models\\Tenant',
-        // User <-> Permission cycle: BelongsToMany requires both sides to import the other model.
-        'Modules\\Permission\\Models\\Role',
+        'Modules\\Permission\\Traits\\HasRoles',
         'Modules\\User\\Models\\User',
     ];
 
