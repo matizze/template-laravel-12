@@ -1,46 +1,53 @@
 # Project Context
 
-Laravel 12 API-only starter template with role-based access (admin/member), settings management, user CRUD, multi-tenant support, and production-ready deployment (Docker + Octane). 100% API — no Blade views, no frontend assets.
+Laravel 12 API-only starter template with Sanctum bearer auth, RBAC permissions, multi-tenant hierarchy, and production-ready deployment (Docker + Octane). 100% API — no Blade views, no frontend assets, no Dusk.
 
 ## Architecture
 
-- **API-only**: All routes under `/api/` prefix, JSON request/response, Sanctum token authentication
-- **Modular**: `app-modules/core`, `app-modules/auth`, `app-modules/user`, `app-modules/tenant`, `app-modules/permission`
-- Routes centralized in `routes/api.php`
+- **API-only**: every route lives under `/api/v1/` (versioned), JSON request/response, Sanctum bearer-token authentication. No session, no remember-me semantics for the API surface.
+- **Modular monolith** via `InterNACHI/modular`. Modules: `app-modules/auth`, `app-modules/user`, `app-modules/permission`, `app-modules/tenant`. Each module declares its dependencies in `composer.json`; cross-module imports are constrained by the custom `App\PHPStan\ModuleDependencyRule` and a per-module `PUBLIC_API` whitelist.
+- Routes centralized in `routes/api.php`.
+- Single uniform JSON error envelope: `App\Exceptions\DomainException` for business errors (422 by default, configurable status + `code`); production 5xx collapse to `{"message": "Server error.", "code": "INTERNAL"}` to avoid leaking internals.
 
 ## Auth Flow (Sanctum)
-- `POST /api/auth/login` → returns `{user, token}` (Bearer token)
-- `POST /api/auth/register` → creates user + returns `{user, token}` (201)
-- `POST /api/auth/logout` → revokes current token (requires auth)
-- `POST /api/auth/forgot-password` → sends reset link (always returns 200)
-- `POST /api/auth/reset-password` → resets password (200 or 422)
-- Rate limiting: `throttle:5,1` on login/register, `throttle:3,1` on password reset
-- All validation via Form Request classes
+- `POST /api/v1/auth/login` → `{user, token}` (manual `Hash::check`, no `Auth::attempt`)
+- `POST /api/v1/auth/register` → `{user, token}` (201) + dispatches `Registered` event
+- `POST /api/v1/auth/logout` → revokes current token
+- `POST /api/v1/auth/forgot-password` / `reset-password` → Laravel Password broker; reset URL points at `FRONTEND_URL/reset-password?token=...&email=...`
+- `GET /api/v1/auth/email/verify/{id}/{hash}` → public, signed URL, `throttle:6,1`; idempotent
+- `POST /api/v1/auth/email/verification-notification` → `auth:sanctum` + `throttle:6,1`
+- Rate limits: `throttle:5,1` on login/register, `throttle:3,1` on password reset, `throttle:60,1` on the authenticated group
+- All validation through Form Request classes
 
 ## API Endpoints
-- **User**: profile (GET/PATCH), password (PATCH), account delete (DELETE)
-- **Users CRUD**: store (`can:users.create`), update role (`can:users.update`), delete (`can:users.delete`)
-- **Tenants**: list, create (`can:tenants.create`), settings (show/update/delete), restore
-- **Tenant Users**: list, attach, remove, leave (membership-based authorization)
-- All protected routes use `auth:sanctum` middleware
-- Current tenant is resolved from the `X-Tenant-ID` header by the `tenant` middleware
+- **User profile** (`/user/account`): show, update profile, update password, delete (DELETE wraps token-revoke + tenant-detach + user-delete in `DB::transaction`)
+- **Users CRUD** (`/users`): store/update/delete gated by `users.*` abilities
+- **Tenants** (`/tenants`): list (paginated, scoped by `Tenant::scopeVisibleTo`), create, settings show/update/delete, soft-delete + restore
+- **Tenant users** (`/tenants/{tenant}/users`): list (paginated), attach, remove, leave (membership-based authz)
+- Current tenant resolved from `X-Tenant-ID` header by the `tenant` middleware (`SetCurrentTenant`); `Tenant::current()` is request-scoped (`scoped` binding for Octane safety)
+- Pagination payload uses `Resource::collection($query->paginate($request->perPage()))` — `perPage` macro on `Request` clamps `[1, 100]` with default 15
+- API contract documented automatically by Dedoc Scramble at `/docs/api`
 
 ## Authorization
-- Permissions are JSON trees on `roles.permissions` (e.g. `{"users":["create","update","delete"]}`) flattened to dotted abilities by `PermissionService`.
-- `Gate::before` short-circuits to `true` when the user holds the role permission.
-- Tenant-scoped abilities (`tenants.*`) are defined in `TenantServiceProvider` and require the user to be a member of the target tenant.
-- `TenantPolicy` (`update`, `delete`, `restore`, `view`) and `UserPolicy` (blocks acting on self) are registered in their module providers.
+- RBAC: `roles.permissions` is a JSON tree (e.g. `{"users":["create","update","delete"]}`) flattened into dotted abilities (`users.create`, `tenants.users.attach`, ...) by `PermissionService`
+- `Gate::before` (in `PermissionServiceProvider`) short-circuits to `true` when the user holds the permission
+- Tenant-scoped abilities (`tenants.create`, `tenants.users.view|attach|detach`, `tenants.settings.*`) defined in `TenantServiceProvider` via `Gate::define`, require membership in the target tenant
+- Policies: `TenantPolicy` (view/update/delete/restore) and `UserPolicy` (blocks acting on self), registered in their owning modules
+- Constants: `App\Support\Ability::*` for ability strings, `App\Enums\RoleName` for role identifiers (`Member`, `Admin`, `Superadmin`)
+- Cross-module concerns: `Modules\User\Events\UserDeleting` is dispatched inside the deletion transaction; `Modules\Tenant\Listeners\DetachUserFromTenants` runs synchronously to keep cleanup atomic
+
+## Audit
+- `owen-it/laravel-auditing` enabled on `User`, `Role`, `Tenant`, `TenantUser` (sensitive fields like `password`, `remember_token` are excluded)
 
 ## Testing
-- PHPUnit (NOT Pest) — all tests use `postJson()`, `getJson()`, `patchJson()`, `deleteJson()`
-- Validation errors: `assertJsonValidationErrors()` (NOT `assertSessionHasErrors`)
-- No Dusk/browser tests — API only
-- Use `UserFactory::admin()` state for admin user tests
-- `actingAs($user)` works for Sanctum in tests
+- PHPUnit (NOT Pest); HTTP tests use `postJson` / `getJson` / `patchJson` / `deleteJson` and `assertJsonValidationErrors` — there is no session
+- Authenticate with `actingAs($user, 'sanctum')`; `UserFactory::admin()` attaches the global admin role
+- In-memory SQLite + array cache driver
 
 ## Development Environment (Herd)
-- **Herd MCP** — use to query site info, PHP versions
-- **Laravel Boost MCP** — use `search-docs` for Laravel docs, `database-query` for DB inspection
+- **Herd MCP** — query site info, PHP versions
+- **Laravel Boost MCP** — `search-docs` for Laravel docs, `database-query` for DB inspection
+- **Serena MCP** — preferred for all file reads, edits and symbol-level navigation in this repo
 
 <laravel-boost-guidelines>
 === foundation rules ===
