@@ -1,0 +1,362 @@
+<!doctype html>
+<!--
+  ⚠️ DEV TOOL — DO NOT DEPLOY TO PRODUCTION ⚠️
+  Static HTML helper to navigate/create/manage the tenant tree against the
+  Sanctum API. Bearer token persisted in localStorage. Same-origin: no CORS.
+
+  Hard limit: renders 3 hierarchy levels (root → child → grandchild). Mirrors
+  the tenant depth cap discussed in the project.
+-->
+<html lang="pt-BR">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Tenant Admin (DEV)</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    <style>[x-cloak]{display:none!important}</style>
+</head>
+<body class="bg-zinc-50 text-zinc-900 antialiased">
+
+<div x-data="adminApp()" x-init="boot()" class="min-h-screen" x-cloak>
+
+    <!-- LOGIN -->
+    <template x-if="!token">
+        <div class="min-h-screen flex items-center justify-center p-4">
+            <form @submit.prevent="login()" class="w-full max-w-sm bg-white rounded-lg shadow-sm border border-zinc-200 p-6 space-y-4">
+                <div>
+                    <h1 class="text-xl font-semibold">Tenant Admin</h1>
+                    <p class="text-sm text-zinc-500">DEV — Sanctum bearer login</p>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium mb-1">Email</label>
+                    <input x-model="loginForm.email" type="email" required autocomplete="username"
+                        class="w-full border border-zinc-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-zinc-900">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium mb-1">Senha</label>
+                    <input x-model="loginForm.password" type="password" required autocomplete="current-password"
+                        class="w-full border border-zinc-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-zinc-900">
+                </div>
+                <button type="submit" :disabled="busy"
+                    class="w-full bg-zinc-900 text-white rounded py-2 hover:bg-zinc-700 disabled:opacity-50">
+                    <span x-text="busy ? 'Entrando...' : 'Entrar'"></span>
+                </button>
+                <p x-show="loginError" x-text="loginError" class="text-sm text-red-600"></p>
+            </form>
+        </div>
+    </template>
+
+    <!-- AUTHED VIEW -->
+    <template x-if="token">
+        <div>
+            <header class="bg-white border-b border-zinc-200 sticky top-0 z-10">
+                <div class="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between">
+                    <div>
+                        <h1 class="font-semibold">Tenant Admin</h1>
+                        <p class="text-xs text-zinc-500" x-text="me ? me.name + ' · ' + me.email : '...'"></p>
+                    </div>
+                    <div class="flex gap-2 items-center">
+                        <button @click="openCreate(null, [])"
+                            class="text-sm bg-zinc-900 text-white rounded px-3 py-1.5 hover:bg-zinc-700">
+                            + Tenant raiz
+                        </button>
+                        <button @click="logout()"
+                            class="text-sm border border-zinc-300 rounded px-3 py-1.5 hover:bg-zinc-100">
+                            Sair
+                        </button>
+                    </div>
+                </div>
+            </header>
+
+            <main class="max-w-6xl mx-auto px-4 py-6">
+                <p x-show="topError" x-text="topError" class="mb-4 p-3 rounded bg-red-50 border border-red-200 text-red-700 text-sm"></p>
+
+                <!-- BREADCRUMB -->
+                <!-- FLAT LIST com indentação por nível -->
+                <div class="bg-white rounded-lg border border-zinc-200 overflow-hidden">
+                    <p x-show="flat.loading" class="p-4 text-sm text-zinc-500">Carregando...</p>
+                    <p x-show="!flat.loading && flat.items.length === 0" class="p-4 text-sm text-zinc-500">
+                        Nenhum tenant visível. Crie o primeiro com o botão acima.
+                    </p>
+                    <ul x-show="!flat.loading && flat.items.length > 0" class="divide-y divide-zinc-100">
+                        <template x-for="row in flat.items" :key="row.tenant.id">
+                            <li class="flex items-center gap-3 py-2 px-3 hover:bg-zinc-50 group">
+                                <span class="text-zinc-300 font-mono text-sm select-none"
+                                    :style="`padding-left:${row.ancestors.length * 1.5}rem`"
+                                    x-text="row.ancestors.length === 0 ? '●' : '└─'"></span>
+                                <span class="font-medium" x-text="row.tenant.name"></span>
+                                <span class="text-xs text-zinc-400" x-text="'#' + row.tenant.id"></span>
+                                <span class="text-xs rounded px-1.5 py-0.5"
+                                    :class="row.tenant.children_count > 0 ? 'bg-zinc-200 text-zinc-700' : 'bg-emerald-100 text-emerald-800'"
+                                    x-text="row.tenant.children_count > 0 ? 'grupo' : 'folha'"></span>
+                                <span x-show="row.tenant.children_count === 0"
+                                    class="text-xs rounded px-1.5 py-0.5"
+                                    :class="(row.tenant.users_count ?? 0) > 0 ? 'bg-blue-100 text-blue-800' : 'bg-zinc-100 text-zinc-500'"
+                                    x-text="(row.tenant.users_count ?? 0) + ' ' + ((row.tenant.users_count ?? 0) === 1 ? 'membro' : 'membros')"></span>
+                                <span class="text-xs text-zinc-400 truncate" x-text="row.path"></span>
+                                <div class="ml-auto flex gap-1">
+                                    <button x-show="row.ancestors.length < 2" @click="openCreate(row.tenant, row.ancestors)"
+                                        class="text-xs border border-zinc-300 rounded px-2 py-0.5 hover:bg-zinc-100 text-zinc-600">+ filho</button>
+                                    <button x-show="row.tenant.children_count === 0" @click="openAttach(row.tenant)"
+                                        class="text-xs border border-zinc-300 rounded px-2 py-0.5 hover:bg-zinc-100 text-zinc-600">users</button>
+                                    <button @click="deleteTenant(row.tenant, row.ancestors)"
+                                        class="text-xs border border-red-300 text-red-700/70 rounded px-2 py-0.5 hover:bg-red-50 hover:text-red-700">delete</button>
+                                </div>
+                            </li>
+                        </template>
+                    </ul>
+                </div>
+            </main>
+
+            <!-- CREATE MODAL -->
+            <div x-show="createModal.open" x-cloak
+                class="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-20">
+                <form @submit.prevent="submitCreate()" class="bg-white rounded-lg shadow-lg w-full max-w-md p-6 space-y-4">
+                    <h2 class="text-lg font-semibold">Criar tenant</h2>
+                    <p class="text-sm text-zinc-500">
+                        Pai:
+                        <span x-text="createModal.parent ? createModal.parent.name + ' (id ' + createModal.parent.id + ')' : '(raiz)'"></span>
+                    </p>
+                    <div>
+                        <label class="block text-sm font-medium mb-1">Nome <span class="text-red-500">*</span></label>
+                        <input x-model="createModal.form.name" required maxlength="255"
+                            class="w-full border border-zinc-300 rounded px-3 py-2">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-1">Slug</label>
+                        <input x-model="createModal.form.slug" maxlength="255"
+                            placeholder="(auto a partir do nome se vazio)"
+                            class="w-full border border-zinc-300 rounded px-3 py-2">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-1">Descrição</label>
+                        <textarea x-model="createModal.form.description" rows="2"
+                            class="w-full border border-zinc-300 rounded px-3 py-2"></textarea>
+                    </div>
+                    <p x-show="createModal.error" x-text="createModal.error" class="text-sm text-red-600"></p>
+                    <div class="flex justify-end gap-2 pt-2">
+                        <button type="button" @click="createModal.open = false"
+                            class="border border-zinc-300 rounded px-4 py-2 hover:bg-zinc-100">Cancelar</button>
+                        <button type="submit" :disabled="createModal.busy"
+                            class="bg-zinc-900 text-white rounded px-4 py-2 hover:bg-zinc-700 disabled:opacity-50">
+                            <span x-text="createModal.busy ? 'Criando...' : 'Criar'"></span>
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- ATTACH MODAL -->
+            <div x-show="attachModal.open" x-cloak
+                class="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-20">
+                <div class="bg-white rounded-lg shadow-lg w-full max-w-lg p-6 space-y-4">
+                    <h2 class="text-lg font-semibold">Atrelar usuário · <span x-text="attachModal.tenant?.name"></span></h2>
+                    <div>
+                        <h3 class="text-sm font-medium mb-2 text-zinc-700">Membros atuais</h3>
+                        <ul class="border border-zinc-200 rounded divide-y divide-zinc-200 max-h-40 overflow-auto">
+                            <template x-if="attachModal.linked.length === 0">
+                                <li class="p-2 text-sm text-zinc-500 italic">Nenhum membro</li>
+                            </template>
+                            <template x-for="link in attachModal.linked" :key="link.id">
+                                <li class="p-2 flex items-center justify-between text-sm">
+                                    <span x-text="link.user.name + ' · ' + link.user.email"></span>
+                                    <button @click="detachUser(link.user.id)"
+                                        class="text-red-600 hover:underline text-xs">Remover</button>
+                                </li>
+                            </template>
+                        </ul>
+                    </div>
+                    <div>
+                        <h3 class="text-sm font-medium mb-2 text-zinc-700">Disponíveis</h3>
+                        <ul class="border border-zinc-200 rounded divide-y divide-zinc-200 max-h-40 overflow-auto">
+                            <template x-if="attachModal.available.length === 0">
+                                <li class="p-2 text-sm text-zinc-500 italic">Nenhum usuário disponível</li>
+                            </template>
+                            <template x-for="u in attachModal.available" :key="u.id">
+                                <li class="p-2 flex items-center justify-between text-sm">
+                                    <span x-text="u.name + ' · ' + u.email"></span>
+                                    <button @click="attachUser(u.id)"
+                                        class="text-zinc-900 hover:underline text-xs">Atrelar</button>
+                                </li>
+                            </template>
+                        </ul>
+                    </div>
+                    <p x-show="attachModal.error" x-text="attachModal.error" class="text-sm text-red-600"></p>
+                    <div class="flex justify-end pt-2">
+                        <button @click="attachModal.open = false"
+                            class="border border-zinc-300 rounded px-4 py-2 hover:bg-zinc-100">Fechar</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </template>
+</div>
+
+<script>
+function adminApp() {
+    return {
+        token: localStorage.getItem('admin_token'),
+        me: null,
+        flat: { loading: false, items: [] },
+        topError: '',
+        busy: false,
+        loginForm: { email: '', password: '' },
+        loginError: '',
+        createModal: { open: false, parent: null, parentAncestors: [], form: {}, busy: false, error: '' },
+        attachModal: { open: false, tenant: null, linked: [], available: [], error: '' },
+
+        async boot() {
+            if (this.token) {
+                await this.fetchMe();
+                if (this.token) await this.loadTree();
+            }
+        },
+
+        async api(path, opts = {}) {
+            const res = await fetch('/api' + path, {
+                ...opts,
+                headers: {
+                    'Accept': 'application/json',
+                    'Content-Type': 'application/json',
+                    ...(this.token ? { 'Authorization': 'Bearer ' + this.token } : {}),
+                    ...(opts.headers || {}),
+                },
+            });
+            const text = await res.text();
+            const json = text ? JSON.parse(text) : null;
+            if (res.status === 401 && path !== '/auth/login') {
+                this.token = null;
+                localStorage.removeItem('admin_token');
+                throw new Error('Sessão expirada — faça login novamente.');
+            }
+            if (!res.ok) {
+                const msg = json?.message || ('HTTP ' + res.status);
+                const errors = json?.errors ? Object.values(json.errors).flat().join(' / ') : '';
+                throw new Error(errors ? msg + ' — ' + errors : msg);
+            }
+            return json;
+        },
+
+        async login() {
+            this.busy = true; this.loginError = '';
+            try {
+                const data = await this.api('/auth/login', {
+                    method: 'POST',
+                    body: JSON.stringify(this.loginForm),
+                });
+                this.token = data.token;
+                localStorage.setItem('admin_token', this.token);
+                this.me = data.user;
+                await this.loadTree();
+            } catch (e) {
+                this.loginError = e.message;
+            } finally {
+                this.busy = false;
+            }
+        },
+
+        async logout() {
+            try { await this.api('/auth/logout', { method: 'POST' }); } catch (e) {}
+            this.token = null;
+            this.me = null;
+            this.flat = { loading: false, items: [] };
+            localStorage.removeItem('admin_token');
+        },
+
+        async fetchMe() {
+            try { this.me = await this.api('/user/profile'); }
+            catch (e) { this.topError = e.message; }
+        },
+
+        async loadTree() {
+            this.flat.loading = true; this.topError = '';
+            try {
+                const roots = await this.api('/tenants');
+                const items = [];
+                await Promise.all(roots.map(r => this._walk(r, [], items)));
+                items.sort((a, b) => a.path.localeCompare(b.path));
+                this.flat.items = items;
+            } catch (e) {
+                this.topError = e.message;
+            } finally {
+                this.flat.loading = false;
+            }
+        },
+
+        async _walk(tenant, ancestors, out) {
+            const path = [...ancestors, tenant].map(t => t.name).join(' › ');
+            out.push({ tenant, ancestors, path });
+            if ((tenant.children_count ?? 0) > 0) {
+                const children = await this.api(`/tenants?parent_id=${tenant.id}`);
+                await Promise.all(children.map(c => this._walk(c, [...ancestors, tenant], out)));
+            }
+        },
+
+        openCreate(parent, parentAncestors) {
+            this.createModal = {
+                open: true, parent, parentAncestors, busy: false, error: '',
+                form: { name: '', slug: '', description: '' },
+            };
+        },
+
+        async submitCreate() {
+            this.createModal.busy = true; this.createModal.error = '';
+            try {
+                const body = { ...this.createModal.form };
+                if (!body.slug) delete body.slug;
+                if (!body.description) delete body.description;
+                if (this.createModal.parent) body.parent_id = this.createModal.parent.id;
+                await this.api('/tenants', { method: 'POST', body: JSON.stringify(body) });
+
+                this.createModal.open = false;
+                await this.loadTree();
+            } catch (e) {
+                this.createModal.error = e.message;
+            } finally {
+                this.createModal.busy = false;
+            }
+        },
+
+        async deleteTenant(tenant, ancestors) {
+            if (!confirm(`Excluir "${tenant.name}"? Não pode ter filhos nem membros.`)) return;
+            try {
+                await this.api(`/tenants/${tenant.id}`, { method: 'DELETE' });
+                await this.loadTree();
+            } catch (e) {
+                this.topError = e.message;
+            }
+        },
+
+        async openAttach(tenant) {
+            this.attachModal = { open: true, tenant, linked: [], available: [], error: '' };
+            try {
+                const data = await this.api(`/tenants/${tenant.id}/users`);
+                this.attachModal.linked = data.tenant_users || [];
+                this.attachModal.available = data.available_users || [];
+            } catch (e) { this.attachModal.error = e.message; }
+        },
+
+        async attachUser(userId) {
+            try {
+                await this.api(`/tenants/${this.attachModal.tenant.id}/users`, {
+                    method: 'POST',
+                    body: JSON.stringify({ user_id: userId }),
+                });
+                await this.openAttach(this.attachModal.tenant);
+            } catch (e) { this.attachModal.error = e.message; }
+        },
+
+        async detachUser(userId) {
+            try {
+                await this.api(`/tenants/${this.attachModal.tenant.id}/users/${userId}`, {
+                    method: 'DELETE',
+                });
+                await this.openAttach(this.attachModal.tenant);
+            } catch (e) { this.attachModal.error = e.message; }
+        },
+    };
+}
+
+</script>
+</body>
+</html>
