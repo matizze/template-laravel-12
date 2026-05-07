@@ -21,7 +21,7 @@ class Tenant extends Model
     /** @use HasFactory<TenantFactory> */
     use HasFactory, SoftDeletes;
 
-    protected $fillable = ['name', 'slug', 'description', 'logo_path'];
+    protected $fillable = ['name', 'slug', 'description', 'logo_path', 'parent_id'];
 
     protected static function newFactory(): TenantFactory
     {
@@ -133,6 +133,14 @@ class Tenant extends Model
         $result = new Collection($ancestors->all());
 
         return $result;
+    }
+
+    /**
+     * Returns the tenant's depth in the hierarchy. Root tenants are depth 1.
+     */
+    public function depth(): int
+    {
+        return $this->ancestors()->count() + 1;
     }
 
     /**
