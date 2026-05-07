@@ -2,12 +2,14 @@
 
 use App\Exceptions\DomainException;
 use Illuminate\Auth\AuthenticationException;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
+use Symfony\Component\HttpKernel\Exception\HttpExceptionInterface;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -28,7 +30,9 @@ return Application::configure(basePath: dirname(__DIR__))
                 return null;
             }
 
-            if ($e instanceof ValidationException || $e instanceof AuthenticationException) {
+            if ($e instanceof ValidationException
+                || $e instanceof AuthenticationException
+                || $e instanceof ModelNotFoundException) {
                 return null;
             }
 
@@ -36,7 +40,7 @@ return Application::configure(basePath: dirname(__DIR__))
                 return null;
             }
 
-            $status = method_exists($e, 'getStatusCode') ? $e->getStatusCode() : 500;
+            $status = $e instanceof HttpExceptionInterface ? $e->getStatusCode() : 500;
 
             if ($status < 500) {
                 return null;
