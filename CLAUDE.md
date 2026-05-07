@@ -71,6 +71,9 @@ php artisan create:user --admin      # create admin user
 - `tenants`, `tenant_user`: hierarchy + membership.
 - `password_reset_tokens`: used by Password broker.
 
+#### Table naming convention
+Tables follow **canonical Laravel/package names** without module prefixes (e.g. `users`, `roles`, `tenants`, `personal_access_tokens`, `audits`). Module ownership is expressed by the **location of the migration** inside `app-modules/<module>/database/migrations/` rather than by a name prefix. Rationale: this is an API-only starter template — preserving canonical names keeps Sanctum/Laravel/`owen-it/laravel-auditing` conventions intact, matches third-party tooling expectations (dashboards, query builders, ops tooling), and avoids cosmetic churn since there are no real name collisions across modules. New modules should only introduce a prefix when an actual collision exists or when the unprefixed name is genuinely ambiguous outside the module.
+
 ### Deployment
 - **Docker:** multi-stage Dockerfile with Octane/Swoole (`deployment/`)
 - **Stack:** PostgreSQL, Redis, MinIO, Adminer (`deployment/stack.yaml`)
