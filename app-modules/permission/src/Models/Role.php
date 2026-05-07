@@ -10,14 +10,16 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Modules\Permission\Database\Factories\RoleFactory;
 use Modules\Tenant\Models\Tenant;
 use Modules\User\Models\User;
+use OwenIt\Auditing\Auditable;
+use OwenIt\Auditing\Contracts\Auditable as AuditableContract;
 
 /**
  * @mixin IdeHelperRole
  */
-class Role extends Model
+class Role extends Model implements AuditableContract
 {
     /** @use HasFactory<RoleFactory> */
-    use HasFactory;
+    use Auditable, HasFactory;
 
     protected $fillable = ['name', 'tenant_id', 'permissions'];
 

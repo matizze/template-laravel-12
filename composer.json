@@ -24,7 +24,8 @@
         "modules/auth": "*@dev",
         "modules/permission": "*@dev",
         "modules/tenant": "*@dev",
-        "modules/user": "*@dev"
+        "modules/user": "*@dev",
+        "owen-it/laravel-auditing": "^14.0"
     },
     "require-dev": {
         "barryvdh/laravel-ide-helper": "^3.6",

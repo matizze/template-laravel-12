@@ -15,14 +15,16 @@ use Illuminate\Support\Str;
 use Modules\Tenant\Database\Factories\TenantFactory;
 use Modules\Tenant\Services\CurrentTenantManager;
 use Modules\User\Models\User;
+use OwenIt\Auditing\Auditable;
+use OwenIt\Auditing\Contracts\Auditable as AuditableContract;
 
 /**
  * @mixin IdeHelperTenant
  */
-class Tenant extends Model
+class Tenant extends Model implements AuditableContract
 {
     /** @use HasFactory<TenantFactory> */
-    use HasFactory, SoftDeletes;
+    use Auditable, HasFactory, SoftDeletes;
 
     protected $fillable = ['name', 'slug', 'description', 'logo_path', 'parent_id'];
 

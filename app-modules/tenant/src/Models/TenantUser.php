@@ -7,15 +7,17 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\Pivot;
 use Modules\Tenant\Database\Factories\TenantUserFactory;
 use Modules\User\Models\User;
+use OwenIt\Auditing\Auditable;
+use OwenIt\Auditing\Contracts\Auditable as AuditableContract;
 use RuntimeException;
 
 /**
  * @mixin IdeHelperTenantUser
  */
-class TenantUser extends Pivot
+class TenantUser extends Pivot implements AuditableContract
 {
     /** @use HasFactory<TenantUserFactory> */
-    use HasFactory;
+    use Auditable, HasFactory;
 
     protected $table = 'tenant_user';
 
