@@ -55,6 +55,26 @@ class PasswordResetTest extends TestCase
         Notification::assertNothingSent();
     }
 
+    public function test_reset_password_email_url_points_at_frontend_with_token_and_email(): void
+    {
+        Notification::fake();
+        config(['app.frontend_url' => 'https://app.example.com/']);
+
+        $user = User::factory()->create(['email' => 'jane+test@example.com']);
+
+        $this->postJson('/api/v1/auth/forgot-password', ['email' => $user->email]);
+
+        Notification::assertSentTo($user, ResetPassword::class, function (ResetPassword $notification) use ($user) {
+            $url = $notification->toMail($user)->actionUrl;
+
+            $this->assertStringStartsWith('https://app.example.com/reset-password?', $url);
+            $this->assertStringContainsString('token='.$notification->token, $url);
+            $this->assertStringContainsString('email=jane%2Btest%40example.com', $url);
+
+            return true;
+        });
+    }
+
     public function test_password_can_be_reset_with_valid_token(): void
     {
         Notification::fake();
