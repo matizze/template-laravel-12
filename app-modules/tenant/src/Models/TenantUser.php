@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\Pivot;
 use Modules\Tenant\Database\Factories\TenantUserFactory;
 use Modules\User\Models\User;
+use RuntimeException;
 
 /**
  * @mixin IdeHelperTenantUser
@@ -33,7 +34,7 @@ class TenantUser extends Pivot
             $tenant = Tenant::withTrashed()->find($tenantUser->tenant_id);
 
             if (! $tenant || $tenant->trashed() || ! $tenant->isOperable()) {
-                throw new \RuntimeException('Vínculo só é aceito em tenants operáveis (folhas) ativos.');
+                throw new RuntimeException('Vínculo só é aceito em tenants operáveis (folhas) ativos.');
             }
         });
     }

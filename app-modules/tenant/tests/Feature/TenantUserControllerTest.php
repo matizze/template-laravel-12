@@ -64,7 +64,7 @@ class TenantUserControllerTest extends TestCase
         $availableIds = collect($response->json('available_users'))->pluck('id')->all();
 
         // Stranger user must not appear because caller has no shared tenant with them.
-        $strangerIds = User::query()
+        User::query()
             ->whereDoesntHave('tenants', fn ($q) => $q->whereKey($tenant->id))
             ->pluck('id')
             ->all();
