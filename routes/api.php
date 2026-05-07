@@ -57,7 +57,7 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/tenants/{tenant}/users', [TenantUserController::class, 'index'])->name('tenant.users.index');
         Route::post('/tenants/{tenant}/users', [TenantUserController::class, 'store'])->name('tenant.users.store');
         Route::post('/tenants/{tenant}/leave', [TenantUserController::class, 'leave'])->name('tenant.users.leave');
-        Route::delete('/tenants/{tenant}/users/{user}', [TenantUserController::class, 'remove'])->name('tenant.users.remove');
+        Route::delete('/tenants/{tenant}/users/{user}', [TenantUserController::class, 'remove'])->name('tenant.users.remove')->scopeBindings();
     });
 
     Route::post('/tenants/{tenantId}/restore', [TenantSettingsController::class, 'restore'])

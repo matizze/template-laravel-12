@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use Database\Seeders\RoleSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Modules\Permission\Models\Role;
 use Modules\User\Models\User;
@@ -10,6 +11,13 @@ use Tests\TestCase;
 class UserManagementTest extends TestCase
 {
     use RefreshDatabase;
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        $this->seed(RoleSeeder::class);
+    }
 
     public function test_admin_can_create_user(): void
     {
@@ -131,10 +139,9 @@ class UserManagementTest extends TestCase
         $admin = User::factory()->admin()->create();
         $user = User::factory()->create();
 
-        $memberRole = Role::firstOrCreate(
-            ['name' => 'member', 'tenant_id' => null],
-            ['permissions' => []]
-        );
+        $memberRole = Role::where('name', 'member')
+            ->whereNull('tenant_id')
+            ->firstOrFail();
         $memberRole->assign($user);
 
         $response = $this->actingAs($admin)->patchJson("/api/users/{$user->id}", [

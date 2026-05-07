@@ -5,7 +5,6 @@ namespace Modules\User\Http\Controllers;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Hash;
 use Modules\Tenant\Models\Tenant;
 use Modules\Tenant\Models\TenantUser;
 use Modules\User\Http\Requests\DeleteAccountRequest;
@@ -29,11 +28,20 @@ class SettingsController extends Controller
 
     public function updatePassword(UpdatePasswordRequest $request): JsonResponse
     {
-        $request->user()->update([
-            'password' => Hash::make($request->validated('password')),
+        $user = $request->user();
+
+        $user->update([
+            'password' => $request->validated('password'),
         ]);
 
-        return response()->json(['message' => 'Senha atualizada com sucesso!']);
+        $user->tokens()->delete();
+
+        $token = $user->createToken('auth-token')->plainTextToken;
+
+        return response()->json([
+            'message' => 'Senha atualizada com sucesso!',
+            'token' => $token,
+        ]);
     }
 
     public function destroy(DeleteAccountRequest $request): JsonResponse

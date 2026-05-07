@@ -4,7 +4,6 @@ namespace Modules\User\Http\Controllers;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Support\Facades\Hash;
 use Modules\Permission\Models\Role;
 use Modules\User\Http\Requests\StoreUserRequest;
 use Modules\User\Http\Requests\UpdateUserRoleRequest;
@@ -19,16 +18,13 @@ class UserController extends Controller
         $user = User::create([
             'name' => $validated['name'],
             'email' => $validated['email'],
-            'password' => Hash::make($validated['password']),
+            'password' => $validated['password'],
         ]);
 
         if (isset($validated['role_name'])) {
-            $role = Role::firstOrCreate(
-                ['name' => $validated['role_name'], 'tenant_id' => null],
-                ['permissions' => $validated['role_name'] === 'admin'
-                    ? ['users' => ['create', 'update', 'delete']]
-                    : []]
-            );
+            $role = Role::where('name', $validated['role_name'])
+                ->whereNull('tenant_id')
+                ->firstOrFail();
             $role->assign($user);
         }
 
@@ -44,12 +40,9 @@ class UserController extends Controller
         $user->roles()->whereNull('tenant_id')->detach();
 
         if (isset($validated['role_name'])) {
-            $role = Role::firstOrCreate(
-                ['name' => $validated['role_name'], 'tenant_id' => null],
-                ['permissions' => $validated['role_name'] === 'admin'
-                    ? ['users' => ['create', 'update', 'delete']]
-                    : []]
-            );
+            $role = Role::where('name', $validated['role_name'])
+                ->whereNull('tenant_id')
+                ->firstOrFail();
             $role->assign($user);
         }
 

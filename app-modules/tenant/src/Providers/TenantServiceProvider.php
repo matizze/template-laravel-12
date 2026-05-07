@@ -26,8 +26,6 @@ class TenantServiceProvider extends ServiceProvider
 
         Gate::policy(Tenant::class, TenantPolicy::class);
 
-        Gate::define('tenants.create', fn (User $user): bool => true);
-
         Gate::define('tenants.users.view', fn (User $user, Tenant $tenant): bool => $user->isMemberOf($tenant));
 
         Gate::define('tenants.settings.view', fn (User $user, Tenant $tenant): bool => $user->isMemberOf($tenant));
