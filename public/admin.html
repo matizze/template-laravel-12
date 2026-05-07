@@ -2,7 +2,8 @@
 <!--
   ⚠️ DEV TOOL — DO NOT DEPLOY TO PRODUCTION ⚠️
   Static HTML helper to navigate/create/manage the tenant tree against the
-  Sanctum API. Bearer token persisted in localStorage. Same-origin: no CORS.
+  Sanctum API (versioned under /api/v1). Bearer token persisted in
+  localStorage. Same-origin: no CORS.
 
   Hard limit: renders 3 hierarchy levels (root → child → grandchild). Mirrors
   the tenant depth cap discussed in the project.
@@ -213,7 +214,7 @@ function adminApp() {
         },
 
         async api(path, opts = {}) {
-            const res = await fetch('/api' + path, {
+            const res = await fetch('/api/v1' + path, {
                 ...opts,
                 headers: {
                     'Accept': 'application/json',

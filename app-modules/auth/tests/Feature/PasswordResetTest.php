@@ -19,7 +19,7 @@ class PasswordResetTest extends TestCase
 
         $user = User::factory()->create();
 
-        $response = $this->postJson('/api/auth/forgot-password', ['email' => $user->email]);
+        $response = $this->postJson('/api/v1/auth/forgot-password', ['email' => $user->email]);
 
         $response->assertStatus(200)
             ->assertJson(['message' => 'If the email is registered, you will receive a password reset link.']);
@@ -29,7 +29,7 @@ class PasswordResetTest extends TestCase
 
     public function test_reset_password_link_requires_email(): void
     {
-        $response = $this->postJson('/api/auth/forgot-password', []);
+        $response = $this->postJson('/api/v1/auth/forgot-password', []);
 
         $response->assertStatus(422)
             ->assertJsonValidationErrors('email');
@@ -37,7 +37,7 @@ class PasswordResetTest extends TestCase
 
     public function test_reset_password_link_requires_valid_email(): void
     {
-        $response = $this->postJson('/api/auth/forgot-password', ['email' => 'not-an-email']);
+        $response = $this->postJson('/api/v1/auth/forgot-password', ['email' => 'not-an-email']);
 
         $response->assertStatus(422)
             ->assertJsonValidationErrors('email');
@@ -47,7 +47,7 @@ class PasswordResetTest extends TestCase
     {
         Notification::fake();
 
-        $response = $this->postJson('/api/auth/forgot-password', ['email' => 'nobody@example.com']);
+        $response = $this->postJson('/api/v1/auth/forgot-password', ['email' => 'nobody@example.com']);
 
         $response->assertStatus(200)
             ->assertJson(['message' => 'If the email is registered, you will receive a password reset link.']);
@@ -61,10 +61,10 @@ class PasswordResetTest extends TestCase
 
         $user = User::factory()->create();
 
-        $this->postJson('/api/auth/forgot-password', ['email' => $user->email]);
+        $this->postJson('/api/v1/auth/forgot-password', ['email' => $user->email]);
 
         Notification::assertSentTo($user, ResetPassword::class, function (ResetPassword $notification) use ($user) {
-            $response = $this->postJson('/api/auth/reset-password', [
+            $response = $this->postJson('/api/v1/auth/reset-password', [
                 'token' => $notification->token,
                 'email' => $user->email,
                 'password' => 'new-password123',
@@ -85,7 +85,7 @@ class PasswordResetTest extends TestCase
     {
         $user = User::factory()->create();
 
-        $response = $this->postJson('/api/auth/reset-password', [
+        $response = $this->postJson('/api/v1/auth/reset-password', [
             'token' => 'invalid-token',
             'email' => $user->email,
             'password' => 'new-password123',
@@ -101,7 +101,7 @@ class PasswordResetTest extends TestCase
 
     public function test_reset_password_requires_all_fields(): void
     {
-        $response = $this->postJson('/api/auth/reset-password', []);
+        $response = $this->postJson('/api/v1/auth/reset-password', []);
 
         $response->assertStatus(422)
             ->assertJsonValidationErrors(['token', 'email', 'password']);
@@ -112,13 +112,13 @@ class PasswordResetTest extends TestCase
         $user = User::factory()->create();
 
         for ($i = 0; $i < 5; $i++) {
-            $this->postJson('/api/auth/login', [
+            $this->postJson('/api/v1/auth/login', [
                 'email' => $user->email,
                 'password' => 'wrong-password',
             ]);
         }
 
-        $response = $this->postJson('/api/auth/login', [
+        $response = $this->postJson('/api/v1/auth/login', [
             'email' => $user->email,
             'password' => 'wrong-password',
         ]);
@@ -131,12 +131,12 @@ class PasswordResetTest extends TestCase
         Notification::fake();
 
         for ($i = 0; $i < 3; $i++) {
-            $this->postJson('/api/auth/forgot-password', [
+            $this->postJson('/api/v1/auth/forgot-password', [
                 'email' => "user{$i}@example.com",
             ]);
         }
 
-        $response = $this->postJson('/api/auth/forgot-password', [
+        $response = $this->postJson('/api/v1/auth/forgot-password', [
             'email' => 'another@example.com',
         ]);
 

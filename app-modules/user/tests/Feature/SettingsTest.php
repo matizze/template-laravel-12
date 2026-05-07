@@ -13,7 +13,7 @@ class SettingsTest extends TestCase
 
     public function test_guest_cannot_access_profile(): void
     {
-        $response = $this->getJson('/api/user/profile');
+        $response = $this->getJson('/api/v1/user/profile');
 
         $response->assertStatus(401);
     }
@@ -22,7 +22,7 @@ class SettingsTest extends TestCase
     {
         $user = User::factory()->create();
 
-        $response = $this->actingAs($user)->getJson('/api/user/profile');
+        $response = $this->actingAs($user)->getJson('/api/v1/user/profile');
 
         $response->assertStatus(200)
             ->assertJson([
@@ -36,7 +36,7 @@ class SettingsTest extends TestCase
     {
         $user = User::factory()->create();
 
-        $response = $this->actingAs($user)->patchJson('/api/user/profile', [
+        $response = $this->actingAs($user)->patchJson('/api/v1/user/profile', [
             'name' => 'Updated Name',
             'email' => 'updated@example.com',
         ]);
@@ -57,7 +57,7 @@ class SettingsTest extends TestCase
     {
         $user = User::factory()->create();
 
-        $response = $this->actingAs($user)->patchJson('/api/user/profile', []);
+        $response = $this->actingAs($user)->patchJson('/api/v1/user/profile', []);
 
         $response->assertStatus(422)
             ->assertJsonValidationErrors(['name', 'email']);
@@ -68,7 +68,7 @@ class SettingsTest extends TestCase
         User::factory()->create(['email' => 'taken@example.com']);
         $user = User::factory()->create();
 
-        $response = $this->actingAs($user)->patchJson('/api/user/profile', [
+        $response = $this->actingAs($user)->patchJson('/api/v1/user/profile', [
             'name' => $user->name,
             'email' => 'taken@example.com',
         ]);
@@ -81,7 +81,7 @@ class SettingsTest extends TestCase
     {
         $user = User::factory()->create(['email' => 'same@example.com']);
 
-        $response = $this->actingAs($user)->patchJson('/api/user/profile', [
+        $response = $this->actingAs($user)->patchJson('/api/v1/user/profile', [
             'name' => 'New Name',
             'email' => 'same@example.com',
         ]);
@@ -99,7 +99,7 @@ class SettingsTest extends TestCase
             'password' => 'old-password1',
         ]);
 
-        $response = $this->actingAs($user)->patchJson('/api/user/password', [
+        $response = $this->actingAs($user)->patchJson('/api/v1/user/password', [
             'current_password' => 'old-password1',
             'password' => 'new-password1',
         ]);
@@ -118,7 +118,7 @@ class SettingsTest extends TestCase
             'password' => 'old-password1',
         ]);
 
-        $response = $this->actingAs($user)->patchJson('/api/user/password', [
+        $response = $this->actingAs($user)->patchJson('/api/v1/user/password', [
             'current_password' => 'wrong-password',
             'password' => 'new-password1',
         ]);
@@ -133,7 +133,7 @@ class SettingsTest extends TestCase
             'password' => 'password',
         ]);
 
-        $response = $this->actingAs($user)->deleteJson('/api/user/account', [
+        $response = $this->actingAs($user)->deleteJson('/api/v1/user/account', [
             'password' => 'password',
         ]);
 
@@ -149,7 +149,7 @@ class SettingsTest extends TestCase
             'password' => 'password',
         ]);
 
-        $response = $this->actingAs($user)->deleteJson('/api/user/account', [
+        $response = $this->actingAs($user)->deleteJson('/api/v1/user/account', [
             'password' => 'wrong-password',
         ]);
 

@@ -28,7 +28,7 @@ class AccountDeletionAtomicityTest extends TestCase
         $this->assertDatabaseHas('tenant_user', ['user_id' => $user->id, 'tenant_id' => $tenantB->id]);
         $this->assertDatabaseHas('personal_access_tokens', ['tokenable_id' => $user->id]);
 
-        $response = $this->actingAs($user)->deleteJson('/api/user/account', [
+        $response = $this->actingAs($user)->deleteJson('/api/v1/user/account', [
             'password' => 'password',
         ]);
 

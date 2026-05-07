@@ -18,7 +18,7 @@ class TenantCreationTest extends TestCase
 
     public function test_anonymous_user_cannot_create_tenant(): void
     {
-        $response = $this->postJson('/api/tenants', [
+        $response = $this->postJson('/api/v1/tenants', [
             'name' => 'Acme',
         ]);
 
@@ -29,7 +29,7 @@ class TenantCreationTest extends TestCase
     {
         $user = User::factory()->create();
 
-        $response = $this->actingAs($user, 'sanctum')->postJson('/api/tenants', [
+        $response = $this->actingAs($user, 'sanctum')->postJson('/api/v1/tenants', [
             'name' => 'Acme',
         ]);
 
@@ -40,7 +40,7 @@ class TenantCreationTest extends TestCase
     {
         $admin = User::factory()->superadmin()->create();
 
-        $response = $this->actingAs($admin, 'sanctum')->postJson('/api/tenants', [
+        $response = $this->actingAs($admin, 'sanctum')->postJson('/api/v1/tenants', [
             'name' => 'Acme Inc',
             'slug' => 'acme-inc',
         ]);
@@ -74,7 +74,7 @@ class TenantCreationTest extends TestCase
         // creation and expecting either 201 OR 422 with parent_id error (rule), but
         // NOT 403.
 
-        $response = $this->actingAs($user, 'sanctum')->postJson('/api/tenants', [
+        $response = $this->actingAs($user, 'sanctum')->postJson('/api/v1/tenants', [
             'name' => 'Child Co',
             'slug' => 'child-co',
             'parent_id' => $parent->id,
@@ -93,7 +93,7 @@ class TenantCreationTest extends TestCase
         $admin = User::factory()->superadmin()->create();
         $parent = Tenant::factory()->create();
 
-        $response = $this->actingAs($admin, 'sanctum')->postJson('/api/tenants', [
+        $response = $this->actingAs($admin, 'sanctum')->postJson('/api/v1/tenants', [
             'name' => 'Subsidiary',
             'slug' => 'subsidiary',
             'parent_id' => $parent->id,
@@ -115,7 +115,7 @@ class TenantCreationTest extends TestCase
     {
         $admin = User::factory()->superadmin()->create();
 
-        $response = $this->actingAs($admin, 'sanctum')->postJson('/api/tenants', [
+        $response = $this->actingAs($admin, 'sanctum')->postJson('/api/v1/tenants', [
             'name' => 'Hello World',
         ]);
 
@@ -132,7 +132,7 @@ class TenantCreationTest extends TestCase
         Tenant::factory()->create(['slug' => 'taken-slug']);
         $admin = User::factory()->superadmin()->create();
 
-        $response = $this->actingAs($admin, 'sanctum')->postJson('/api/tenants', [
+        $response = $this->actingAs($admin, 'sanctum')->postJson('/api/v1/tenants', [
             'name' => 'Other',
             'slug' => 'taken-slug',
         ]);

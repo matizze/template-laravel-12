@@ -68,7 +68,7 @@ class TenantUserInvariantTest extends TestCase
 
         $response = $this->actingAs($admin, 'sanctum')
             ->withHeader('X-Tenant-ID', $tenant->id)
-            ->postJson("/api/tenants/{$tenant->id}/users", [
+            ->postJson("/api/v1/tenants/{$tenant->id}/users", [
                 'user_id' => $newUser->id,
             ]);
 
@@ -89,7 +89,7 @@ class TenantUserInvariantTest extends TestCase
 
         $response = $this->actingAs($admin, 'sanctum')
             ->withHeader('X-Tenant-ID', $parent->id)
-            ->postJson("/api/tenants/{$parent->id}/users", [
+            ->postJson("/api/v1/tenants/{$parent->id}/users", [
                 'user_id' => $newUser->id,
             ]);
 

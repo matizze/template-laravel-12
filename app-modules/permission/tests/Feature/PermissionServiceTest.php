@@ -229,7 +229,7 @@ class PermissionServiceTest extends TestCase
 
         $response = $this->actingAs($user, 'sanctum')
             ->withHeader('X-Tenant-ID', $tenant->id)
-            ->getJson('/api/tenants');
+            ->getJson('/api/v1/tenants');
 
         $response->assertOk();
     }

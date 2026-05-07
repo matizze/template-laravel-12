@@ -23,7 +23,7 @@ class UserManagementTest extends TestCase
     {
         $admin = User::factory()->admin()->create();
 
-        $response = $this->actingAs($admin)->postJson('/api/users', [
+        $response = $this->actingAs($admin)->postJson('/api/v1/users', [
             'name' => 'New User',
             'email' => 'newuser@example.com',
             'password' => 'password123',
@@ -48,7 +48,7 @@ class UserManagementTest extends TestCase
     {
         $admin = User::factory()->admin()->create();
 
-        $response = $this->actingAs($admin)->postJson('/api/users', [
+        $response = $this->actingAs($admin)->postJson('/api/v1/users', [
             'name' => 'New Admin',
             'email' => 'admin2@example.com',
             'password' => 'password123',
@@ -69,7 +69,7 @@ class UserManagementTest extends TestCase
     {
         $member = User::factory()->create();
 
-        $response = $this->actingAs($member)->postJson('/api/users', [
+        $response = $this->actingAs($member)->postJson('/api/v1/users', [
             'name' => 'New User',
             'email' => 'newuser@example.com',
             'password' => 'password123',
@@ -83,7 +83,7 @@ class UserManagementTest extends TestCase
 
     public function test_guest_cannot_create_user(): void
     {
-        $response = $this->postJson('/api/users', [
+        $response = $this->postJson('/api/v1/users', [
             'name' => 'New User',
             'email' => 'newuser@example.com',
             'password' => 'password123',
@@ -97,7 +97,7 @@ class UserManagementTest extends TestCase
     {
         $admin = User::factory()->admin()->create();
 
-        $response = $this->actingAs($admin)->postJson('/api/users', []);
+        $response = $this->actingAs($admin)->postJson('/api/v1/users', []);
 
         $response->assertStatus(422)
             ->assertJsonValidationErrors(['name', 'email', 'password', 'role_name']);
@@ -108,7 +108,7 @@ class UserManagementTest extends TestCase
         $admin = User::factory()->admin()->create();
         User::factory()->create(['email' => 'taken@example.com']);
 
-        $response = $this->actingAs($admin)->postJson('/api/users', [
+        $response = $this->actingAs($admin)->postJson('/api/v1/users', [
             'name' => 'New User',
             'email' => 'taken@example.com',
             'password' => 'password123',
@@ -123,7 +123,7 @@ class UserManagementTest extends TestCase
     {
         $admin = User::factory()->admin()->create();
 
-        $response = $this->actingAs($admin)->postJson('/api/users', [
+        $response = $this->actingAs($admin)->postJson('/api/v1/users', [
             'name' => 'New User',
             'email' => 'newuser@example.com',
             'password' => 'password123',
@@ -144,7 +144,7 @@ class UserManagementTest extends TestCase
             ->firstOrFail();
         $memberRole->assign($user);
 
-        $response = $this->actingAs($admin)->patchJson("/api/users/{$user->id}", [
+        $response = $this->actingAs($admin)->patchJson("/api/v1/users/{$user->id}", [
             'role_name' => 'admin',
         ]);
 
@@ -159,7 +159,7 @@ class UserManagementTest extends TestCase
     {
         $admin = User::factory()->admin()->create();
 
-        $response = $this->actingAs($admin)->patchJson("/api/users/{$admin->id}", [
+        $response = $this->actingAs($admin)->patchJson("/api/v1/users/{$admin->id}", [
             'role_name' => 'member',
         ]);
 
@@ -174,7 +174,7 @@ class UserManagementTest extends TestCase
         $member = User::factory()->create();
         $otherUser = User::factory()->create();
 
-        $response = $this->actingAs($member)->patchJson("/api/users/{$otherUser->id}", [
+        $response = $this->actingAs($member)->patchJson("/api/v1/users/{$otherUser->id}", [
             'role_name' => 'admin',
         ]);
 
@@ -186,7 +186,7 @@ class UserManagementTest extends TestCase
         $admin = User::factory()->admin()->create();
         $user = User::factory()->create();
 
-        $response = $this->actingAs($admin)->deleteJson("/api/users/{$user->id}");
+        $response = $this->actingAs($admin)->deleteJson("/api/v1/users/{$user->id}");
 
         $response->assertStatus(200)
             ->assertJson(['message' => 'Usuário deletado com sucesso!']);
@@ -198,7 +198,7 @@ class UserManagementTest extends TestCase
     {
         $admin = User::factory()->admin()->create();
 
-        $response = $this->actingAs($admin)->deleteJson("/api/users/{$admin->id}");
+        $response = $this->actingAs($admin)->deleteJson("/api/v1/users/{$admin->id}");
 
         $response->assertStatus(403);
 
@@ -210,7 +210,7 @@ class UserManagementTest extends TestCase
         $member = User::factory()->create();
         $otherUser = User::factory()->create();
 
-        $response = $this->actingAs($member)->deleteJson("/api/users/{$otherUser->id}");
+        $response = $this->actingAs($member)->deleteJson("/api/v1/users/{$otherUser->id}");
 
         $response->assertStatus(403);
 

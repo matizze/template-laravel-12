@@ -36,7 +36,7 @@ class TenantUserControllerTest extends TestCase
         // they should only see users who share at least one of caller's tenants.
         $response = $this->actingAs($callerUser, 'sanctum')
             ->withHeader('X-Tenant-ID', $tenantB->id)
-            ->getJson("/api/tenants/{$tenantB->id}/users");
+            ->getJson("/api/v1/tenants/{$tenantB->id}/users");
 
         // Caller is NOT a member of tenantB so tenants.users.view should fail.
         $response->assertStatus(403);
@@ -57,7 +57,7 @@ class TenantUserControllerTest extends TestCase
 
         $response = $this->actingAs($caller, 'sanctum')
             ->withHeader('X-Tenant-ID', $tenant->id)
-            ->getJson("/api/tenants/{$tenant->id}/users");
+            ->getJson("/api/v1/tenants/{$tenant->id}/users");
 
         $response->assertOk();
 
@@ -88,7 +88,7 @@ class TenantUserControllerTest extends TestCase
 
         $response = $this->actingAs($admin, 'sanctum')
             ->withHeader('X-Tenant-ID', $tenant->id)
-            ->getJson("/api/tenants/{$tenant->id}/users");
+            ->getJson("/api/v1/tenants/{$tenant->id}/users");
 
         $response->assertOk();
 
@@ -107,7 +107,7 @@ class TenantUserControllerTest extends TestCase
 
         $response = $this->actingAs($admin, 'sanctum')
             ->withHeader('X-Tenant-ID', $tenant->id)
-            ->postJson("/api/tenants/{$tenant->id}/users", [
+            ->postJson("/api/v1/tenants/{$tenant->id}/users", [
                 'user_id' => $newUser->id,
             ]);
 
@@ -132,7 +132,7 @@ class TenantUserControllerTest extends TestCase
 
         $response = $this->actingAs($admin, 'sanctum')
             ->withHeader('X-Tenant-ID', $tenantA->id)
-            ->deleteJson("/api/tenants/{$tenantA->id}/users/{$userInOtherTenant->id}");
+            ->deleteJson("/api/v1/tenants/{$tenantA->id}/users/{$userInOtherTenant->id}");
 
         $response->assertStatus(404);
     }
@@ -150,7 +150,7 @@ class TenantUserControllerTest extends TestCase
 
         $response = $this->actingAs($caller, 'sanctum')
             ->withHeader('X-Tenant-ID', $tenant->id)
-            ->postJson("/api/tenants/{$tenant->id}/leave");
+            ->postJson("/api/v1/tenants/{$tenant->id}/leave");
 
         $response->assertOk();
         $this->assertDatabaseMissing('tenant_user', [
