@@ -1,16 +1,22 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Modules\User\Http\Controllers;
 
+use App\Enums\RoleName;
 use App\Http\Controllers\Controller;
+use App\Http\Resources\UserResource;
 use Illuminate\Http\JsonResponse;
-use Modules\Permission\Models\Role;
+use Modules\Permission\Services\RoleAssigner;
 use Modules\User\Http\Requests\StoreUserRequest;
 use Modules\User\Http\Requests\UpdateUserRoleRequest;
 use Modules\User\Models\User;
 
 class UserController extends Controller
 {
+    public function __construct(private readonly RoleAssigner $roles) {}
+
     public function store(StoreUserRequest $request): JsonResponse
     {
         $validated = $request->validated();
@@ -22,13 +28,12 @@ class UserController extends Controller
         ]);
 
         if (isset($validated['role_name'])) {
-            $role = Role::where('name', $validated['role_name'])
-                ->whereNull('tenant_id')
-                ->firstOrFail();
-            $role->assign($user);
+            $this->roles->assign($user, RoleName::from($validated['role_name']));
         }
 
-        return response()->json($user->load('roles'), 201);
+        return UserResource::make($user->load('roles'))
+            ->response()
+            ->setStatusCode(201);
     }
 
     public function update(UpdateUserRoleRequest $request, User $user): JsonResponse
@@ -37,16 +42,11 @@ class UserController extends Controller
 
         $validated = $request->validated();
 
-        $user->roles()->whereNull('tenant_id')->detach();
-
         if (isset($validated['role_name'])) {
-            $role = Role::where('name', $validated['role_name'])
-                ->whereNull('tenant_id')
-                ->firstOrFail();
-            $role->assign($user);
+            $this->roles->replaceGlobal($user, RoleName::from($validated['role_name']));
         }
 
-        return response()->json($user->load('roles'));
+        return response()->json(UserResource::make($user->load('roles')));
     }
 
     public function destroy(User $user): JsonResponse

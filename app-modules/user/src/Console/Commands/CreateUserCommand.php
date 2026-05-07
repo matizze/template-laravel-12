@@ -1,9 +1,13 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Modules\User\Console\Commands;
 
+use App\Enums\RoleName;
+use Database\Seeders\RoleSeeder;
 use Illuminate\Console\Command;
-use Modules\Permission\Models\Role;
+use Modules\Permission\Services\RoleAssigner;
 use Modules\User\Models\User;
 
 use function Laravel\Prompts\password;
@@ -16,7 +20,7 @@ class CreateUserCommand extends Command
 
     protected $description = 'Create a new user';
 
-    public function handle(): int
+    public function handle(RoleAssigner $roles): int
     {
         $name = $this->argument('name') ?: text(label: 'Nome do usuário', required: true);
 
@@ -30,15 +34,15 @@ class CreateUserCommand extends Command
 
         $password = $this->argument('password') ?: password(label: 'Senha do usuário', required: true);
 
-        if ($this->option('admin')) {
-            $roleName = 'admin';
-        } else {
-            $roleName = $this->option('role') ?: select(
+        $roleName = match (true) {
+            (bool) $this->option('admin') => RoleName::Admin,
+            (bool) $this->option('role') => RoleName::from((string) $this->option('role')),
+            default => RoleName::from(select(
                 label: 'Role do usuário',
-                options: ['member', 'admin'],
-                default: 'member'
-            );
-        }
+                options: [RoleName::Member->value, RoleName::Admin->value],
+                default: RoleName::Member->value,
+            )),
+        };
 
         $user = User::create([
             'name' => $name,
@@ -46,13 +50,8 @@ class CreateUserCommand extends Command
             'password' => $password,
         ]);
 
-        $role = Role::firstOrCreate(
-            ['name' => $roleName, 'tenant_id' => null],
-            ['permissions' => $roleName === 'admin'
-                ? ['users' => ['create', 'update', 'delete']]
-                : []]
-        );
-        $role->assign($user);
+        $roles->ensure($roleName, $this->permissionsFor($roleName));
+        $roles->assign($user, $roleName);
 
         $this->newLine();
         $this->line('==============================');
@@ -60,10 +59,22 @@ class CreateUserCommand extends Command
         $this->line('==============================');
         $this->line("Name     : {$name}");
         $this->line("Email    : {$email}");
-        $this->line("Role     : {$roleName}");
+        $this->line("Role     : {$roleName->value}");
         $this->line('==============================');
         $this->newLine();
 
         return self::SUCCESS;
+    }
+
+    /**
+     * @return array<string, array<int, string>>
+     */
+    private function permissionsFor(RoleName $name): array
+    {
+        return match ($name) {
+            RoleName::Admin => RoleSeeder::adminPermissions(),
+            RoleName::Superadmin => RoleSeeder::superadminPermissions(),
+            RoleName::Member => [],
+        };
     }
 }

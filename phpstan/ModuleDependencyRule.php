@@ -28,7 +28,10 @@ class ModuleDependencyRule implements Rule
         'Modules\\Tenant\\Enums\\TenantRole',
         'Modules\\Tenant\\Models\\TenantUser',
         'Modules\\Tenant\\Models\\Tenant',
+        // User module attaches roles via the RoleAssigner service and HasRoles trait.
         'Modules\\Permission\\Traits\\HasRoles',
+        'Modules\\Permission\\Services\\RoleAssigner',
+        // Permission still imports User (BelongsToMany inverse). Documented one-way edge.
         'Modules\\User\\Models\\User',
     ];
 
