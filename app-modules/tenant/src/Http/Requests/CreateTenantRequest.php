@@ -16,7 +16,7 @@ class CreateTenantRequest extends FormRequest
         $name = $this->input('name');
         $slug = $this->input('slug');
 
-        if (! $slug && is_string($name) && $name !== '') {
+        if (! $slug && \is_string($name) && $name !== '') {
             $this->merge(['slug' => Str::slug($name)]);
         }
     }

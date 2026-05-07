@@ -26,7 +26,7 @@ class AppServiceProvider extends ServiceProvider
                 );
             })
             ->withOperationTransformers(function (Operation $operation, RouteInfo $routeInfo): void {
-                if (in_array('auth:sanctum', $routeInfo->route->gatherMiddleware(), true)) {
+                if (\in_array('auth:sanctum', $routeInfo->route->gatherMiddleware(), true)) {
                     $operation->addSecurity(new SecurityRequirement(['bearer' => []]));
                 }
             });
