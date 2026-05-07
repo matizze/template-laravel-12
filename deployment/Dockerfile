@@ -44,6 +44,7 @@ SHELL ["/bin/bash", "-euo", "pipefail", "-c"]
 COPY . .
 COPY --from=vendor /app/vendor ./vendor
 COPY --from=assets /src/public/build ./public/build
+RUN rm -f ${ROOT}/public/admin.html
 
 # Entrypoint
 COPY --chmod=755 deployment/runtime/entrypoint.sh /entrypoint.sh

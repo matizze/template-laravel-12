@@ -280,18 +280,23 @@ if [ ${#BRANCH_NAME} -gt $MAX_BRANCH_LENGTH ]; then
 fi
 
 if [ "$HAS_GIT" = true ]; then
-    if ! git checkout -b "$BRANCH_NAME" 2>/dev/null; then
-        # Check if branch already exists
-        if git branch --list "$BRANCH_NAME" | grep -q .; then
-            >&2 echo "Error: Branch '$BRANCH_NAME' already exists. Please use a different feature name or specify a different number with --number."
-            exit 1
-        else
-            >&2 echo "Error: Failed to create git branch '$BRANCH_NAME'. Please check your git configuration and try again."
-            exit 1
-        fi
+    # Check if branch already exists (local or as worktree)
+    if git branch --list "$BRANCH_NAME" | grep -q .; then
+        >&2 echo "Error: Branch '$BRANCH_NAME' already exists. Please use a different feature name or specify a different number with --number."
+        exit 1
     fi
+
+    # Create branch + worktree in one step (stays on current branch)
+    WORKTREE_DIR="$REPO_ROOT/.worktrees/$BRANCH_NAME"
+    if ! git worktree add -b "$BRANCH_NAME" "$WORKTREE_DIR" 2>/dev/null; then
+        >&2 echo "Error: Failed to create worktree at $WORKTREE_DIR."
+        >&2 echo "You can try manually: git worktree add -b $BRANCH_NAME .worktrees/$BRANCH_NAME"
+        exit 1
+    fi
+    >&2 echo "[specify] Branch + worktree created at .worktrees/$BRANCH_NAME"
 else
-    >&2 echo "[specify] Warning: Git repository not detected; skipped branch creation for $BRANCH_NAME"
+    WORKTREE_DIR=""
+    >&2 echo "[specify] Warning: Git repository not detected; skipped branch and worktree creation for $BRANCH_NAME"
 fi
 
 FEATURE_DIR="$SPECS_DIR/$BRANCH_NAME"
@@ -315,13 +320,15 @@ if $JSON_MODE; then
             --arg branch_name "$BRANCH_NAME" \
             --arg spec_file "$SPEC_FILE" \
             --arg feature_num "$FEATURE_NUM" \
-            '{BRANCH_NAME:$branch_name,SPEC_FILE:$spec_file,FEATURE_NUM:$feature_num}'
+            --arg worktree_dir "${WORKTREE_DIR:-}" \
+            '{BRANCH_NAME:$branch_name,SPEC_FILE:$spec_file,FEATURE_NUM:$feature_num,WORKTREE_DIR:$worktree_dir}'
     else
-        printf '{"BRANCH_NAME":"%s","SPEC_FILE":"%s","FEATURE_NUM":"%s"}\n' "$(json_escape "$BRANCH_NAME")" "$(json_escape "$SPEC_FILE")" "$(json_escape "$FEATURE_NUM")"
+        printf '{"BRANCH_NAME":"%s","SPEC_FILE":"%s","FEATURE_NUM":"%s","WORKTREE_DIR":"%s"}\n' "$(json_escape "$BRANCH_NAME")" "$(json_escape "$SPEC_FILE")" "$(json_escape "$FEATURE_NUM")" "$(json_escape "${WORKTREE_DIR:-}")"
     fi
 else
     echo "BRANCH_NAME: $BRANCH_NAME"
     echo "SPEC_FILE: $SPEC_FILE"
     echo "FEATURE_NUM: $FEATURE_NUM"
+    [ -n "${WORKTREE_DIR:-}" ] && echo "WORKTREE_DIR: $WORKTREE_DIR"
     printf '# To persist in your shell: export SPECIFY_FEATURE=%q\n' "$BRANCH_NAME"
 fi

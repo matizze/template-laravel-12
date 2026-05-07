@@ -1,7 +1,6 @@
 *.log
 .DS_Store
 .env
-.env.dusk.local
 .env.backup
 .env.production
 .phpactor.json
@@ -26,3 +25,6 @@ Thumbs.db
 
 _ide_helper.php
 _ide_helper_models.php
+database/testing.sqlite
+.worktrees
+tmp/

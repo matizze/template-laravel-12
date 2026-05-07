@@ -31,7 +31,17 @@
 
 *GATE: Must pass before Phase 0 research. Re-check after Phase 1 design.*
 
-[Gates determined based on constitution file]
+| Check | Status | Notes |
+|-------|--------|-------|
+| **I. TDD** — Tests written before implementation? | ☐ | Failing tests defined per user story |
+| **II. Laravel Way** — Using Artisan generators, Eloquent, Form Requests, named routes? | ☐ | No inline validation, no raw DB:: queries |
+| **III. Modular Architecture** — Code placed in correct module (Core/User/Auth/Workspace)? | ☐ | No cross-module model mutation |
+| **IV. Simplicity** — No premature abstractions, speculative patterns, or backwards-compat shims? | ☐ | |
+| **V. CLAUDE.md / AGENTS.md** — Laravel Boost `search-docs` consulted before implementation? | ☐ | |
+| **VI. MCP Tooling** — Serena for navigation, Laravel Boost for docs/DB, Herd for site URL? | ☐ | `mcp__plugin_laravel-boost_laravel-boost__laravel-code-simplifier` scheduled as simplify gate |
+| **Agent Assignments** — `architect` approved module placement? `testing-expert` scheduled for TDD gate? | ☐ | See constitution Agent Assignments section |
+
+> If any check FAILS, document the violation in **Complexity Tracking** below with justification.
 
 ## Project Structure
 

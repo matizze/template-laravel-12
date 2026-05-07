@@ -8,31 +8,43 @@
         "framework"
     ],
     "license": "MIT",
+    "repositories": [
+        {"type": "path", "url": "app-modules/user"},
+        {"type": "path", "url": "app-modules/auth"},
+        {"type": "path", "url": "app-modules/tenant"},
+        {"type": "path", "url": "app-modules/permission"}
+    ],
     "require": {
         "php": "^8.2",
+        "dedoc/scramble": "^0.13.22",
         "laravel/framework": "^12.0",
         "laravel/octane": "^2.15",
-        "laravel/tinker": "^2.10.1",
-        "mallardduck/blade-lucide-icons": "^1.24",
-        "php-flasher/flasher-noty-laravel": "^2.5"
+        "laravel/sanctum": "^4.0",
+        "laravel/tinker": "^3.0",
+        "modules/auth": "*@dev",
+        "modules/permission": "*@dev",
+        "modules/tenant": "*@dev",
+        "modules/user": "*@dev",
+        "owen-it/laravel-auditing": "^14.0"
     },
     "require-dev": {
         "barryvdh/laravel-ide-helper": "^3.6",
+        "driftingly/rector-laravel": "^2.3",
         "fakerphp/faker": "^1.23",
         "larastan/larastan": "^3.8",
-        "laravel/boost": "^1.8",
-        "laravel/dusk": "^8.4",
+        "laravel/boost": "^2.0",
         "laravel/pail": "^1.2.2",
         "laravel/pint": "^1.24",
         "laravel/sail": "^1.41",
         "mockery/mockery": "^1.6",
         "nunomaduro/collision": "^8.6",
-        "phpunit/phpunit": "^11.5.3"
+        "phpunit/phpunit": "^11.0",
+        "rector/rector": "^2.4"
     },
     "autoload": {
         "psr-4": {
             "App\\": "app/",
-            "Database\\Factories\\": "database/factories/",
+            "App\\PHPStan\\": "phpstan/",
             "Database\\Seeders\\": "database/seeders/"
         }
     },
@@ -46,13 +58,11 @@
             "composer install",
             "@php -r \"file_exists('.env') || copy('.env.example', '.env');\"",
             "@php artisan key:generate",
-            "@php artisan migrate --force",
-            "npm install",
-            "npm run build"
+            "@php artisan migrate --force"
         ],
         "dev": [
             "Composer\\Config::disableProcessTimeout",
-            "npx concurrently -c \"#93c5fd,#c4b5fd,#fb7185,#fdba74,#86efac\" \"php artisan serve\" \"php artisan queue:listen --queue=high,low,default --tries=1\" \"php artisan pail --timeout=0\" \"npm run dev\" \"php artisan schedule:work\" --names=server,queue,logs,vite,scheduler --kill-others"
+            "npx concurrently -c \"#93c5fd,#c4b5fd,#fb7185,#fdba74,#86efac\" \"php artisan serve\" \"php artisan queue:listen --queue=high,low,default --tries=1\" \"php artisan pail --timeout=0\" \"php artisan schedule:work\" --names=server,queue,logs,scheduler --kill-others"
         ],
         "test": [
             "@php artisan config:clear --ansi",
@@ -78,7 +88,7 @@
         ],
         "ide-helper": [
             "php artisan ide-helper:generate",
-            "php artisan ide-helper:models --nowrite"
+            "php artisan ide-helper:models -M --write-mixin --reset --dir=app-modules/user/src/Models --dir=app-modules/permission/src/Models --dir=app-modules/tenant/src/Models"
         ]
     },
     "extra": {

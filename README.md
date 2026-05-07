@@ -2,7 +2,7 @@
 
 # Laravel 12 Starter Template
 
-Laravel 12 starter template with role-based access (admin/member), settings management, user CRUD, and production-ready deployment (Docker + Octane).
+Laravel 12 **API-only** starter template. Sanctum bearer-token authentication, modular monolith (InterNACHI/modular), RBAC permissions with JSON-tree role definitions, multi-tenant hierarchy, and production-ready deployment (Docker + Octane). No Blade views, no Vite, no Dusk.
 
 ## Installation
 
@@ -29,28 +29,26 @@ composer setup
 
 ## Features
 
-- Role-based access control (admin/member) with Gates
-- User management CRUD (admin only)
-- Settings management
-- Password reset flow
-- Flash notifications (PHPFlasher + Noty)
-- Blade components (layouts, forms, modals, avatar, pagination)
-- Tailwind CSS v4 + Alpine.js
-- PHPUnit test suite (Feature + Browser/Dusk)
-- Docker + Octane deployment ready
+- Sanctum bearer-token authentication (login, register, logout, password reset)
+- RBAC permissions with JSON-tree role definitions and `Gate::before` short-circuit
+- Multi-tenant hierarchy (parent → children) with soft delete and membership pivot
+- User management endpoints gated by named permissions (`users.create/update/delete`)
+- OpenAPI docs auto-generated via Dedoc Scramble at `/docs/api`
+- PHPUnit test suite (feature + unit; no Dusk)
+- Docker + Octane (Swoole) deployment ready
 
 ## Common Commands
 
 ```bash
-composer dev          # Start dev environment (server + queue + scheduler + logs + Vite)
+composer dev          # Start dev environment (server + queue + scheduler + logs)
 composer test         # Run tests
 composer setup        # Full project setup
 
-./vendor/bin/phpstan analyse   # Static analysis
-./vendor/bin/pint              # Code formatting
+./vendor/bin/phpstan analyse           # Static analysis
+./vendor/bin/pint --dirty --format agent   # Code formatting
 
-php artisan migrate:fresh --seed   # Reset database with seeders
-php artisan create:user --admin    # Create admin user via CLI
+php artisan migrate:fresh --seed       # Reset database with seeders
+php artisan create:user --admin        # Create admin user via CLI
 ```
 
 ## License

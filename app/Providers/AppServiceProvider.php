@@ -2,7 +2,15 @@
 
 namespace App\Providers;
 
+use Dedoc\Scramble\Scramble;
+use Dedoc\Scramble\Support\Generator\OpenApi;
+use Dedoc\Scramble\Support\Generator\Operation;
+use Dedoc\Scramble\Support\Generator\SecurityRequirement;
+use Dedoc\Scramble\Support\Generator\SecurityScheme;
+use Dedoc\Scramble\Support\RouteInfo;
 use Illuminate\Database\Events\MigrationsEnded;
+use Illuminate\Http\Request;
+use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Event;
@@ -10,30 +18,45 @@ use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
 {
-    /**
-     * Register any application services.
-     */
-    public function register(): void
-    {
-        //
-    }
-
-    /**
-     * Bootstrap any application services.
-     */
     public function boot(): void
     {
-        if (! App::environment('local')) {
-            return;
-        }
+        JsonResource::withoutWrapping();
 
-        // Intercepta as migrations para gerar os ide_helpers
-        Event::listen(
-            MigrationsEnded::class,
-            function () {
-                Artisan::call('ide-helper:generate');
-                Artisan::call('ide-helper:models', ['--nowrite' => true, '--reset' => true]);
-            }
-        );
+        Request::macro('perPage', function (int $default = 15, int $max = 100): int {
+            /** @var Request $this */
+            return max(1, min($max, $this->integer('per_page', $default)));
+        });
+
+        Scramble::configure()
+            ->withDocumentTransformers(function (OpenApi $openApi): void {
+                $openApi->components->addSecurityScheme(
+                    'bearer',
+                    SecurityScheme::http('bearer')
+                        ->setDescription('Token Sanctum retornado por POST /api/auth/login')
+                );
+            })
+            ->withOperationTransformers(function (Operation $operation, RouteInfo $routeInfo): void {
+                if (\in_array('auth:sanctum', $routeInfo->route->gatherMiddleware(), true)) {
+                    $operation->addSecurity(new SecurityRequirement(['bearer' => []]));
+                }
+            });
+
+        if (App::environment('local')) {
+            Event::listen(
+                MigrationsEnded::class,
+                function (): void {
+                    Artisan::call('ide-helper:generate');
+                    Artisan::call('ide-helper:models', [
+                        '--write-mixin' => true,
+                        '--reset' => true,
+                        '--dir' => [
+                            'app-modules/user/src/Models',
+                            'app-modules/permission/src/Models',
+                            'app-modules/tenant/src/Models',
+                        ],
+                    ]);
+                }
+            );
+        }
     }
 }

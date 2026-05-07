@@ -1,0 +1,23 @@
+{
+    "name": "modules/tenant",
+    "description": "Tenant module — tenant management, users and onboarding",
+    "type": "library",
+    "license": "MIT",
+    "require": {
+        "modules/user": "*@dev"
+    },
+    "autoload": {
+        "psr-4": {
+            "Modules\\Tenant\\": "src/",
+            "Modules\\Tenant\\Database\\Factories\\": "database/factories/"
+        }
+    },
+    "extra": {
+        "laravel": {
+            "providers": [
+                "Modules\\Tenant\\Providers\\TenantServiceProvider"
+            ]
+        }
+    },
+    "minimum-stability": "dev"
+}

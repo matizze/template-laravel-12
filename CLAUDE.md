@@ -4,33 +4,33 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-Laravel 12 starter template with role-based access (admin/member), settings management, user CRUD, and production-ready deployment (Docker + Octane).
+Laravel 12 **API-only** starter template using Sanctum bearer-token authentication, modular monolith (InterNACHI/modular), RBAC permissions, multi-tenant hierarchy, and production-ready deployment (Docker + Octane). No Blade views, no frontend assets, no Dusk.
 
 ## Common Commands
 
 ```bash
-# Full project setup (install deps, generate key, migrate, build assets)
+# Full project setup
 composer setup
 
-# Start dev environment (server + queue + scheduler + logs + Vite)
+# Start dev environment (server + queue + scheduler + logs)
 composer dev
 
 # Run tests
 composer test
-php artisan test --filter=TestName   # single test
+php artisan test --compact --filter=TestName
 
-# Static analysis (PHPStan level 3)
+# Static analysis
 ./vendor/bin/phpstan analyse
 
 # Code formatting
-./vendor/bin/pint
+./vendor/bin/pint --dirty --format agent
 
 # Generate IDE helper files
 composer ide-helper
 
 # Database
 php artisan migrate
-php artisan migrate:fresh --seed     # reset with seeders
+php artisan migrate:fresh --seed
 
 # Create user via CLI
 php artisan create:user              # interactive
@@ -39,57 +39,95 @@ php artisan create:user --admin      # create admin user
 
 ## Architecture
 
-### Backend
-- **Laravel 12** on PHP 8.2+, SQLite database (dev), PostgreSQL (prod)
-- **Models:** `User` (roles: admin/member)
-- **Auth:** Custom controllers (`LoginController`, `RegisterController`, `ForgotPasswordController`, `ResetPasswordController`) with Form Request validation, session-based. Auto-login after registration. "Remember me" support on login.
-- **Password Reset:** Full forgot/reset password flow using Laravel's built-in `Password` broker. Routes: `password.request`, `password.email`, `password.reset`, `password.update`
-- **Rate Limiting:** `throttle:5,1` on login/register, `throttle:3,1` on password reset routes
-- **Authorization:** `AuthorizationServiceProvider` with Gates (`manage-users`), routes protected via `can:` middleware
-- **Controllers:** `SettingsController`, `UserController`
-- **Routes:** `routes/web.php` (auth middleware groups), `routes/auth.php` (guest/auth routes)
+### Stack
+- **Laravel 12** on PHP 8.2+, SQLite (dev/test), PostgreSQL (prod)
+- **Sanctum API** with bearer tokens — `auth:sanctum` middleware on all protected routes
+- **Modular monolith** in `app-modules/`: `user`, `auth`, `tenant`, `permission`
+- All routes live in `routes/api.php` (no `routes/web.php`)
 
-### Frontend
-- **Blade components** in `resources/views/components/` — layouts (`layout.app`, `layout.dashboard`), form inputs, buttons, cards, modal, avatar, pagination, nav-item, user-menu
-- **Tailwind CSS v4** with custom theme colors defined in `resources/css/app.css`
-- **Vite 7** for asset bundling
-- **Icons:** Lucide icons via `blade-lucide-icons` (`x-icon:name="lucide-{icon}"`)
-- **Font:** Lato (Google Fonts)
-- **Alpine.js** with custom directives and utilities (http, polling)
+### Auth (Sanctum bearer tokens)
+- `POST /api/auth/login` → `{user, token}` — manual `Hash::check`, no `Auth::attempt`, no session, no remember-me
+- `POST /api/auth/register` → `{user, token}` (201)
+- `POST /api/auth/logout` → revokes the current token
+- `POST /api/auth/forgot-password` / `POST /api/auth/reset-password` — Laravel's `Password` broker
+- Rate limits: `throttle:5,1` on login/register, `throttle:3,1` on password reset
+- All validation in Form Request classes
 
-### Flash Messages / Notifications
-- **PHPFlasher** with Noty adapter — auto-intercepts Laravel session flash messages
-- Controllers MUST use `->with('success', '...')` or `->with('error', '...')` for flash messages
-- DO NOT use `->with('status', '...')` or `->with('message', '...')` — these keys are NOT intercepted by PHPFlasher
-- Supported flash keys: `success`, `error`, `warning`, `info` (mapped in `config/flasher.php` flash_bag)
-- Assets are auto-injected into HTML responses (no `@flasher_render` needed)
+### Authorization
+- **RBAC** lives in `app-modules/permission`. `roles.permissions` is a JSON tree (e.g. `{"users":["create","update","delete"]}`) flattened into dotted abilities by `PermissionService` (e.g. `users.create`).
+- `Gate::before` (in `PermissionServiceProvider`) short-circuits to `true` when the user holds the role permission, otherwise returns `null` so other gates/policies run.
+- **Tenant-scoped abilities** (`tenants.create`, `tenants.users.view|attach|detach`, `tenants.settings.view|update|delete`) are defined in `TenantServiceProvider::boot()` via `Gate::define` and require the user to be a member of the target tenant.
+- **Policies:** `TenantPolicy` (view/update/delete/restore) and `UserPolicy` (blocks acting on self) registered in their module providers.
+
+### Multi-tenant
+- Tenants form a hierarchy via `parent_id` with soft delete; users link via the `tenant_user` pivot.
+- The current tenant is resolved from the `X-Tenant-ID` request header by the `tenant` middleware (`SetCurrentTenant`), which is registered as a route alias inside `TenantServiceProvider::boot()`.
+- `Tenant::current()` is backed by the `CurrentTenantManager` (registered as `scoped` for Octane safety) — request-only, no session.
 
 ### Database Schema
-- `users`: name, email, password, role (enum: admin/member)
-- `password_reset_tokens`: email, token, created_at (used by Password broker)
-- Sessions, cache, and jobs tables use database driver
+- `users`: name, email, password, email_verified_at, remember_token (Laravel scaffolding; unused for token API), timestamps. **No `role` column** — roles live in the RBAC tables.
+- `roles`: name, tenant_id (nullable for global roles), permissions JSON.
+- `user_roles`: pivot.
+- `tenants`, `tenant_user`: hierarchy + membership.
+- `password_reset_tokens`: used by Password broker.
+
+#### Table naming convention
+Tables follow **canonical Laravel/package names** without module prefixes (e.g. `users`, `roles`, `tenants`, `personal_access_tokens`, `audits`). Module ownership is expressed by the **location of the migration** inside `app-modules/<module>/database/migrations/` rather than by a name prefix. Rationale: this is an API-only starter template — preserving canonical names keeps Sanctum/Laravel/`owen-it/laravel-auditing` conventions intact, matches third-party tooling expectations (dashboards, query builders, ops tooling), and avoids cosmetic churn since there are no real name collisions across modules. New modules should only introduce a prefix when an actual collision exists or when the unprefixed name is genuinely ambiguous outside the module.
 
 ### Deployment
-- **Docker:** Multi-stage Dockerfile with Octane/Swoole (`deployment/`)
+- **Docker:** multi-stage Dockerfile with Octane/Swoole (`deployment/`)
 - **Stack:** PostgreSQL, Redis, MinIO, Adminer (`deployment/stack.yaml`)
 - **CI/CD:** GitHub Actions → GHCR with optional deploy webhook (`.github/workflows/docker.yaml`)
 - **Production env:** `deployment/.env.example`
 
 ### Testing
-- PHPUnit with in-memory SQLite, array session/cache drivers
-- Test suites: `tests/Unit/`, `tests/Feature/`
-- Feature tests: `AuthTest`, `SettingsTest`, `UserManagementTest`, `PasswordResetTest`, `CreateUserCommandTest`
-- PHPFlasher consumes flash session data — do NOT use `assertSessionHas` for flash keys (`success`, `error`, etc.)
+- PHPUnit with in-memory SQLite, array cache driver
+- Test suites: `tests/Unit/`, `tests/Feature/`, plus `app-modules/*/tests/`
+- All HTTP tests use `postJson`/`getJson`/`patchJson`/`deleteJson` and assert via `assertJsonValidationErrors` (NOT `assertSessionHas*` — there is no session)
+- Use `actingAs($user, 'sanctum')` to authenticate in HTTP tests
+- Use `UserFactory::admin()` to attach the global admin role
+
+### Module public API
+
+Each module exposes a **minimal, explicit set of classes** that other modules may import. The whitelist lives in `phpstan/ModuleDependencyRule.php` (`PUBLIC_API` constant) and is enforced by PHPStan on every analysis run.
+
+Current public surface:
+
+- `auth` → (none — edge consumer)
+- `user` → `Modules\User\Models\User`, `Modules\User\Events\UserDeleting`
+- `permission` → `Modules\Permission\Services\RoleAssigner`, `Modules\Permission\Traits\HasRoles`
+- `tenant` → `Modules\Tenant\Models\Tenant`, `Modules\Tenant\Traits\HasTenants`
+
+Anything else under `Modules\<X>\` (Controllers, Form Requests, Policies, Middleware, Providers, internal Services, Rules, Listeners, Notifications, etc.) is **internal** — importing it from another module fails PHPStan with `Cannot import internal class ... Only the public API is exportable.`
+
+To expose a new class, add it to `PUBLIC_API` in the rule and document the rationale (one-line comment is fine). Keep the surface minimal: prefer Models, Traits, Enums and Events over services.
+
+## Tooling Policy — Use Serena MCP for ALL code operations
+
+This project blocks the built-in `Read`, `Write`, `Edit`, `Grep`, `Glob` tools via `permissions.deny` in `.claude/settings.json`. **Every file operation must go through Serena MCP**:
+
+| Built-in (denied) | Use Serena instead |
+|---|---|
+| `Read` | `mcp__plugin_serena_serena__read_file` |
+| `Write` | `mcp__plugin_serena_serena__create_text_file` |
+| `Edit` (small change) | `mcp__plugin_serena_serena__replace_content` |
+| `Edit` (symbol body) | `mcp__plugin_serena_serena__replace_symbol_body` |
+| `Edit` (insert before/after symbol) | `mcp__plugin_serena_serena__insert_before_symbol` / `insert_after_symbol` |
+| `Grep` | `mcp__plugin_serena_serena__search_for_pattern` |
+| `Glob` / file lookup | `mcp__plugin_serena_serena__find_file` / `list_dir` |
+| Code structure overview | `mcp__plugin_serena_serena__get_symbols_overview` / `find_symbol` |
+| LSP diagnostics | `mcp__plugin_serena_serena__get_diagnostics_for_file` |
+
+This forces symbolic, token-efficient reads (no whole-file slurps unless necessary) and consistent diagnostics access. The PostToolUse hook in `.claude/settings.json` runs PHPStan automatically after every Serena edit on `.php` files inside `app-modules/` or `app/` (skipping tests/migrations) — diagnostics return inline in the agent context.
 
 ## Conventions
 
-- Resource controllers follow Laravel conventions
-- Views organized by route: `settings/`, `auth/`, etc.
-- Blade components use kebab-case naming (`nav-item`, `user-menu`)
-- PHP 8.2+ features: match expressions, typed properties, union types
+- API-only: every controller returns `JsonResponse`
+- Resource controllers follow Laravel conventions; routes named with dot-case (`tenant.settings.show`)
+- PHP 8.2+ features: constructor property promotion, typed properties, return types
 - Code style: Laravel Pint (PSR-12)
-- `AppServiceProvider` auto-generates IDE helper files on migration
-- Flash messages: always use `success`, `error`, `warning`, or `info` as session keys
+- `AppServiceProvider` regenerates IDE helper files after migrations in local environment
+- Flash messages do NOT exist — return JSON with appropriate status codes
 
 ===
 
@@ -98,73 +136,85 @@ php artisan create:user --admin      # create admin user
 
 # Laravel Boost Guidelines
 
-The Laravel Boost guidelines are specifically curated by Laravel maintainers for this application. These guidelines should be followed closely to enhance the user's satisfaction building Laravel applications.
+The Laravel Boost guidelines are specifically curated by Laravel maintainers for this application. These guidelines should be followed closely to ensure the best experience when building Laravel applications.
 
 ## Foundational Context
+
 This application is a Laravel application and its main Laravel ecosystems package & versions are below. You are an expert with them all. Ensure you abide by these specific packages & versions.
 
-- php - 8.4.1
+- php - 8.4
 - laravel/framework (LARAVEL) - v12
 - laravel/octane (OCTANE) - v2
+- laravel/sanctum (SANCTUM) - v4
 - laravel/prompts (PROMPTS) - v0
 - larastan/larastan (LARASTAN) - v3
+- laravel/boost (BOOST) - v2
 - laravel/mcp (MCP) - v0
+- laravel/pail (PAIL) - v1
 - laravel/pint (PINT) - v1
 - laravel/sail (SAIL) - v1
 - phpunit/phpunit (PHPUNIT) - v11
-- alpinejs (ALPINEJS) - v3
-- tailwindcss (TAILWINDCSS) - v4
 
 ## Conventions
+
 - You must follow all existing code conventions used in this application. When creating or editing a file, check sibling files for the correct structure, approach, and naming.
 - Use descriptive names for variables and methods. For example, `isRegisteredForDiscounts`, not `discount()`.
 - Check for existing components to reuse before writing a new one.
 
 ## Verification Scripts
-- Do not create verification scripts or tinker when tests cover that functionality and prove it works. Unit and feature tests are more important.
+
+- Do not create verification scripts or tinker when tests cover that functionality and prove they work. Unit and feature tests are more important.
 
 ## Application Structure & Architecture
+
 - Stick to existing directory structure; don't create new base folders without approval.
 - Do not change the application's dependencies without approval.
 
-## Frontend Bundling
-- If the user doesn't see a frontend change reflected in the UI, it could mean they need to run `npm run build`, `npm run dev`, or `composer run dev`. Ask them.
+## Documentation Files
+
+- You must only create documentation files if explicitly requested by the user.
 
 ## Replies
-- Be concise in your explanations - focus on what's important rather than explaining obvious details.
 
-## Documentation Files
-- You must only create documentation files if explicitly requested by the user.
+- Be concise in your explanations - focus on what's important rather than explaining obvious details.
 
 === boost rules ===
 
-## Laravel Boost
+# Laravel Boost
+
 - Laravel Boost is an MCP server that comes with powerful tools designed specifically for this application. Use them.
 
-## Artisan
-- Use the `list-artisan-commands` tool when you need to call an Artisan command to double-check the available parameters.
+## Artisan Commands
+
+- Run Artisan commands directly via the command line (e.g., `php artisan route:list`, `php artisan tinker --execute "..."`).
+- Use `php artisan list` to discover available commands and `php artisan [command] --help` to check parameters.
 
 ## URLs
+
 - Whenever you share a project URL with the user, you should use the `get-absolute-url` tool to ensure you're using the correct scheme, domain/IP, and port.
 
-## Tinker / Debugging
-- You should use the `tinker` tool when you need to execute PHP to debug code or query Eloquent models directly.
+## Debugging
+
 - Use the `database-query` tool when you only need to read from the database.
+- Use the `database-schema` tool to inspect table structure before writing migrations or models.
+- To execute PHP code for debugging, run `php artisan tinker --execute "your code here"` directly.
+- To read configuration values, read the config files directly or run `php artisan config:show [key]`.
+- To inspect routes, run `php artisan route:list` directly.
+- To check environment variables, read the `.env` file directly.
 
 ## Reading Browser Logs With the `browser-logs` Tool
+
 - You can read browser logs, errors, and exceptions using the `browser-logs` tool from Boost.
 - Only recent browser logs will be useful - ignore old logs.
 
 ## Searching Documentation (Critically Important)
-- Boost comes with a powerful `search-docs` tool you should use before any other approaches when dealing with Laravel or Laravel ecosystem packages. This tool automatically passes a list of installed packages and their versions to the remote Boost API, so it returns only version-specific documentation for the user's circumstance. You should pass an array of packages to filter on if you know you need docs for particular packages.
-- The `search-docs` tool is perfect for all Laravel-related packages, including Laravel, Inertia, Livewire, Filament, Tailwind, Pest, Nova, Nightwatch, etc.
-- You must use this tool to search for Laravel ecosystem documentation before falling back to other approaches.
+
+- Boost comes with a powerful `search-docs` tool you should use before trying other approaches when working with Laravel or Laravel ecosystem packages. This tool automatically passes a list of installed packages and their versions to the remote Boost API, so it returns only version-specific documentation for the user's circumstance. You should pass an array of packages to filter on if you know you need docs for particular packages.
 - Search the documentation before making code changes to ensure we are taking the correct approach.
-- Use multiple, broad, simple, topic-based queries to start. For example: `['rate limiting', 'routing rate limiting', 'routing']`.
+- Use multiple, broad, simple, topic-based queries at once. For example: `['rate limiting', 'routing rate limiting', 'routing']`. The most relevant results will be returned first.
 - Do not add package names to queries; package information is already shared. For example, use `test resource table`, not `filament 4 test resource table`.
 
 ### Available Search Syntax
-- You can and should pass multiple queries at once. The most relevant results will be returned first.
 
 1. Simple Word Searches with auto-stemming - query=authentication - finds 'authenticate' and 'auth'.
 2. Multiple Words (AND Logic) - query=rate limit - finds knowledge containing both "rate" AND "limit".
@@ -174,44 +224,58 @@ This application is a Laravel application and its main Laravel ecosystems packag
 
 === php rules ===
 
-## PHP
+# PHP
 
-- Always use curly braces for control structures, even if it has one line.
+- Always use curly braces for control structures, even for single-line bodies.
 
-### Constructors
+## Constructors
+
 - Use PHP 8 constructor property promotion in `__construct()`.
-    - <code-snippet>public function __construct(public GitHub $github) { }</code-snippet>
+    - `public function __construct(public GitHub $github) { }`
 - Do not allow empty `__construct()` methods with zero parameters unless the constructor is private.
 
-### Type Declarations
+## Type Declarations
+
 - Always use explicit return type declarations for methods and functions.
 - Use appropriate PHP type hints for method parameters.
 
-<code-snippet name="Explicit Return Types and Method Params" lang="php">
+<!-- Explicit Return Types and Method Params -->
+```php
 protected function isAccessible(User $user, ?string $path = null): bool
 {
     ...
 }
-</code-snippet>
-
-## Comments
-- Prefer PHPDoc blocks over inline comments. Never use comments within the code itself unless there is something very complex going on.
-
-## PHPDoc Blocks
-- Add useful array shape type definitions for arrays when appropriate.
+```
 
 ## Enums
+
 - Typically, keys in an Enum should be TitleCase. For example: `FavoritePerson`, `BestLake`, `Monthly`.
+
+## Comments
+
+- Prefer PHPDoc blocks over inline comments. Never use comments within the code itself unless the logic is exceptionally complex.
+
+## PHPDoc Blocks
+
+- Add useful array shape type definitions when appropriate.
+
+=== tests rules ===
+
+# Test Enforcement
+
+- Every change must be programmatically tested. Write a new test or update an existing test, then run the affected tests to make sure they pass.
+- Run the minimum number of tests needed to ensure code quality and speed. Use `php artisan test --compact` with a specific filename or filter.
 
 === laravel/core rules ===
 
-## Do Things the Laravel Way
+# Do Things the Laravel Way
 
-- Use `php artisan make:` commands to create new files (i.e. migrations, controllers, models, etc.). You can list available Artisan commands using the `list-artisan-commands` tool.
+- Use `php artisan make:` commands to create new files (i.e. migrations, controllers, models, etc.). You can list available Artisan commands using `php artisan list` and check their parameters with `php artisan [command] --help`.
 - If you're creating a generic PHP class, use `php artisan make:class`.
 - Pass `--no-interaction` to all Artisan commands to ensure they work without user input. You should also pass the correct `--options` to ensure correct behavior.
 
-### Database
+## Database
+
 - Always use proper Eloquent relationship methods with return type hints. Prefer relationship methods over raw queries or manual joins.
 - Use Eloquent models and relationships before suggesting raw database queries.
 - Avoid `DB::`; prefer `Model::query()`. Generate code that leverages Laravel's ORM capabilities rather than bypassing them.
@@ -219,146 +283,66 @@ protected function isAccessible(User $user, ?string $path = null): bool
 - Use Laravel's query builder for very complex database operations.
 
 ### Model Creation
-- When creating new models, create useful factories and seeders for them too. Ask the user if they need any other things, using `list-artisan-commands` to check the available options to `php artisan make:model`.
+
+- When creating new models, create useful factories and seeders for them too. Ask the user if they need any other things, using `php artisan make:model --help` to check the available options.
 
 ### APIs & Eloquent Resources
+
 - For APIs, default to using Eloquent API Resources and API versioning unless existing API routes do not, then you should follow existing application convention.
 
-### Controllers & Validation
+## Controllers & Validation
+
 - Always create Form Request classes for validation rather than inline validation in controllers. Include both validation rules and custom error messages.
 - Check sibling Form Requests to see if the application uses array or string based validation rules.
 
-### Queues
-- Use queued jobs for time-consuming operations with the `ShouldQueue` interface.
+## Authentication & Authorization
 
-### Authentication & Authorization
 - Use Laravel's built-in authentication and authorization features (gates, policies, Sanctum, etc.).
 
-### URL Generation
+## URL Generation
+
 - When generating links to other pages, prefer named routes and the `route()` function.
 
-### Configuration
+## Queues
+
+- Use queued jobs for time-consuming operations with the `ShouldQueue` interface.
+
+## Configuration
+
 - Use environment variables only in configuration files - never use the `env()` function directly outside of config files. Always use `config('app.name')`, not `env('APP_NAME')`.
 
-### Testing
+## Testing
+
 - When creating models for tests, use the factories for the models. Check if the factory has custom states that can be used before manually setting up the model.
 - Faker: Use methods such as `$this->faker->word()` or `fake()->randomDigit()`. Follow existing conventions whether to use `$this->faker` or `fake()`.
 - When creating tests, make use of `php artisan make:test [options] {name}` to create a feature test, and pass `--unit` to create a unit test. Most tests should be feature tests.
 
-### Vite Error
-- If you receive an "Illuminate\Foundation\ViteException: Unable to locate file in Vite manifest" error, you can run `npm run build` or ask the user to run `npm run dev` or `composer run dev`.
-
 === laravel/v12 rules ===
 
-## Laravel 12
+# Laravel 12
 
-- Use the `search-docs` tool to get version-specific documentation.
+- CRITICAL: ALWAYS use `search-docs` tool for version-specific Laravel documentation and updated code examples.
 - Since Laravel 11, Laravel has a new streamlined file structure which this project uses.
 
-### Laravel 12 Structure
+## Laravel 12 Structure
+
 - In Laravel 12, middleware are no longer registered in `app/Http/Kernel.php`.
 - Middleware are configured declaratively in `bootstrap/app.php` using `Application::configure()->withMiddleware()`.
 - `bootstrap/app.php` is the file to register middleware, exceptions, and routing files.
 - `bootstrap/providers.php` contains application specific service providers.
-- The `app\Console\Kernel.php` file no longer exists; use `bootstrap/app.php` or `routes/console.php` for console configuration.
+- The `app/Console/Kernel.php` file no longer exists; use `bootstrap/app.php` or `routes/console.php` for console configuration.
 - Console commands in `app/Console/Commands/` are automatically available and do not require manual registration.
 
-### Database
+## Database
+
 - When modifying a column, the migration must include all of the attributes that were previously defined on the column. Otherwise, they will be dropped and lost.
 - Laravel 12 allows limiting eagerly loaded records natively, without external packages: `$query->latest()->limit(10);`.
 
 ### Models
+
 - Casts can and likely should be set in a `casts()` method on a model rather than the `$casts` property. Follow existing conventions from other models.
 
-=== pint/core rules ===
-
-## Laravel Pint Code Formatter
-
-- You must run `vendor/bin/pint --dirty` before finalizing changes to ensure your code matches the project's expected style.
-- Do not run `vendor/bin/pint --test`, simply run `vendor/bin/pint` to fix any formatting issues.
-
-=== phpunit/core rules ===
-
-## PHPUnit
-
-- This application uses PHPUnit for testing. All tests must be written as PHPUnit classes. Use `php artisan make:test --phpunit {name}` to create a new test.
-- If you see a test using "Pest", convert it to PHPUnit.
-- Every time a test has been updated, run that singular test.
-- When the tests relating to your feature are passing, ask the user if they would like to also run the entire test suite to make sure everything is still passing.
-- Tests should test all of the happy paths, failure paths, and weird paths.
-- You must not remove any tests or test files from the tests directory without approval. These are not temporary or helper files; these are core to the application.
-
-### Running Tests
-- Run the minimal number of tests, using an appropriate filter, before finalizing.
-- To run all tests: `php artisan test --compact`.
-- To run all tests in a file: `php artisan test --compact tests/Feature/ExampleTest.php`.
-- To filter on a particular test name: `php artisan test --compact --filter=testName` (recommended after making a change to a related file).
-
-=== tailwindcss/core rules ===
-
-## Tailwind CSS
-
-- Use Tailwind CSS classes to style HTML; check and use existing Tailwind conventions within the project before writing your own.
-- Offer to extract repeated patterns into components that match the project's conventions (i.e. Blade, JSX, Vue, etc.).
-- Think through class placement, order, priority, and defaults. Remove redundant classes, add classes to parent or child carefully to limit repetition, and group elements logically.
-- You can use the `search-docs` tool to get exact examples from the official documentation when needed.
-
-### Spacing
-- When listing items, use gap utilities for spacing; don't use margins.
-
-<code-snippet name="Valid Flex Gap Spacing Example" lang="html">
-    <div class="flex gap-8">
-        <div>Superior</div>
-        <div>Michigan</div>
-        <div>Erie</div>
-    </div>
-</code-snippet>
-
-### Dark Mode
-- If existing pages and components support dark mode, new pages and components must support dark mode in a similar way, typically using `dark:`.
-
-=== tailwindcss/v4 rules ===
-
-## Tailwind CSS 4
-
-- Always use Tailwind CSS v4; do not use the deprecated utilities.
-- `corePlugins` is not supported in Tailwind v4.
-- In Tailwind v4, configuration is CSS-first using the `@theme` directive — no separate `tailwind.config.js` file is needed.
-
-<code-snippet name="Extending Theme in CSS" lang="css">
-@theme {
-  --color-brand: oklch(0.72 0.11 178);
-}
-</code-snippet>
-
-- In Tailwind v4, you import Tailwind using a regular CSS `@import` statement, not using the `@tailwind` directives used in v3:
-
-<code-snippet name="Tailwind v4 Import Tailwind Diff" lang="diff">
-   - @tailwind base;
-   - @tailwind components;
-   - @tailwind utilities;
-   + @import "tailwindcss";
-</code-snippet>
-
-### Replaced Utilities
-- Tailwind v4 removed deprecated utilities. Do not use the deprecated option; use the replacement.
-- Opacity values are still numeric.
-
-| Deprecated |	Replacement |
-|------------+--------------|
-| bg-opacity-* | bg-black/* |
-| text-opacity-* | text-black/* |
-| border-opacity-* | border-black/* |
-| divide-opacity-* | divide-black/* |
-| ring-opacity-* | ring-black/* |
-| placeholder-opacity-* | placeholder-black/* |
-| flex-shrink-* | shrink-* |
-| flex-grow-* | grow-* |
-| overflow-ellipsis | text-ellipsis |
-| decoration-slice | box-decoration-slice |
-| decoration-clone | box-decoration-clone |
-
-=== laravel/octane rules ===
+=== octane/core rules ===
 
 # Octane
 
@@ -375,4 +359,41 @@ $this->app->singleton(Service::class, fn () => new Service(fn () => request()));
 ```
 
 - Never append to static properties, as they accumulate in memory across requests.
+
+=== pint/core rules ===
+
+# Laravel Pint Code Formatter
+
+- If you have modified any PHP files, you must run `vendor/bin/pint --dirty --format agent` before finalizing changes to ensure your code matches the project's expected style.
+- Do not run `vendor/bin/pint --test --format agent`, simply run `vendor/bin/pint --format agent` to fix any formatting issues.
+
+=== phpunit/core rules ===
+
+# PHPUnit
+
+- This application uses PHPUnit for testing. All tests must be written as PHPUnit classes. Use `php artisan make:test --phpunit {name}` to create a new test.
+- If you see a test using "Pest", convert it to PHPUnit.
+- Every time a test has been updated, run that singular test.
+- When the tests relating to your feature are passing, ask the user if they would like to also run the entire test suite to make sure everything is still passing.
+- Tests should cover all happy paths, failure paths, and edge cases.
+- You must not remove any tests or test files from the tests directory without approval. These are not temporary or helper files; these are core to the application.
+
+## Running Tests
+
+- Run the minimal number of tests, using an appropriate filter, before finalizing.
+- To run all tests: `php artisan test --compact`.
+- To run all tests in a file: `php artisan test --compact tests/Feature/ExampleTest.php`.
+- To filter on a particular test name: `php artisan test --compact --filter=testName` (recommended after making a change to a related file).
+
 </laravel-boost-guidelines>
+
+## Active Technologies
+- PHP 8.4 / Laravel 12 + InterNACHI/modular, PHPStan (larastan), Laravel Pin (003-modular-migration)
+- SQLite (dev), PostgreSQL (prod) — sem alterações de schema (003-modular-migration)
+- PHP 8.4 + Laravel 12, InterNACHI/modular (modular monolith). Sem deps externas adicionais (zero external deps mantida). (005-rbac-permissions)
+- SQLite em dev/test; PostgreSQL em prod. Schema RBAC criado por migrations do novo módulo. (005-rbac-permissions)
+- PHP 8.4 / Laravel 12 + laravel/framework v12, laravel/octane v2 (Swoole), InterNACHI/modular (modular monolith), spatie/laravel-data (não usado neste módulo), blade-lucide-icons, Alpine.js 3, Tailwind v4 (004-multi-tenant-hierarchy)
+- SQLite em dev/test (in-memory para PHPUnit), PostgreSQL em prod — schema único, sem partitioning. Sem alterações estruturais de stack. (004-multi-tenant-hierarchy)
+
+## Recent Changes
+- 005-rbac-permissions: Added PHP 8.4 + Laravel 12, InterNACHI/modular (modular monolith). Sem deps externas adicionais (zero external deps mantida).

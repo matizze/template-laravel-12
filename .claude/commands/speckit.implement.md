@@ -168,7 +168,19 @@ You **MUST** consider the user input before proceeding (if not empty).
 
 Note: This command assumes a complete task breakdown exists in tasks.md. If tasks are incomplete or missing, suggest running `/speckit.tasks` first to regenerate the task list.
 
-10. **Check for extension hooks**: After completion validation, check if `.specify/extensions.yml` exists in the project root.
+10. **Copy spec to worktree (final commit)**:
+   - Determine the main repository root: use `git rev-parse --git-common-dir` to find the shared `.git` directory, then `dirname` it to get the main repo path. If `--git-common-dir` returns `.git` (relative), you're already in the main repo.
+   - Locate the spec directory in the main repo: `<main_repo>/specs/<branch_name>/`
+   - Copy the entire spec directory into the worktree: `cp -r <main_repo>/specs/<branch_name> <worktree_root>/specs/`
+   - Stage and commit the spec files as the final commit:
+     ```
+     git add specs/
+     git commit -m "spec: add specification for <branch_name>"
+     ```
+   - This MUST be the last commit before creating the PR
+   - If the spec directory is not found in the main repo, warn the user but do not fail
+
+11. **Check for extension hooks**: After completion validation, check if `.specify/extensions.yml` exists in the project root.
     - If it exists, read it and look for entries under the `hooks.after_implement` key
     - If the YAML cannot be parsed or is invalid, skip hook checking silently and continue normally
     - Filter out hooks where `enabled` is explicitly `false`. Treat hooks without an `enabled` field as enabled by default.
