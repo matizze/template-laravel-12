@@ -272,7 +272,7 @@ function adminApp() {
         async loadTree() {
             this.flat.loading = true; this.topError = '';
             try {
-                const roots = await this.api('/tenants');
+                const roots = (await this.api('/tenants')).data || [];
                 const items = [];
                 await Promise.all(roots.map(r => this._walk(r, [], items)));
                 items.sort((a, b) => a.path.localeCompare(b.path));
@@ -288,7 +288,7 @@ function adminApp() {
             const path = [...ancestors, tenant].map(t => t.name).join(' › ');
             out.push({ tenant, ancestors, path });
             if ((tenant.children_count ?? 0) > 0) {
-                const children = await this.api(`/tenants?parent_id=${tenant.id}`);
+                const children = (await this.api(`/tenants?parent_id=${tenant.id}`)).data || [];
                 await Promise.all(children.map(c => this._walk(c, [...ancestors, tenant], out)));
             }
         },
@@ -333,7 +333,7 @@ function adminApp() {
             try {
                 const data = await this.api(`/tenants/${tenant.id}/users`);
                 this.attachModal.linked = data.tenant_users || [];
-                this.attachModal.available = data.available_users || [];
+                this.attachModal.available = data.available_users?.data || [];
             } catch (e) { this.attachModal.error = e.message; }
         },
 

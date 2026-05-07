@@ -31,9 +31,15 @@ class TenantUserController extends Controller
             $availableQuery->whereHas('tenants', fn ($q) => $q->whereHas('users', fn ($u) => $u->whereKey($user->id)));
         }
 
+        $perPage = max(1, min(100, $request->integer('per_page', 15)));
+
+        $availableUsers = UserResource::collection(
+            $availableQuery->orderBy('name')->paginate($perPage)
+        )->response()->getData(true);
+
         return response()->json([
             'tenant_users' => TenantUserResource::collection($tenantUsers),
-            'available_users' => UserResource::collection($availableQuery->orderBy('name')->get()),
+            'available_users' => $availableUsers,
         ]);
     }
 

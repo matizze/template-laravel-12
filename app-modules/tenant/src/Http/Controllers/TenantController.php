@@ -28,7 +28,9 @@ class TenantController extends Controller
             $query->whereNull('parent_id');
         }
 
-        return TenantResource::collection($query->get());
+        $perPage = max(1, min(100, $request->integer('per_page', 15)));
+
+        return TenantResource::collection($query->paginate($perPage));
     }
 
     public function store(CreateTenantRequest $request): JsonResponse

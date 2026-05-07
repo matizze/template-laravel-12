@@ -61,7 +61,7 @@ class TenantUserControllerTest extends TestCase
 
         $response->assertOk();
 
-        $availableIds = collect($response->json('available_users'))->pluck('id')->all();
+        $availableIds = collect($response->json('available_users.data'))->pluck('id')->all();
 
         // Stranger user must not appear because caller has no shared tenant with them.
         User::query()
@@ -92,7 +92,7 @@ class TenantUserControllerTest extends TestCase
 
         $response->assertOk();
 
-        $availableIds = collect($response->json('available_users'))->pluck('id')->all();
+        $availableIds = collect($response->json('available_users.data'))->pluck('id')->all();
 
         $this->assertContains($u1->id, $availableIds);
         $this->assertContains($u2->id, $availableIds);
