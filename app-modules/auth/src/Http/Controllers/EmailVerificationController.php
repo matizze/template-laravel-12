@@ -21,21 +21,17 @@ class EmailVerificationController extends Controller
      * signature against the URL parameters and expiry) plus a hash comparison
      * against the user's current email.
      */
-    public function verify(Request $request, int $id, string $hash): JsonResponse
+    public function verify(int $id, string $hash): JsonResponse
     {
-        $user = User::find($id);
+        $user = User::query()->find($id);
 
-        if (! $user instanceof User) {
-            throw new AccessDeniedHttpException('Invalid verification link.');
-        }
-
-        if (! hash_equals(sha1($user->getEmailForVerification()), $hash)) {
+        if (! $user instanceof User || ! hash_equals(sha1($user->getEmailForVerification()), $hash)) {
             throw new AccessDeniedHttpException('Invalid verification link.');
         }
 
         if ($user->hasVerifiedEmail()) {
             return response()->json([
-                'message' => 'Email já verificado.',
+                'message' => 'Email already verified.',
                 'verified' => true,
             ]);
         }
@@ -45,7 +41,7 @@ class EmailVerificationController extends Controller
         event(new Verified($user));
 
         return response()->json([
-            'message' => 'Email verificado.',
+            'message' => 'Email verified.',
             'verified' => true,
         ]);
     }
@@ -60,7 +56,7 @@ class EmailVerificationController extends Controller
 
         if ($user->hasVerifiedEmail()) {
             return response()->json([
-                'message' => 'Já verificado.',
+                'message' => 'Email already verified.',
                 'verified' => true,
             ]);
         }
@@ -68,7 +64,7 @@ class EmailVerificationController extends Controller
         $user->sendEmailVerificationNotification();
 
         return response()->json([
-            'message' => 'Email enviado.',
+            'message' => 'Verification email sent.',
         ]);
     }
 }

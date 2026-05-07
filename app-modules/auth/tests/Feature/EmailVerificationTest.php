@@ -55,7 +55,7 @@ class EmailVerificationTest extends TestCase
 
         $response->assertStatus(200)
             ->assertJson([
-                'message' => 'Email verificado.',
+                'message' => 'Email verified.',
                 'verified' => true,
             ]);
 
@@ -74,7 +74,7 @@ class EmailVerificationTest extends TestCase
 
         $response->assertStatus(200)
             ->assertJson([
-                'message' => 'Email já verificado.',
+                'message' => 'Email already verified.',
                 'verified' => true,
             ]);
     }
@@ -117,7 +117,7 @@ class EmailVerificationTest extends TestCase
             ->postJson('/api/v1/auth/email/verification-notification');
 
         $response->assertStatus(200)
-            ->assertJson(['message' => 'Email enviado.']);
+            ->assertJson(['message' => 'Verification email sent.']);
 
         Notification::assertSentTo($user, VerifyEmail::class);
     }
@@ -133,7 +133,7 @@ class EmailVerificationTest extends TestCase
 
         $response->assertStatus(200)
             ->assertJson([
-                'message' => 'Já verificado.',
+                'message' => 'Email already verified.',
                 'verified' => true,
             ]);
 
