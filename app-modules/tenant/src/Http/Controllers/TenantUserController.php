@@ -31,10 +31,14 @@ class TenantUserController extends Controller
             $availableQuery->whereHas('tenants', fn ($q) => $q->whereHas('users', fn ($u) => $u->whereKey($user->id)));
         }
 
-        $perPage = max(1, min(100, $request->integer('per_page', 15)));
-
+        // Materialise the {data, links, meta} envelope explicitly: when a
+        // paginated AnonymousResourceCollection is nested inside response()
+        // ->json([...]), JsonResource::withoutWrapping() strips the `data`
+        // key and the paginator metadata is lost. ->response()->getData(true)
+        // forces Laravel's PaginatedResourceResponse to materialise first,
+        // then we splice the envelope into the wrapping payload.
         $availableUsers = UserResource::collection(
-            $availableQuery->orderBy('name')->paginate($perPage)
+            $availableQuery->orderBy('name')->paginate($request->perPage())
         )->response()->getData(true);
 
         return response()->json([

@@ -9,6 +9,7 @@ use Dedoc\Scramble\Support\Generator\SecurityRequirement;
 use Dedoc\Scramble\Support\Generator\SecurityScheme;
 use Dedoc\Scramble\Support\RouteInfo;
 use Illuminate\Database\Events\MigrationsEnded;
+use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\Artisan;
@@ -20,6 +21,11 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         JsonResource::withoutWrapping();
+
+        Request::macro('perPage', function (int $default = 15, int $max = 100): int {
+            /** @var Request $this */
+            return max(1, min($max, $this->integer('per_page', $default)));
+        });
 
         Scramble::configure()
             ->withDocumentTransformers(function (OpenApi $openApi): void {
