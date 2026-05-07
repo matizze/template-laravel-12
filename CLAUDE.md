@@ -84,6 +84,24 @@ php artisan create:user --admin      # create admin user
 - Use `actingAs($user, 'sanctum')` to authenticate in HTTP tests
 - Use `UserFactory::admin()` to attach the global admin role
 
+## Tooling Policy — Use Serena MCP for ALL code operations
+
+This project blocks the built-in `Read`, `Write`, `Edit`, `Grep`, `Glob` tools via `permissions.deny` in `.claude/settings.json`. **Every file operation must go through Serena MCP**:
+
+| Built-in (denied) | Use Serena instead |
+|---|---|
+| `Read` | `mcp__plugin_serena_serena__read_file` |
+| `Write` | `mcp__plugin_serena_serena__create_text_file` |
+| `Edit` (small change) | `mcp__plugin_serena_serena__replace_content` |
+| `Edit` (symbol body) | `mcp__plugin_serena_serena__replace_symbol_body` |
+| `Edit` (insert before/after symbol) | `mcp__plugin_serena_serena__insert_before_symbol` / `insert_after_symbol` |
+| `Grep` | `mcp__plugin_serena_serena__search_for_pattern` |
+| `Glob` / file lookup | `mcp__plugin_serena_serena__find_file` / `list_dir` |
+| Code structure overview | `mcp__plugin_serena_serena__get_symbols_overview` / `find_symbol` |
+| LSP diagnostics | `mcp__plugin_serena_serena__get_diagnostics_for_file` |
+
+This forces symbolic, token-efficient reads (no whole-file slurps unless necessary) and consistent diagnostics access. The PostToolUse hook in `.claude/settings.json` runs PHPStan automatically after every Serena edit on `.php` files inside `app-modules/` or `app/` (skipping tests/migrations) — diagnostics return inline in the agent context.
+
 ## Conventions
 
 - API-only: every controller returns `JsonResponse`

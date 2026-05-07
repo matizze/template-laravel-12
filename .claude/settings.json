@@ -2,6 +2,15 @@
   "enabledPlugins": {
     "laravel-boost@claude-plugins-official": true
   },
+  "permissions": {
+    "deny": [
+      "Read",
+      "Write",
+      "Edit",
+      "Grep",
+      "Glob"
+    ]
+  },
   "mcpServers": {
     "herd": {
       "command": "php",
@@ -12,5 +21,19 @@
         "SITE_PATH": "${PROJECT_CWD}"
       }
     }
+  },
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "mcp__plugin_serena_serena__(replace_content|insert_after_symbol|insert_before_symbol|replace_symbol_body|create_text_file)|Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "jq -r '.tool_input.relative_path // .tool_input.file_path' | { read -r f; [[ \"$f\" == *.php && \"$f\" != */tests/* && \"$f\" != */migrations/* && ( \"$f\" == */app-modules/* || \"$f\" == */app/* || \"$f\" == app-modules/* || \"$f\" == app/* ) ]] && ./vendor/bin/phpstan analyse \"$f\" --no-progress --memory-limit=512M 2>&1 | tail -30; } 2>/dev/null || true",
+            "statusMessage": "PHPStan diagnostics"
+          }
+        ]
+      }
+    ]
   }
 }
