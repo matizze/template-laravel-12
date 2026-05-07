@@ -3,6 +3,7 @@
 namespace Modules\User\Http\Controllers;
 
 use App\Http\Controllers\Controller;
+use App\Http\Resources\UserResource;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Modules\Tenant\Models\Tenant;
@@ -13,17 +14,17 @@ use Modules\User\Http\Requests\UpdateProfileRequest;
 
 class SettingsController extends Controller
 {
-    public function showProfile(Request $request): JsonResponse
+    public function showProfile(Request $request): UserResource
     {
-        return response()->json($request->user());
+        return UserResource::make($request->user());
     }
 
-    public function updateProfile(UpdateProfileRequest $request): JsonResponse
+    public function updateProfile(UpdateProfileRequest $request): UserResource
     {
         $user = $request->user();
         $user->update($request->validated());
 
-        return response()->json($user);
+        return UserResource::make($user);
     }
 
     public function updatePassword(UpdatePasswordRequest $request): JsonResponse

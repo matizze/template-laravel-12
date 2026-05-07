@@ -2,6 +2,7 @@
 
 namespace Modules\Permission\Models;
 
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -29,19 +30,19 @@ class Role extends Model
         ];
     }
 
-    protected static function booted(): void
+    /**
+     * Limit query to roles for the given tenant. When `$tenantId` is null,
+     * only global roles (with `tenant_id IS NULL`) are returned.
+     *
+     * @param  Builder<Role>  $query
+     */
+    public function scopeForTenant(Builder $query, ?int $tenantId): void
     {
-        static::addGlobalScope('tenant', function ($query) {
-            if (app()->runningInConsole()) {
-                return;
-            }
-
-            $tenantId = Tenant::current()?->id;
-
-            if ($tenantId) {
-                $query->where('tenant_id', $tenantId);
-            }
-        });
+        if ($tenantId !== null) {
+            $query->where(fn ($q) => $q->whereNull('tenant_id')->orWhere('tenant_id', $tenantId));
+        } else {
+            $query->whereNull('tenant_id');
+        }
     }
 
     public function users(): BelongsToMany

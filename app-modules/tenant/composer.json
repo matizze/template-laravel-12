@@ -5,7 +5,6 @@
     "license": "MIT",
     "require": {
         "modules/core": "*@dev",
-        "modules/permission": "*@dev",
         "modules/user": "*@dev"
     },
     "autoload": {

@@ -160,4 +160,19 @@ class Tenant extends Model
     {
         $query->whereDoesntHave('children');
     }
+
+    /**
+     * Limit query to tenants visible to the given user.
+     *
+     * Users with the `tenants.view` permission see every tenant; otherwise
+     * the query is constrained to tenants they are members of.
+     *
+     * @param  Builder<Tenant>  $query
+     */
+    public function scopeVisibleTo(Builder $query, User $user): void
+    {
+        if (! $user->can('tenants.view')) {
+            $query->whereHas('users', fn ($q) => $q->whereKey($user->id));
+        }
+    }
 }

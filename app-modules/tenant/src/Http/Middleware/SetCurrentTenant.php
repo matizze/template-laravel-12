@@ -24,8 +24,8 @@ class SetCurrentTenant
         }
 
         /** @var Tenant|null $tenant */
-        $tenant = $user->tenants()
-            ->where('tenants.id', $tenantId)
+        $tenant = Tenant::visibleTo($user)
+            ->where('id', $tenantId)
             ->first();
 
         if (! $tenant) {

@@ -3,20 +3,22 @@
 namespace Modules\Tenant\Http\Controllers;
 
 use App\Http\Controllers\Controller;
+use App\Http\Resources\TenantResource;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Modules\Tenant\Http\Requests\CreateTenantRequest;
 use Modules\Tenant\Models\Tenant;
 
 class TenantController extends Controller
 {
-    public function index(Request $request): JsonResponse
+    public function index(Request $request): AnonymousResourceCollection
     {
         $user = $request->user();
 
-        $query = $user->can('tenants.view')
-            ? Tenant::query()->withCount(['children', 'users'])
-            : $user->tenants()->withCount(['children', 'users']);
+        $query = Tenant::query()
+            ->visibleTo($user)
+            ->withCount(['children', 'users']);
 
         $parentId = $request->query('parent_id');
 
@@ -26,7 +28,7 @@ class TenantController extends Controller
             $query->whereNull('parent_id');
         }
 
-        return response()->json($query->get());
+        return TenantResource::collection($query->get());
     }
 
     public function store(CreateTenantRequest $request): JsonResponse
@@ -38,6 +40,6 @@ class TenantController extends Controller
             'parent_id' => $request->validated('parent_id'),
         ]);
 
-        return response()->json($tenant, 201);
+        return TenantResource::make($tenant)->response()->setStatusCode(201);
     }
 }

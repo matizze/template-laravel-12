@@ -3,6 +3,7 @@
 namespace Modules\Tenant\Http\Controllers;
 
 use App\Http\Controllers\Controller;
+use App\Http\Resources\TenantResource;
 use Illuminate\Http\JsonResponse;
 use Modules\Tenant\Http\Requests\DeleteTenantRequest;
 use Modules\Tenant\Http\Requests\RestoreTenantRequest;
@@ -18,16 +19,16 @@ class TenantSettingsController extends Controller
         $tenantUsers = $tenant->tenantUsers()->with('user')->get();
 
         return response()->json([
-            'tenant' => $tenant,
+            'tenant' => TenantResource::make($tenant),
             'tenant_users' => $tenantUsers,
         ]);
     }
 
-    public function update(UpdateTenantSettingsRequest $request, Tenant $tenant): JsonResponse
+    public function update(UpdateTenantSettingsRequest $request, Tenant $tenant): TenantResource
     {
         $tenant->update($request->validated());
 
-        return response()->json($tenant);
+        return TenantResource::make($tenant);
     }
 
     public function destroy(DeleteTenantRequest $request, Tenant $tenant): JsonResponse
