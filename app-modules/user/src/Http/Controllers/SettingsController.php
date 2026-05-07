@@ -8,6 +8,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Modules\Tenant\Models\Tenant;
+use Modules\User\Events\UserDeleting;
 use Modules\User\Http\Requests\DeleteAccountRequest;
 use Modules\User\Http\Requests\UpdatePasswordRequest;
 use Modules\User\Http\Requests\UpdateProfileRequest;
@@ -50,7 +51,7 @@ class SettingsController extends Controller
         $user = $request->user();
 
         DB::transaction(function () use ($user): void {
-            $user->tenants()->detach();
+            event(new UserDeleting($user));
             $user->tokens()->delete();
             $user->delete();
         });
