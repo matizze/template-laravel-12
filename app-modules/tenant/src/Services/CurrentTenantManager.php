@@ -2,8 +2,8 @@
 
 namespace Modules\Tenant\Services;
 
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Modules\Tenant\Models\Tenant;
-use RuntimeException;
 
 class CurrentTenantManager
 {
@@ -24,7 +24,7 @@ class CurrentTenantManager
         $tenant = Tenant::find($tenantId);
 
         if (! $tenant) {
-            throw new RuntimeException("Tenant ID {$tenantId} não encontrado ou excluído.");
+            throw (new ModelNotFoundException)->setModel(Tenant::class, [$tenantId]);
         }
 
         $this->set($tenant);
