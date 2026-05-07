@@ -11,6 +11,9 @@ use Modules\Permission\Database\Factories\RoleFactory;
 use Modules\Tenant\Models\Tenant;
 use Modules\User\Models\User;
 
+/**
+ * @mixin IdeHelperRole
+ */
 class Role extends Model
 {
     /** @use HasFactory<RoleFactory> */

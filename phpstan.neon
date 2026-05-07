@@ -10,5 +10,8 @@ parameters:
     scanDirectories:
         - phpstan
 
+    scanFiles:
+        - _ide_helper_models.php
+
 rules:
     - App\PHPStan\ModuleDependencyRule

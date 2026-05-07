@@ -26,10 +26,7 @@ class TenantUserController extends Controller
         $availableQuery = User::query()->whereNotIn('id', $linkedIds);
 
         if (! $user->can('tenants.view')) {
-            $availableQuery->whereHas(
-                'tenants',
-                fn ($q) => $q->visibleTo($user)
-            );
+            $availableQuery->whereHas('tenants', fn ($q) => $q->whereHas('users', fn ($u) => $u->whereKey($user->id)));
         }
 
         return response()->json([

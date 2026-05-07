@@ -8,6 +8,9 @@ use Illuminate\Database\Eloquent\Relations\Pivot;
 use Modules\Tenant\Database\Factories\TenantUserFactory;
 use Modules\User\Models\User;
 
+/**
+ * @mixin IdeHelperTenantUser
+ */
 class TenantUser extends Pivot
 {
     /** @use HasFactory<TenantUserFactory> */

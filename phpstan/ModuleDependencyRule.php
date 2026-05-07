@@ -18,6 +18,7 @@ class ModuleDependencyRule implements Rule
     private const ALLOWED_DEPENDENCIES = [
         'Core' => [],
         'User' => ['Core'],
+        'Permission' => ['Core'],
         'Auth' => ['Core', 'User'],
         'Tenant' => ['Core', 'User'],
     ];
@@ -28,6 +29,9 @@ class ModuleDependencyRule implements Rule
         'Modules\\Tenant\\Enums\\TenantRole',
         'Modules\\Tenant\\Models\\TenantUser',
         'Modules\\Tenant\\Models\\Tenant',
+        // User <-> Permission cycle: BelongsToMany requires both sides to import the other model.
+        'Modules\\Permission\\Models\\Role',
+        'Modules\\User\\Models\\User',
     ];
 
     public function getNodeType(): string
@@ -53,7 +57,7 @@ class ModuleDependencyRule implements Rule
                 continue;
             }
 
-            if (in_array($usedName, self::ALLOWED_IMPORTS, true)) {
+            if (\in_array($usedName, self::ALLOWED_IMPORTS, true)) {
                 continue;
             }
 
@@ -63,7 +67,7 @@ class ModuleDependencyRule implements Rule
             }
 
             $allowedDeps = self::ALLOWED_DEPENDENCIES[$currentModule] ?? [];
-            if (! in_array($importedModule, $allowedDeps, true)) {
+            if (! \in_array($importedModule, $allowedDeps, true)) {
                 $errors[] = RuleErrorBuilder::message(
                     "Module '{$currentModule}' cannot depend on module '{$importedModule}'. Allowed: [".implode(', ', $allowedDeps).'].'
                 )->build();

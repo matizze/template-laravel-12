@@ -16,6 +16,9 @@ use Modules\Tenant\Database\Factories\TenantFactory;
 use Modules\Tenant\Services\CurrentTenantManager;
 use Modules\User\Models\User;
 
+/**
+ * @mixin IdeHelperTenant
+ */
 class Tenant extends Model
 {
     /** @use HasFactory<TenantFactory> */

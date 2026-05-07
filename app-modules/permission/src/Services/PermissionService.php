@@ -9,7 +9,7 @@ class PermissionService
 {
     public function check(User $user, string $permission): bool
     {
-        return in_array($permission, $this->getUserPermissions($user), true);
+        return \in_array($permission, $this->getUserPermissions($user), true);
     }
 
     /**
@@ -33,7 +33,7 @@ class PermissionService
         $result = [];
 
         foreach ($permissions as $namespace => $actions) {
-            if (! is_array($actions)) {
+            if (! \is_array($actions)) {
                 continue;
             }
 
@@ -58,7 +58,7 @@ class PermissionService
             }
 
             if ($role->permissions) {
-                $all = array_merge($all, $this->flatten($role->permissions));
+                $all = [...$all, ...$this->flatten($role->permissions)];
             }
         }
 

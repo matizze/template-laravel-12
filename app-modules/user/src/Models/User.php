@@ -11,6 +11,9 @@ use Modules\Permission\Models\Role;
 use Modules\Tenant\Traits\HasTenants;
 use Modules\User\Database\Factories\UserFactory;
 
+/**
+ * @mixin IdeHelperUser
+ */
 class User extends Authenticatable
 {
     /** @use HasFactory<UserFactory> */
