@@ -102,7 +102,6 @@ class SettingsTest extends TestCase
         $response = $this->actingAs($user)->patchJson('/api/user/password', [
             'current_password' => 'old-password1',
             'password' => 'new-password1',
-            'password_confirmation' => 'new-password1',
         ]);
 
         $response->assertStatus(200)
@@ -122,26 +121,10 @@ class SettingsTest extends TestCase
         $response = $this->actingAs($user)->patchJson('/api/user/password', [
             'current_password' => 'wrong-password',
             'password' => 'new-password1',
-            'password_confirmation' => 'new-password1',
         ]);
 
         $response->assertStatus(422)
             ->assertJsonValidationErrors('current_password');
-    }
-
-    public function test_password_update_requires_confirmation(): void
-    {
-        $user = User::factory()->create([
-            'password' => 'old-password1',
-        ]);
-
-        $response = $this->actingAs($user)->patchJson('/api/user/password', [
-            'current_password' => 'old-password1',
-            'password' => 'new-password1',
-        ]);
-
-        $response->assertStatus(422)
-            ->assertJsonValidationErrors('password');
     }
 
     public function test_user_can_delete_account(): void

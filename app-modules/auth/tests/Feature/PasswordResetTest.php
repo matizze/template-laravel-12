@@ -68,7 +68,6 @@ class PasswordResetTest extends TestCase
                 'token' => $notification->token,
                 'email' => $user->email,
                 'password' => 'new-password123',
-                'password_confirmation' => 'new-password123',
             ]);
 
             $response->assertStatus(200)
@@ -90,7 +89,6 @@ class PasswordResetTest extends TestCase
             'token' => 'invalid-token',
             'email' => $user->email,
             'password' => 'new-password123',
-            'password_confirmation' => 'new-password123',
         ]);
 
         $response->assertStatus(422)
@@ -99,18 +97,6 @@ class PasswordResetTest extends TestCase
         $user->refresh();
 
         $this->assertFalse(Hash::check('new-password123', $user->password));
-    }
-
-    public function test_reset_password_requires_password_confirmation(): void
-    {
-        $response = $this->postJson('/api/auth/reset-password', [
-            'token' => 'some-token',
-            'email' => 'test@example.com',
-            'password' => 'new-password123',
-        ]);
-
-        $response->assertStatus(422)
-            ->assertJsonValidationErrors('password');
     }
 
     public function test_reset_password_requires_all_fields(): void

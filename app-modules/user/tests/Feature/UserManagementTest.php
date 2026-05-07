@@ -19,7 +19,6 @@ class UserManagementTest extends TestCase
             'name' => 'New User',
             'email' => 'newuser@example.com',
             'password' => 'password123',
-            'password_confirmation' => 'password123',
             'role_name' => 'member',
         ]);
 
@@ -45,7 +44,6 @@ class UserManagementTest extends TestCase
             'name' => 'New Admin',
             'email' => 'admin2@example.com',
             'password' => 'password123',
-            'password_confirmation' => 'password123',
             'role_name' => 'admin',
         ]);
 
@@ -67,7 +65,6 @@ class UserManagementTest extends TestCase
             'name' => 'New User',
             'email' => 'newuser@example.com',
             'password' => 'password123',
-            'password_confirmation' => 'password123',
             'role_name' => 'member',
         ]);
 
@@ -82,7 +79,6 @@ class UserManagementTest extends TestCase
             'name' => 'New User',
             'email' => 'newuser@example.com',
             'password' => 'password123',
-            'password_confirmation' => 'password123',
             'role_name' => 'member',
         ]);
 
@@ -108,7 +104,6 @@ class UserManagementTest extends TestCase
             'name' => 'New User',
             'email' => 'taken@example.com',
             'password' => 'password123',
-            'password_confirmation' => 'password123',
             'role_name' => 'member',
         ]);
 
@@ -124,7 +119,6 @@ class UserManagementTest extends TestCase
             'name' => 'New User',
             'email' => 'newuser@example.com',
             'password' => 'password123',
-            'password_confirmation' => 'password123',
             'role_name' => 'superadmin',
         ]);
 
