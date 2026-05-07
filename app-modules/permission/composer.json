@@ -4,7 +4,6 @@
     "type": "library",
     "license": "MIT",
     "require": {
-        "modules/core": "*@dev",
         "modules/user": "*@dev",
         "modules/tenant": "*@dev"
     },

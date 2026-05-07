@@ -8,7 +8,11 @@ use Dedoc\Scramble\Support\Generator\Operation;
 use Dedoc\Scramble\Support\Generator\SecurityRequirement;
 use Dedoc\Scramble\Support\Generator\SecurityScheme;
 use Dedoc\Scramble\Support\RouteInfo;
+use Illuminate\Database\Events\MigrationsEnded;
 use Illuminate\Http\Resources\Json\JsonResource;
+use Illuminate\Support\Facades\App;
+use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\Event;
 use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
@@ -30,5 +34,15 @@ class AppServiceProvider extends ServiceProvider
                     $operation->addSecurity(new SecurityRequirement(['bearer' => []]));
                 }
             });
+
+        if (App::environment('local')) {
+            Event::listen(
+                MigrationsEnded::class,
+                function (): void {
+                    Artisan::call('ide-helper:generate');
+                    Artisan::call('ide-helper:models', ['--nowrite' => true, '--reset' => true]);
+                }
+            );
+        }
     }
 }

@@ -9,7 +9,6 @@
     ],
     "license": "MIT",
     "repositories": [
-        {"type": "path", "url": "app-modules/core"},
         {"type": "path", "url": "app-modules/user"},
         {"type": "path", "url": "app-modules/auth"},
         {"type": "path", "url": "app-modules/tenant"},
@@ -23,7 +22,6 @@
         "laravel/sanctum": "^4.0",
         "laravel/tinker": "^3.0",
         "modules/auth": "*@dev",
-        "modules/core": "*@dev",
         "modules/permission": "*@dev",
         "modules/tenant": "*@dev",
         "modules/user": "*@dev"

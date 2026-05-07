@@ -11,9 +11,6 @@
         <testsuite name="Feature">
             <directory>tests/Feature</directory>
         </testsuite>
-        <testsuite name="Core">
-            <directory>app-modules/core/tests</directory>
-        </testsuite>
         <testsuite name="User">
             <directory>app-modules/user/tests</directory>
         </testsuite>

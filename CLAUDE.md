@@ -42,7 +42,7 @@ php artisan create:user --admin      # create admin user
 ### Stack
 - **Laravel 12** on PHP 8.2+, SQLite (dev/test), PostgreSQL (prod)
 - **Sanctum API** with bearer tokens — `auth:sanctum` middleware on all protected routes
-- **Modular monolith** in `app-modules/`: `core`, `user`, `auth`, `tenant`, `permission`
+- **Modular monolith** in `app-modules/`: `user`, `auth`, `tenant`, `permission`
 - All routes live in `routes/api.php` (no `routes/web.php`)
 
 ### Auth (Sanctum bearer tokens)
@@ -108,7 +108,7 @@ This forces symbolic, token-efficient reads (no whole-file slurps unless necessa
 - Resource controllers follow Laravel conventions; routes named with dot-case (`tenant.settings.show`)
 - PHP 8.2+ features: constructor property promotion, typed properties, return types
 - Code style: Laravel Pint (PSR-12)
-- `CoreServiceProvider` regenerates IDE helper files after migrations in local environment
+- `AppServiceProvider` regenerates IDE helper files after migrations in local environment
 - Flash messages do NOT exist — return JSON with appropriate status codes
 
 ===
