@@ -22,19 +22,17 @@ class TenantUserController extends Controller
 
         $linkedIds = $tenantUsers->pluck('user_id');
 
-        $visibleTenantIds = $request->user()
-            ->tenants()
-            ->pluck('tenants.id');
+        $user = $request->user();
+        $availableQuery = User::query()->whereNotIn('id', $linkedIds);
 
-        $availableUsers = User::query()
-            ->whereNotIn('id', $linkedIds)
-            ->whereHas('tenants', fn ($q) => $q->whereIn('tenants.id', $visibleTenantIds))
-            ->orderBy('name')
-            ->get();
+        if (! $user->can('tenants.view')) {
+            $visibleTenantIds = $user->tenants()->pluck('tenants.id');
+            $availableQuery->whereHas('tenants', fn ($q) => $q->whereIn('tenants.id', $visibleTenantIds));
+        }
 
         return response()->json([
             'tenant_users' => $tenantUsers,
-            'available_users' => $availableUsers,
+            'available_users' => $availableQuery->orderBy('name')->get(),
         ]);
     }
 

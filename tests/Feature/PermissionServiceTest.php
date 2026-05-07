@@ -28,16 +28,12 @@ class PermissionServiceTest extends TestCase
         ], $result);
     }
 
-    public function test_flatten_nested_permissions(): void
+    public function test_flatten_dotted_namespace(): void
     {
         $service = app(PermissionService::class);
 
         $result = $service->flatten([
-            'rh' => [
-                'aso' => [
-                    'exames' => ['create', 'delete'],
-                ],
-            ],
+            'rh.aso.exames' => ['create', 'delete'],
         ]);
 
         $this->assertEquals([
@@ -46,15 +42,13 @@ class PermissionServiceTest extends TestCase
         ], $result);
     }
 
-    public function test_flatten_mixed_permissions(): void
+    public function test_flatten_multiple_namespaces(): void
     {
         $service = app(PermissionService::class);
 
         $result = $service->flatten([
             'users' => ['create', 'update'],
-            'finance' => [
-                'order' => ['view', 'approve'],
-            ],
+            'finance.order' => ['view', 'approve'],
         ]);
 
         $this->assertEquals([

@@ -21,23 +21,24 @@ class PermissionService
     }
 
     /**
+     * Permissions JSON is a flat map of "namespace" => list of action names.
+     * The namespace itself can contain dots to express depth (e.g. "tenants.settings").
+     * Each combination produces a dotted ability string: "namespace.action".
+     *
+     * @param  array<string, array<int, string>>  $permissions
      * @return array<int, string>
      */
-    public function flatten(array $permissions, string $prefix = ''): array
+    public function flatten(array $permissions): array
     {
         $result = [];
 
-        foreach ($permissions as $key => $value) {
-            $current = $prefix ? "{$prefix}.{$key}" : $key;
+        foreach ($permissions as $namespace => $actions) {
+            if (! is_array($actions)) {
+                continue;
+            }
 
-            if (is_array($value)) {
-                if (array_is_list($value)) {
-                    foreach ($value as $action) {
-                        $result[] = "{$current}.{$action}";
-                    }
-                } else {
-                    $result = array_merge($result, $this->flatten($value, $current));
-                }
+            foreach ($actions as $action) {
+                $result[] = "{$namespace}.{$action}";
             }
         }
 

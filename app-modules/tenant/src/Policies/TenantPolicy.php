@@ -14,16 +14,28 @@ class TenantPolicy
 
     public function update(User $user, Tenant $tenant): bool
     {
-        return ! $tenant->trashed() && $user->isMemberOf($tenant);
+        if ($tenant->trashed()) {
+            return false;
+        }
+
+        return $user->can('tenants.settings.update', $tenant);
     }
 
     public function delete(User $user, Tenant $tenant): bool
     {
-        return ! $tenant->trashed() && $user->isMemberOf($tenant);
+        if ($tenant->trashed()) {
+            return false;
+        }
+
+        return $user->can('tenants.settings.delete', $tenant);
     }
 
     public function restore(User $user, Tenant $tenant): bool
     {
-        return $tenant->trashed() && $user->isMemberOf($tenant);
+        if (! $tenant->trashed()) {
+            return false;
+        }
+
+        return $user->can('tenants.settings.update', $tenant);
     }
 }

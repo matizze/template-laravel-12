@@ -30,14 +30,6 @@ class TenantServiceProvider extends ServiceProvider
 
         Gate::define('tenants.users.view', fn (User $user, Tenant $tenant): bool => $user->isMemberOf($tenant));
 
-        Gate::define('tenants.users.attach', fn (User $user, Tenant $tenant): bool => $user->isMemberOf($tenant) && ! $tenant->trashed());
-
-        Gate::define('tenants.users.detach', fn (User $user, Tenant $tenant): bool => $user->isMemberOf($tenant));
-
         Gate::define('tenants.settings.view', fn (User $user, Tenant $tenant): bool => $user->isMemberOf($tenant));
-
-        Gate::define('tenants.settings.update', fn (User $user, Tenant $tenant): bool => $user->isMemberOf($tenant));
-
-        Gate::define('tenants.settings.delete', fn (User $user, Tenant $tenant): bool => $user->isMemberOf($tenant));
     }
 }

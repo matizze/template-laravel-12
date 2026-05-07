@@ -4,11 +4,22 @@ namespace Modules\Tenant\Http\Requests;
 
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Support\Str;
 use Modules\Tenant\Models\Tenant;
 use Modules\Tenant\Rules\ParentHasNoActiveLinks;
 
 class CreateTenantRequest extends FormRequest
 {
+    protected function prepareForValidation(): void
+    {
+        $name = $this->input('name');
+        $slug = $this->input('slug');
+
+        if (! $slug && is_string($name) && $name !== '') {
+            $this->merge(['slug' => Str::slug($name)]);
+        }
+    }
+
     public function authorize(): bool
     {
         $user = $this->user();
@@ -16,9 +27,13 @@ class CreateTenantRequest extends FormRequest
             return false;
         }
 
+        if ($user->can('tenants.create')) {
+            return true;
+        }
+
         $parentId = $this->input('parent_id');
         if ($parentId === null) {
-            return $user->can('tenants.create');
+            return false;
         }
 
         $parent = Tenant::find($parentId);
@@ -36,7 +51,7 @@ class CreateTenantRequest extends FormRequest
     {
         return [
             'name' => ['required', 'string', 'max:255'],
-            'slug' => ['nullable', 'string', 'max:255', 'unique:tenants,slug'],
+            'slug' => ['required', 'string', 'max:255', 'unique:tenants,slug'],
             'description' => ['nullable', 'string'],
             'parent_id' => ['nullable', 'integer', 'exists:tenants,id', new ParentHasNoActiveLinks],
         ];

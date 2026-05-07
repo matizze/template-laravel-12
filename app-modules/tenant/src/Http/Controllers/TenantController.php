@@ -12,9 +12,11 @@ class TenantController extends Controller
 {
     public function index(Request $request): JsonResponse
     {
-        $query = $request->user()
-            ->tenants()
-            ->withCount('children');
+        $user = $request->user();
+
+        $query = $user->can('tenants.view')
+            ? Tenant::query()->withCount(['children', 'users'])
+            : $user->tenants()->withCount(['children', 'users']);
 
         $parentId = $request->query('parent_id');
 
