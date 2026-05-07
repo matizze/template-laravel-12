@@ -5,11 +5,11 @@ namespace Modules\Tenant\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\Pivot;
+use Illuminate\Validation\ValidationException;
 use Modules\Tenant\Database\Factories\TenantUserFactory;
 use Modules\User\Models\User;
 use OwenIt\Auditing\Auditable;
 use OwenIt\Auditing\Contracts\Auditable as AuditableContract;
-use RuntimeException;
 
 /**
  * @mixin IdeHelperTenantUser
@@ -36,7 +36,9 @@ class TenantUser extends Pivot implements AuditableContract
             $tenant = Tenant::withTrashed()->find($tenantUser->tenant_id);
 
             if (! $tenant || $tenant->trashed() || ! $tenant->isOperable()) {
-                throw new RuntimeException('Vínculo só é aceito em tenants operáveis (folhas) ativos.');
+                throw ValidationException::withMessages([
+                    'tenant' => 'Vínculo só é aceito em tenants operáveis (folhas) ativos.',
+                ]);
             }
         });
     }
