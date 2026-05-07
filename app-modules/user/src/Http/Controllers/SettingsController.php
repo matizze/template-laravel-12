@@ -6,8 +6,8 @@ use App\Http\Controllers\Controller;
 use App\Http\Resources\UserResource;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Modules\Tenant\Models\Tenant;
-use Modules\Tenant\Models\TenantUser;
 use Modules\User\Http\Requests\DeleteAccountRequest;
 use Modules\User\Http\Requests\UpdatePasswordRequest;
 use Modules\User\Http\Requests\UpdateProfileRequest;
@@ -49,10 +49,13 @@ class SettingsController extends Controller
     {
         $user = $request->user();
 
-        TenantUser::where('user_id', $user->id)->delete();
+        DB::transaction(function () use ($user): void {
+            $user->tenants()->detach();
+            $user->tokens()->delete();
+            $user->delete();
+        });
+
         Tenant::forgetCurrent();
-        $user->tokens()->delete();
-        $user->delete();
 
         return response()->json(['message' => 'Conta excluída com sucesso!']);
     }
